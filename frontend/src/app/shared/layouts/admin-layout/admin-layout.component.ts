@@ -6,15 +6,82 @@ import { SocketService } from '../../../core/services/socket.service';
 import { AdminService } from '../../../core/services/admin.service';
 import { Subscription } from 'rxjs';
 
+import { AdminNavComponent } from '../../components/admin-nav/admin-nav.component';
+
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './admin-layout.component.html'
+  imports: [CommonModule, RouterModule, AdminNavComponent],
+  template: `
+    <div class="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      
+      <!-- Navegación Lateral y Mobile para Admin -->
+      <app-admin-nav 
+        [isSidebarOpen]="isSidebarOpen" 
+        [notificacionesNuevas]="notificacionesNuevas"
+        (toggleSidebar)="toggleSidebar()">
+      </app-admin-nav>
+
+      <!-- ===== CONTENT AREA ===== -->
+      <div class="flex-1 flex flex-col min-w-0 my-4 mr-4 h-[calc(100vh-2rem)] rounded-[2.5rem] bg-slate-50 shadow-xl shadow-slate-200/50 border border-gray-100 overflow-hidden">
+        
+        <!-- Top Header -->
+        <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 z-10 shrink-0 shadow-sm">
+          <div class="flex items-center gap-4">
+            <h2 class="text-xl font-black text-slate-900 tracking-tight hidden sm:block">Admin<span class="text-blue-600">Console</span></h2>
+            <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest hidden lg:block">Panel de Control Ecuavip</p>
+          </div>
+
+          <div class="flex items-center gap-6">
+            <!-- Profile Dropdown -->
+            <div class="relative group">
+              <button class="flex items-center gap-3 p-1.5 pr-4 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-600/20">
+                  {{ usuario?.nombre?.charAt(0) }}
+                </div>
+                <div class="text-left hidden lg:block">
+                  <p class="text-xs font-black text-slate-900 leading-tight">{{ usuario?.nombre?.split(' ')[0] }}</p>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrador</p>
+                </div>
+                <svg class="text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+
+              <!-- Dropdown menu -->
+              <div class="absolute right-0 top-full mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 p-2">
+                  <div class="px-4 py-3 border-b border-slate-50 mb-1">
+                    <p class="text-sm font-black text-slate-900">{{ usuario?.nombre }}</p>
+                    <p class="text-[10px] text-slate-400 font-bold truncate">{{ usuario?.correo }}</p>
+                  </div>
+                  <a routerLink="/admin/perfil" class="flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Mi Perfil
+                  </a>
+                  <div class="border-t border-slate-50 mt-1 pt-1">
+                    <button (click)="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 pb-28 md:pb-8 no-scrollbar">
+          <router-outlet></router-outlet>
+        </main>
+      </div>
+    </div>
+  `
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   isSidebarOpen = true;
   notificacionesNuevas = 0;
+  usuario: any = null;
   private socketSub: Subscription | null = null;
   private countSub: Subscription | null = null;
 
@@ -30,6 +97,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.usuario = this.authService.getUsuario();
     // Doble verificación en el componente: si no es admin, redirigir
     if (!this.isAdmin) {
       this.router.navigate(['/cliente']);

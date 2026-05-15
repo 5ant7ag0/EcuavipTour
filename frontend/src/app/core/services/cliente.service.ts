@@ -30,4 +30,8 @@ export class ClienteService {
   markAsRead(otroId: number): Observable<any> {
     return this.http.post(`http://localhost:5001/api/chat/mark_read/${otroId}`, {}, { headers: this.getHeaders() });
   }
+
+  calificarViaje(datos: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/calificar`, datos, { headers: this.getHeaders() });
+  }
 }

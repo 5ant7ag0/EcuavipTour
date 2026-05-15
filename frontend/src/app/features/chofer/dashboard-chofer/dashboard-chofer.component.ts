@@ -6,176 +6,221 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ViajeService } from '../../../core/services/viaje.service';
 import { Subscription } from 'rxjs';
 
+import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/chat-sidebar.component';
+
 @Component({
   selector: 'app-dashboard-chofer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ChatSidebarComponent],
   template: `
-    <div class="relative h-screen w-full overflow-hidden bg-gray-900">
+    <!-- VISTA CONSOLA FIJA (SIN SCROLL) -->
+    <div class="h-screen w-full bg-[#f8fafc] flex flex-col lg:flex-row lg:p-8 lg:gap-8 overflow-hidden">
       
-      <!-- MAPA DE FONDO (OCUPA TODO) -->
-      <div id="choferMap" class="absolute inset-0 z-0"></div>
-
-      <!-- HEADER MINIMALISTA (GLASS) -->
-      <header class="absolute top-0 left-0 right-0 z-40 p-6 pointer-events-none">
-        <div class="flex items-center justify-between pointer-events-auto">
-          <div class="bg-white/90 backdrop-blur-xl p-4 rounded-[2rem] shadow-xl border border-white/50 flex items-center gap-4">
-            <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black">
-              {{ usuario?.nombre?.charAt(0) }}
-            </div>
-            <div>
-              <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">En Línea</p>
-              <h1 class="text-sm font-black text-gray-900">{{ usuario?.nombre }}</h1>
-            </div>
-          </div>
+      <!-- SECCIÓN MAPA (Móvil: 68%, Desktop: 60%) -->
+      <div class="h-[68vh] lg:h-full lg:flex-[7] order-1 lg:order-2 relative">
+        <div class="w-full h-full lg:rounded-[3rem] lg:shadow-2xl lg:border-8 lg:border-white overflow-hidden relative">
+          <div id="choferMap" class="w-full h-full"></div>
           
-          <div class="bg-white/90 backdrop-blur-xl px-6 py-4 rounded-full shadow-xl border border-white/50">
-            <p class="text-[10px] font-black" [class.text-green-500]="!viajeActual" [class.text-blue-500]="viajeActual">
-              {{ viajeActual ? 'EN SERVICIO' : 'BUSCANDO VIAJES' }}
-            </p>
+          <!-- Radar Effect (Sólo si no hay viaje) -->
+          <div *ngIf="!viajeActual && !nuevoViaje" class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center bg-blue-600/5">
+             <div class="relative">
+               <div class="absolute inset-0 -m-20 border border-blue-500/20 rounded-full animate-ping"></div>
+               <div class="absolute inset-0 -m-40 border border-blue-500/10 rounded-full animate-ping" style="animation-delay: 1s"></div>
+             </div>
+          </div>
+
+          <!-- Badge Status (Solo punto) -->
+          <div class="absolute top-6 left-6 p-2 bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white flex items-center gap-2">
+            <div class="w-2.5 h-2.5 bg-blue-600 rounded-full animate-ping"></div>
           </div>
         </div>
-      </header>
-
-      <!-- MODO: BUSCANDO (OVERLAY RADAR) -->
-      <div *ngIf="!viajeActual && !nuevoViaje" class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
-         <div class="relative">
-           <!-- Radar Waves -->
-           <div class="absolute inset-0 -m-20 border border-blue-500/20 rounded-full animate-ping"></div>
-           <div class="absolute inset-0 -m-40 border border-blue-500/10 rounded-full animate-ping" style="animation-delay: 1s"></div>
-           
-           <div class="bg-blue-600/10 backdrop-blur-sm px-8 py-4 rounded-full border border-blue-500/20 animate-pulse">
-             <p class="text-blue-600 font-black text-xs uppercase tracking-[0.3em]">Escaneando zona...</p>
-           </div>
-         </div>
       </div>
 
-      <!-- ALERTA DE VIAJE (CENTRAL UBER-STYLE) -->
-      <div *ngIf="nuevoViaje" class="absolute inset-0 z-50 flex items-center justify-center p-6 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/50 relative overflow-hidden">
-           <!-- Timer Bar -->
+      <!-- SECCIÓN INFORMACIÓN / ACCIONES (Móvil: 32%, Desktop: 40%) -->
+      <div class="h-[32vh] lg:h-full lg:flex-[5] order-2 lg:order-1 p-3 lg:p-0 flex flex-col">
+        
+        <div class="h-full bg-white lg:bg-transparent rounded-[2.5rem] lg:rounded-none p-5 lg:p-0 shadow-2xl lg:shadow-none border border-gray-100 lg:border-none flex flex-col justify-between">
+          
+          <!-- CONTENIDO DINÁMICO SEGÚN ESTADO -->
+          <div class="flex-1 flex flex-col justify-center">
+            
+            <!-- ESTADO: BUSCANDO -->
+            <div *ngIf="!viajeActual" class="text-center space-y-2 animate-slide-up">
+              <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto animate-pulse">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/></svg>
+              </div>
+              <h3 class="text-base font-black text-gray-900">Buscando Servicios</h3>
+            </div>
+
+            <!-- ESTADO: EN VIAJE -->
+            <div *ngIf="viajeActual" class="space-y-4 animate-slide-up">
+              <!-- Info Cliente Compacta -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gray-900 text-white rounded-xl flex items-center justify-center shadow-lg">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <div>
+                    <h4 class="text-base font-black text-gray-900 leading-tight">{{ viajeActual.nombre_cliente || 'Pasajero VIP' }}</h4>
+                    <p class="text-[8px] font-bold text-blue-600 uppercase tracking-widest">En Curso • $ {{ viajeActual.tarifa }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ruta Ultra-Compacta -->
+              <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-1 bg-blue-500 rounded-full shrink-0"></div>
+                  <p class="text-[10px] font-bold text-gray-500 leading-tight line-clamp-1">{{ viajeActual.origen }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-1 bg-gray-900 rounded-sm shrink-0"></div>
+                  <p class="text-[10px] font-black text-gray-900 leading-tight line-clamp-1">{{ viajeActual.destino }}</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BOTONERA FIJA INFERIOR (UNA SOLA FILA) -->
+          <div *ngIf="viajeActual" class="pt-3 border-t border-gray-50 flex gap-2 items-center h-16">
+            <!-- Cancelar -->
+            <button (click)="cancelarViaje()" 
+                   class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100 transition-all border border-red-100 active:scale-95 shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+
+            <!-- Chat -->
+            <button (click)="openChat()" 
+                   class="w-12 h-12 bg-gray-50 text-gray-900 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-100 active:scale-95 shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7c1.1 0 2.2.3 3.2.8l4.4-1.1-1.1 4.4z"/></svg>
+            </button>
+
+            <!-- Acción Dinámica -->
+            <div class="flex-1 h-12">
+              <button *ngIf="viajeActual.estado_logistico === 'aceptado'" (click)="marcarLlegada()" 
+                      class="w-full h-full bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">
+                 Llegué al Origen
+              </button>
+              <button *ngIf="viajeActual.estado_logistico === 'esperando_cliente'" (click)="isScannerOpen = true" 
+                      class="w-full h-full bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">
+                 Validar Abordaje
+              </button>
+              <button *ngIf="viajeActual.estado_logistico === 'en_curso'" (click)="finalizarViaje()" 
+                      class="w-full h-full bg-gray-900 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-black/20 hover:bg-green-600 active:scale-95">
+                 Finalizar Viaje
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+      <!-- ALERTA DE NUEVO VIAJE (OVERLAY) -->
+      <div *ngIf="nuevoViaje" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-gray-900/60 backdrop-blur-xl animate-fade-in">
+        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl relative overflow-hidden">
            <div class="absolute bottom-0 left-0 right-0 h-2 bg-gray-100 overflow-hidden">
              <div class="h-full bg-blue-600 animate-notification-timeout" [style.animationDuration.ms]="10000"></div>
            </div>
-
-           <div class="text-center mb-10">
-             <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
-             </div>
-             <h2 class="text-3xl font-black text-gray-900 mb-2">¡Nuevo Viaje!</h2>
-             <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">A {{ nuevoViaje.distancia || '2.4' }} km de ti</p>
+           <div class="text-center mb-8">
+              <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+              </div>
+              <h2 class="text-3xl font-black text-gray-900 mb-1">¡Nuevo Viaje!</h2>
+              <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">A {{ nuevoViaje.distancia || '2.4' }} km</p>
            </div>
-
-           <div class="space-y-4 mb-10">
-             <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-               <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-               <p class="text-sm font-bold text-gray-700 truncate">{{ nuevoViaje.origen }}</p>
-             </div>
-             <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-               <div class="w-2 h-2 bg-gray-900 rounded-sm"></div>
-               <p class="text-sm font-bold text-gray-700 truncate">{{ nuevoViaje.destino }}</p>
-             </div>
+           <div class="space-y-6 mb-10 text-center">
+              <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Ganancia Estimada</p>
+                <p class="text-4xl font-black text-green-600">$ {{ nuevoViaje.tarifa }}</p>
+              </div>
+              <div class="flex flex-col gap-3">
+                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p class="text-xs font-bold text-gray-700 truncate">De: {{ nuevoViaje.origen }}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p class="text-xs font-bold text-gray-700 truncate">A: {{ nuevoViaje.destino }}</p>
+                </div>
+              </div>
            </div>
-
-           <div class="flex items-center justify-between mb-10">
-             <div>
-               <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Ganancia Est.</p>
-               <p class="text-3xl font-black text-green-600">$ {{ nuevoViaje.tarifa }}</p>
-             </div>
-             <div class="text-right">
-               <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Servicio</p>
-               <p class="text-sm font-black text-gray-900 uppercase">{{ nuevoViaje.tipo_servicio }}</p>
-             </div>
-           </div>
-
            <div class="grid grid-cols-1 gap-4">
-             <button (click)="aceptarViaje()" class="w-full h-20 bg-blue-600 text-white rounded-[2rem] font-black text-lg uppercase tracking-widest shadow-xl shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-95">Aceptar Viaje</button>
-             <button (click)="rechazarViaje()" class="w-full py-4 text-gray-400 font-black text-xs uppercase tracking-widest hover:text-gray-600 transition-colors">Rechazar</button>
+              <button (click)="aceptarViaje()" class="w-full h-20 bg-blue-600 text-white rounded-[2rem] font-black text-lg uppercase tracking-widest shadow-2xl shadow-blue-600/30 active:scale-95">Aceptar</button>
+              <button (click)="rechazarViaje()" class="w-full py-4 text-gray-400 font-black text-xs uppercase tracking-widest">Ignorar</button>
            </div>
         </div>
       </div>
 
-      <!-- MODO EN VIAJE: CONSOLA INFERIOR (BOTTOM SHEET) -->
-      <div *ngIf="viajeActual" class="absolute bottom-0 left-0 right-0 z-40 p-6 animate-slide-up">
-        <div class="bg-white rounded-[3.5rem] shadow-[0_-20px_80px_rgba(0,0,0,0.15)] p-10 max-w-4xl mx-auto border border-gray-100">
-           
-           <div class="flex flex-col md:flex-row gap-10">
-             <!-- Left: Info -->
-             <div class="flex-grow space-y-8">
-               <div class="flex items-center justify-between">
-                 <div>
-                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Cliente</p>
-                    <h3 class="text-2xl font-black text-gray-900">{{ viajeActual.cliente_nombre || 'Pasajero VIP' }}</h3>
-                 </div>
-                 <div class="text-right">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total</p>
-                    <p class="text-2xl font-black text-gray-900">$ {{ viajeActual.tarifa }}</p>
-                 </div>
-               </div>
-
-               <div class="space-y-4">
-                 <div class="flex items-start gap-4">
-                    <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 shrink-0"></div>
-                    <p class="text-sm font-bold text-gray-600 leading-tight">{{ viajeActual.origen }}</p>
-                 </div>
-                 <div class="flex items-start gap-4">
-                    <div class="w-2 h-2 bg-gray-900 rounded-sm mt-2 shrink-0"></div>
-                    <p class="text-sm font-bold text-gray-900 leading-tight">{{ viajeActual.destino }}</p>
-                 </div>
-               </div>
-             </div>
-
-             <!-- Right: Actions Grid -->
-             <div class="grid grid-cols-2 md:grid-cols-2 gap-4 shrink-0">
-                <button (click)="openExternalMap()" class="h-20 w-20 md:w-24 md:h-24 bg-gray-100 text-gray-900 rounded-[2rem] flex flex-col items-center justify-center gap-2 hover:bg-gray-200 transition-all group">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                   <span class="text-[8px] font-black uppercase tracking-tighter">Navegar</span>
-                </button>
-
-                <button (click)="isScannerOpen = true" class="h-20 w-20 md:w-24 md:h-24 bg-gray-100 text-gray-900 rounded-[2rem] flex flex-col items-center justify-center gap-2 hover:bg-gray-200 transition-all group">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
-                   <span class="text-[8px] font-black uppercase tracking-tighter">Validar QR</span>
-                </button>
-
-                <button (click)="openChat()" class="h-20 w-20 md:w-24 md:h-24 bg-blue-50 text-blue-600 rounded-[2rem] flex flex-col items-center justify-center gap-2 hover:bg-blue-100 transition-all group">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7c1.1 0 2.2.3 3.2.8l4.4-1.1-1.1 4.4z"/></svg>
-                   <span class="text-[8px] font-black uppercase tracking-tighter">Chat</span>
-                </button>
-
-                <button (click)="finalizarViaje()" class="h-20 w-20 md:w-24 md:h-24 bg-green-500 text-white rounded-[2rem] flex flex-col items-center justify-center gap-2 shadow-xl shadow-green-500/20 hover:bg-green-600 transition-all active:scale-95">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
-                   <span class="text-[8px] font-black uppercase tracking-tighter">Finalizar</span>
-                </button>
-             </div>
-           </div>
-
-        </div>
-      </div>
-
-      <!-- MODAL ESCÁNER QR -->
-      <div *ngIf="isScannerOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in">
-        <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-md" (click)="isScannerOpen = false"></div>
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-10 relative z-10 shadow-2xl">
-          <h3 class="text-2xl font-black text-gray-900 mb-8 text-center">Validar Pasajero</h3>
-          <div class="bg-gray-50 aspect-square rounded-[2rem] mb-8 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden">
-             <div class="w-48 h-48 border-4 border-blue-500/30 rounded-3xl relative">
+      <!-- MODALES DE CONTROL (CONFIRMACIONES, SCANNER, ETC) -->
+      <!-- Scanner -->
+      <div *ngIf="isScannerOpen" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-xl" (click)="isScannerOpen = false"></div>
+        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-12 relative z-10 shadow-2xl text-center">
+          <h3 class="text-3xl font-black text-gray-900 mb-8">Validar Abordaje</h3>
+          <div class="bg-gray-50 aspect-square rounded-[2.5rem] mb-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden">
+             <div class="w-40 h-40 border-4 border-blue-500/30 rounded-3xl relative">
                 <div class="absolute top-0 left-0 w-full h-1 bg-blue-500 animate-scanner-line shadow-[0_0_15px_rgba(59,130,246,0.8)]"></div>
              </div>
           </div>
           <div class="space-y-4">
-            <input type="text" [(ngModel)]="pinIngresado" maxlength="4" placeholder="Ingresa PIN de 4 dígitos" class="w-full py-4 bg-gray-50 rounded-2xl text-center font-black text-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50">
-            <button (click)="confirmarAbordaje()" class="w-full h-16 bg-ecuavip-blue text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 active:scale-95 transition-all">Confirmar Abordaje</button>
+            <input type="text" [(ngModel)]="pinIngresado" maxlength="4" placeholder="PIN de 4 dígitos" class="w-full py-6 bg-gray-50 rounded-2xl text-center font-black text-3xl tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+            <button (click)="confirmarAbordaje()" class="w-full h-20 bg-blue-600 text-white font-black rounded-[2rem] shadow-xl shadow-blue-600/30 active:scale-95 transition-all uppercase tracking-widest text-xs">Confirmar</button>
           </div>
         </div>
       </div>
 
-      <!-- TOAST MESSAGES -->
-      <div *ngIf="toast" class="fixed top-8 right-8 z-[200] bg-white border border-gray-100 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-4 animate-fade-in-right">
-        <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-        <span class="text-sm font-black text-gray-800">{{ toast }}</span>
+      <!-- Finalizar -->
+      <div *ngIf="showFinishModal" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-blue-900/40 backdrop-blur-xl" (click)="showFinishModal = false"></div>
+        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 relative z-10 shadow-2xl text-center">
+          <div class="w-20 h-20 bg-green-50 text-green-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/10">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <h3 class="text-2xl font-black text-gray-900 mb-4">¿Viaje Terminado?</h3>
+          <p class="text-gray-500 text-sm font-medium mb-10 px-4">Asegúrate de que el pasajero haya desembarcado con seguridad en el destino.</p>
+          <div class="grid grid-cols-1 gap-4">
+            <button (click)="confirmarFinalizacion()" class="w-full h-16 bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-green-600/20">Sí, Finalizar</button>
+            <button (click)="showFinishModal = false" class="w-full py-4 text-gray-400 font-black text-[10px] uppercase tracking-widest">Volver</button>
+          </div>
+        </div>
       </div>
-    </div>
-  `,
+
+      <!-- Cancelar -->
+      <div *ngIf="showCancelModal" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-red-900/40 backdrop-blur-xl" (click)="showCancelModal = false"></div>
+        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 relative z-10 shadow-2xl text-center border border-white/20">
+          <div class="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </div>
+          <h3 class="text-2xl font-black text-gray-900 mb-4 font-black">¿Cancelar Viaje?</h3>
+          <p class="text-gray-500 text-sm font-medium mb-10 px-4">Esta acción afectará tu calificación y notificará al cliente de inmediato.</p>
+          <div class="grid grid-cols-1 gap-4">
+            <button (click)="confirmarCancelacion()" class="w-full h-16 bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-red-500/20">Confirmar</button>
+            <button (click)="showCancelModal = false" class="w-full py-4 text-gray-400 font-black text-[10px] uppercase tracking-widest">No, Mantener</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOAST -->
+      <div *ngIf="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[20000] animate-slide-up w-[90%] max-w-xs">
+        <div class="bg-gray-900/95 backdrop-blur-xl text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+          <p class="text-[10px] font-black uppercase tracking-widest leading-tight">{{ toast }}</p>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <app-chat-sidebar 
+        [isOpen]="isChatOpen"
+        [viajeId]="viajeActual?.viaje_id || viajeActual?.id"
+        [destinatarioId]="viajeActual?.cliente_id"
+        [tipoReceptor]="'chofer'"
+        [tituloCabecera]="'Cliente: ' + (viajeActual?.nombre_cliente || 'Pasajero VIP')"
+        (closed)="isChatOpen = false">
+      </app-chat-sidebar>
+
+    `,
   styles: [`
     @keyframes radar-spin {
       from { transform: rotate(0deg); }
@@ -227,6 +272,10 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   viajeActual: any = null;
   nuevoViaje: any = null;
   isScannerOpen = false;
+  isChatOpen = false;
+  showCancelModal = false;
+
+  showFinishModal = false;
   pinIngresado = '';
   toast: string | null = null;
   
@@ -342,7 +391,7 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
 
     // Escuchar confirmación de aceptación
     this.socketService.listen('viaje_confirmado_chofer').subscribe((data) => {
-      this.viajeActual = this.nuevoViaje;
+      this.viajeActual = { ...this.nuevoViaje, estado_logistico: 'aceptado' };
       this.nuevoViaje = null;
       this.showToast(data.mensaje);
       // Inicializar mapa y ruta después de aceptar
@@ -360,8 +409,20 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   }
 
   checkActiveTrip() {
-    // Simulación: En un caso real, haríamos una petición al backend
-    // para ver si el chofer tiene un viaje 'en_curso'
+    this.viajeService.getViajeActivo().subscribe({
+      next: (viaje) => {
+        if (viaje) {
+          console.log('[DashboardChofer] Viaje activo detectado:', viaje);
+          console.log('[DashboardChofer] Estado logístico:', viaje.estado_logistico);
+          this.viajeActual = viaje;
+          // Si el mapa ya está listo, calcular ruta
+          if (this.map) {
+            this.calculateRoute();
+          }
+        }
+      },
+      error: (err) => console.error('[DashboardChofer] Error al buscar viaje activo:', err)
+    });
   }
 
   aceptarViaje() {
@@ -394,16 +455,32 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
     if (this.gpsInterval) clearInterval(this.gpsInterval);
   }
 
+  marcarLlegada() {
+    if (!this.viajeActual) return;
+    this.socketService.emit('llegada_origen', {
+      viaje_id: this.viajeActual.viaje_id
+    });
+    this.viajeActual.estado_logistico = 'esperando_cliente';
+    this.showToast('Notificando al cliente de tu llegada...');
+  }
+
   finalizarViaje() {
+    this.showFinishModal = true;
+  }
+
+  confirmarFinalizacion() {
     if (!this.viajeActual) return;
     this.socketService.emit('finalizar_viaje', {
       viaje_id: this.viajeActual.viaje_id
     });
     this.showToast('¡Viaje finalizado con éxito!');
     this.viajeActual = null;
+    this.showFinishModal = false;
     this.stopGPS();
-    this.directionsRenderer.setDirections({routes: []}); // Limpiar ruta
-    this.initMap(); // Volver al radar
+    if (this.directionsRenderer) {
+      this.directionsRenderer.setDirections({routes: []}); // Limpiar ruta
+    }
+    setTimeout(() => this.initMap(), 500); // Volver al radar
   }
 
   confirmarAbordaje() {
@@ -417,7 +494,8 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
         this.showToast(res.mensaje);
         this.isScannerOpen = false;
         this.pinIngresado = '';
-        this.viajeActual.estado_logistico = 'en_viaje';
+        this.viajeActual.estado_logistico = 'en_curso';
+        this.calculateRoute(); // Actualizar ruta hacia el destino
       },
       error: (err) => {
         this.showToast(err.error?.error || 'Error al validar');
@@ -432,8 +510,29 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   }
 
   openChat() {
-    // Redirigir al inbox
-    window.location.href = '/mensajeria';
+    this.isChatOpen = true;
+  }
+
+  cancelarViaje() {
+    this.showCancelModal = true;
+  }
+
+  confirmarCancelacion() {
+    if (!this.viajeActual) return;
+    
+    this.socketService.emit('cancelar_viaje', {
+      viaje_id: this.viajeActual.viaje_id,
+      motivo: 'Cancelado por el chofer desde la consola'
+    });
+
+    this.showToast('Viaje cancelado con éxito.');
+    this.viajeActual = null;
+    this.showCancelModal = false;
+    this.stopGPS();
+    if (this.directionsRenderer) {
+      this.directionsRenderer.setDirections({routes: []});
+    }
+    setTimeout(() => this.initMap(), 500); // Volver al radar
   }
 
   showToast(msg: string) {

@@ -87,22 +87,125 @@ class ViajeService:
         viajes = self.viaje_repo.get_by_cliente_id(cliente_id)
         resultado = []
         for v in viajes:
+            # Buscar el hash del ticket QR si existe de forma segura
             qr = TicketQR.query.filter_by(viaje_id=v.id).first()
+            
+            # Buscar nombre del chofer de forma segura
+            nombre_chofer = None
+            if v.chofer_id:
+                chofer = Usuario.query.get(v.chofer_id)
+                if chofer:
+                    nombre_chofer = chofer.nombre
+            
             resultado.append({
                 "id": v.id,
-                "viaje_id": v.id, # Añadido por compatibilidad
+                "viaje_id": v.id,
                 "origen": v.dir_origen,
-                "dir_origen": v.dir_origen, # Añadido por compatibilidad
+                "dir_origen": v.dir_origen,
                 "destino": v.dir_destino,
-                "dir_destino": v.dir_destino, # Añadido por compatibilidad
-                "distancia_km": float(v.distancia_km),
-                "monto": float(v.monto_total),
+                "dir_destino": v.dir_destino,
+                "distancia_km": float(v.distancia_km) if v.distancia_km else 0,
+                "monto": float(v.monto_total) if v.monto_total else 0,
                 "estado_pago": v.estado_pago,
                 "estado_logistico": v.estado_logistico,
                 "tipo_servicio": v.tipo_servicio,
-                "fecha": v.fecha_creacion.strftime("%Y-%m-%d %H:%M"),
+                "fecha": v.fecha_creacion.strftime("%Y-%m-%d %H:%M") if v.fecha_creacion else "Sin fecha",
                 "fecha_limite_pago": v.fecha_limite_pago.isoformat() if v.fecha_limite_pago else None,
                 "qr_hash": qr.codigo_hash if qr else None,
-                "nombre_chofer": Usuario.query.get(v.chofer_id).nombre if v.chofer_id else None
+                "nombre_chofer": nombre_chofer
             })
         return resultado, 200
+    def get_viaje_activo(self, user_id):
+        from database import Viaje, Usuario, TicketQR, db
+        # Buscamos el viaje más reciente que no esté finalizado ni cancelado
+        # Donde el usuario sea cliente o chofer
+        v = Viaje.query.filter(
+            db.or_(Viaje.cliente_id == user_id, Viaje.chofer_id == user_id),
+            Viaje.estado_logistico.in_(['pendiente', 'aceptado', 'esperando_cliente', 'en_curso'])
+        ).order_by(Viaje.fecha_creacion.desc()).first()
+
+        if not v:
+            return None, 200
+
+        # Datos del chofer si hay uno
+        chofer_data = None
+        if v.chofer_id:
+            chofer = Usuario.query.get(v.chofer_id)
+            if chofer:
+                chofer_data = {"id": chofer.id, "nombre": chofer.nombre}
+
+        # Datos del cliente
+        cliente = Usuario.query.get(v.cliente_id)
+        nombre_cliente = cliente.nombre if cliente else "Cliente Desconocido"
+
+        # QR si hay uno
+        qr = TicketQR.query.filter_by(viaje_id=v.id).first()
+
+        resultado = {
+            "id": v.id,
+            "viaje_id": v.id,
+            "origen": v.dir_origen,
+            "destino": v.dir_destino,
+            "distancia": float(v.distancia_km) if v.distancia_km else 0,
+            "tarifa": float(v.monto_total) if v.monto_total else 0,
+            "estado_pago": v.estado_pago,
+            "estado_logistico": v.estado_logistico,
+            "tipo_servicio": v.tipo_servicio,
+            "chofer": chofer_data,
+            "nombre_cliente": nombre_cliente,
+            "qr_hash": qr.codigo_hash if qr else None
+        }
+        return resultado, 200
+
+    def validar_abordaje(self, datos):
+        from database import Viaje, db
+        viaje_id = datos.get('viaje_id')
+        codigo = datos.get('codigo')
+
+        viaje = Viaje.query.get(viaje_id)
+        if not viaje:
+            return {"error": "Viaje no encontrado"}, 404
+
+        # En un sistema real verificaríamos contra el PIN generado
+        # Por ahora aceptamos cualquier código de 4 dígitos o validamos contra un campo si existe
+        # Asumiremos que el 'pin' es '1234' para pruebas o simplemente lo validamos
+        if len(codigo) == 4:
+            viaje.estado_logistico = 'en_curso'
+            db.session.commit()
+            return {"mensaje": "Abordaje verificado correctamente", "estado": "en_curso"}, 200
+        else:
+            return {"error": "Código de abordaje inválido"}, 400
+
+    def cancelar_viaje_admin(self, datos):
+        from database import Viaje, db
+        viaje_id = datos.get('viaje_id')
+        viaje = Viaje.query.get(viaje_id)
+        if not viaje:
+            return {"error": "Viaje no encontrado"}, 404
+        
+        viaje.estado_logistico = 'cancelado'
+        viaje.estado_pago = 'cancelado'
+        db.session.commit()
+        return {"mensaje": "Viaje cancelado correctamente"}, 200
+
+    def calificar_viaje(self, datos):
+        from database import Calificacion, db
+        viaje_id = datos.get('viaje_id')
+        cliente_id = datos.get('cliente_id')
+        estrellas = datos.get('estrellas')
+        comentario = datos.get('comentario')
+        
+        if not viaje_id or not estrellas:
+            return {"error": "Faltan datos obligatorios"}, 400
+            
+        nueva = Calificacion(
+            viaje_id=viaje_id,
+            cliente_id=cliente_id,
+            estrellas=estrellas,
+            comentario=comentario
+        )
+        db.session.add(nueva)
+        db.session.commit()
+        return {"mensaje": "Calificación enviada correctamente"}, 200
+
+

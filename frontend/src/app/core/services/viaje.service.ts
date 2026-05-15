@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { AuthService } from './auth.service';
 
 export interface CotizacionRequest {
   distancia_km: number;
@@ -20,15 +21,22 @@ export interface CotizacionResponse {
   providedIn: 'root'
 })
 export class ViajeService {
-  private apiUrl = 'http://localhost:5001/api/viaje';
+  private apiUrl = 'http://localhost:5001/api/viajes';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
+
+  private getHeaders() {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+  }
 
   validarAbordaje(viajeId: number, codigo: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/validar_abordaje`, {
       viaje_id: viajeId,
       codigo: codigo
-    });
+    }, { headers: this.getHeaders() });
   }
 
   cotizarViaje(request: CotizacionRequest): Observable<CotizacionResponse> {
@@ -83,5 +91,19 @@ export class ViajeService {
       precio_unitario: Number(precio_zona.toFixed(2)),
       zona: zona
     });
+  }
+
+  getViajeActivo(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/activo`, { headers: this.getHeaders() });
+  }
+
+  cancelarViaje(viajeId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/cancelar`, {
+      viaje_id: viajeId
+    }, { headers: this.getHeaders() });
+  }
+
+  calificarViaje(datos: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/calificar`, datos, { headers: this.getHeaders() });
   }
 }

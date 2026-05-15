@@ -56,13 +56,14 @@ from sockets import register_socket_events
 register_socket_events(socketio)
 
 # 5. Registrar Blueprints (Rutas)
-from routes import auth_bp, viaje_bp, chofer_bp, admin_bp, pago_bp
+from routes import auth_bp, viaje_bp, chofer_bp, admin_bp, pago_bp, chat_bp
 
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(viaje_bp, url_prefix='/api/viajes')
 app.register_blueprint(chofer_bp, url_prefix='/api/chofer')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
 app.register_blueprint(pago_bp, url_prefix='/api/pagos')
+app.register_blueprint(chat_bp, url_prefix='/api/chat')
 
 # Además, en `app.py` original habían endpoints en la raíz de `/api/` 
 # Mapearemos la ruta antigua `/api/cotizar` al nuevo Blueprint aunque el prefijo sea viajes,

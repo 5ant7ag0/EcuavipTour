@@ -50,28 +50,18 @@ export const routes: Routes = [
 
   // ── DASHBOARD CHOFER (protegido por RoleGuard) ────────────────────────────
   {
-    path: 'chofer/dashboard',
-    loadComponent: () => import('./features/chofer/dashboard-chofer/dashboard-chofer.component').then(m => m.DashboardChoferComponent),
+    path: 'chofer',
+    loadComponent: () => import('./shared/layouts/chofer-layout/chofer-layout.component').then(m => m.ChoferLayoutComponent),
     canActivate: [authGuard, roleGuard],
-    data: { role: 'chofer' }
-  },
-  {
-    path: 'chofer/disponible',
-    loadComponent: () => import('./features/chofer/solicitudes/solicitudes.component').then(m => m.SolicitudesComponent),
-    canActivate: [authGuard, roleGuard],
-    data: { role: 'chofer' }
-  },
-  {
-    path: 'chofer/ruta',
-    loadComponent: () => import('./features/chofer/hoja-ruta/hoja-ruta.component').then(m => m.HojaRutaComponent),
-    canActivate: [authGuard, roleGuard],
-    data: { role: 'chofer' }
-  },
-  {
-    path: 'chofer/en-curso',
-    loadComponent: () => import('./features/chofer/operacion-viaje/operacion-viaje.component').then(m => m.OperacionViajeComponent),
-    canActivate: [authGuard, roleGuard],
-    data: { role: 'chofer' }
+    data: { role: 'chofer' },
+    children: [
+      { path: 'dashboard', loadComponent: () => import('./features/chofer/dashboard-chofer/dashboard-chofer.component').then(m => m.DashboardChoferComponent) },
+      { path: 'disponible', loadComponent: () => import('./features/chofer/solicitudes/solicitudes.component').then(m => m.SolicitudesComponent) },
+      { path: 'ruta', loadComponent: () => import('./features/chofer/hoja-ruta/hoja-ruta.component').then(m => m.HojaRutaComponent) },
+      { path: 'en-curso', loadComponent: () => import('./features/chofer/operacion-viaje/operacion-viaje.component').then(m => m.OperacionViajeComponent) },
+      { path: 'perfil', loadComponent: () => import('./features/cliente/perfil/perfil.component').then(m => m.PerfilComponent) },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
   },
 
   // ── DASHBOARD ADMIN (protegido por RoleGuard) ─────────────────────────────
@@ -85,7 +75,9 @@ export const routes: Routes = [
       { path: 'mensajeria', loadComponent: () => import('./features/admin/mensajeria/mensajeria.component').then(m => m.MensajeriaComponent) },
       { path: 'monitor', loadComponent: () => import('./features/admin/monitor-flota/monitor-flota.component').then(m => m.MonitorFlotaComponent) },
       { path: 'vehiculos', loadComponent: () => import('./features/admin/gestion-vehiculos/gestion-vehiculos.component').then(m => m.GestionVehiculosComponent) },
-      { path: '', redirectTo: 'pagos', pathMatch: 'full' }
+      { path: 'usuarios', loadComponent: () => import('./features/admin/usuarios/usuarios.component').then(m => m.UsuariosComponent) },
+      { path: 'perfil', loadComponent: () => import('./features/cliente/perfil/perfil.component').then(m => m.PerfilComponent) },
+      { path: '', redirectTo: 'monitor', pathMatch: 'full' }
     ]
   }
 ];

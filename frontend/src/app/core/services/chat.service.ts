@@ -18,8 +18,12 @@ export class ChatService {
     });
   }
 
-  getHistorial(otroId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/history/${otroId}`, { headers: this.getHeaders() });
+  getHistorial(otroId: number, tipoReceptor: string = 'admin', viajeId?: number): Observable<any[]> {
+    let url = `${this.apiUrl}/history/${otroId}?tipo_receptor=${tipoReceptor}`;
+    if (viajeId) {
+      url += `&viaje_id=${viajeId}`;
+    }
+    return this.http.get<any[]>(url, { headers: this.getHeaders() });
   }
 
   markAsRead(otroId: number): Observable<any> {

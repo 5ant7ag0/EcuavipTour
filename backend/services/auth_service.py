@@ -26,7 +26,13 @@ class AuthService:
         return {
             "mensaje": "Usuario registrado", 
             "token": token, 
-            "usuario": {"id": nuevo_usuario.id, "nombre": nuevo_usuario.nombre, "correo": nuevo_usuario.correo}
+            "usuario": {
+                "id": nuevo_usuario.id, 
+                "nombre": nuevo_usuario.nombre, 
+                "correo": nuevo_usuario.correo,
+                "rol": nuevo_usuario.rol,
+                "telefono": nuevo_usuario.telefono
+            }
         }, 201
 
     def login(self, datos):
@@ -41,5 +47,32 @@ class AuthService:
         return {
             "mensaje": "Login exitoso", 
             "token": token, 
-            "usuario": {"id": usuario.id, "nombre": usuario.nombre, "correo": usuario.correo, "rol": usuario.rol}
+            "usuario": {"id": usuario.id, "nombre": usuario.nombre, "correo": usuario.correo, "rol": usuario.rol, "telefono": usuario.telefono}
+        }, 200
+
+    def update_profile(self, usuario_id, datos):
+        usuario = self.usuario_repo.get_by_id(usuario_id)
+        if not usuario:
+            return {"error": "Usuario no encontrado"}, 404
+
+        # Campos permitidos para actualizar
+        update_data = {}
+        if 'nombre' in datos:
+            update_data['nombre'] = datos['nombre']
+        if 'telefono' in datos:
+            update_data['telefono'] = datos['telefono']
+        if 'password' in datos and datos['password']:
+            update_data['password_hash'] = generate_password_hash(datos['password'])
+
+        updated_user = self.usuario_repo.update(usuario, **update_data)
+        
+        return {
+            "mensaje": "Perfil actualizado correctamente",
+            "usuario": {
+                "id": updated_user.id,
+                "nombre": updated_user.nombre,
+                "correo": updated_user.correo,
+                "rol": updated_user.rol,
+                "telefono": updated_user.telefono
+            }
         }, 200

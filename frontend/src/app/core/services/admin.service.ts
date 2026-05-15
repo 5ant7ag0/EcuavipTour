@@ -60,4 +60,22 @@ export class AdminService {
   rechazarPago(pagoId: number, motivo: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/rechazar_pago`, { pago_id: pagoId, motivo }, { headers: this.getHeaders() });
   }
+
+  getUsuarios(rol?: string, search?: string): Observable<any[]> {
+    let url = `${this.apiUrl}/usuarios`;
+    const params = [];
+    if (rol) params.push(`rol=${rol}`);
+    if (search) params.push(`search=${search}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    
+    return this.http.get<any[]>(url, { headers: this.getHeaders() });
+  }
+
+  toggleUsuarioStatus(usuarioId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/usuarios/toggle_status`, { usuario_id: usuarioId }, { headers: this.getHeaders() });
+  }
+
+  getStats(period: string = 'month'): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/stats?period=${period}`, { headers: this.getHeaders() });
+  }
 }

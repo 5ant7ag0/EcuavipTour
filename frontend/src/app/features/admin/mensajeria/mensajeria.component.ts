@@ -38,6 +38,7 @@ export class MensajeriaComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.cargarInbox();
+    this.socketService.connectAndJoin();
 
     // Suscribirse a mensajes nuevos para recargar el inbox y subir el chat a la cima
     this.socketSub = this.socketService.listen('nuevo_mensaje').subscribe((msg: any) => {

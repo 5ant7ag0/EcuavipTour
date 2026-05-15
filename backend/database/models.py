@@ -80,6 +80,7 @@ class MensajeChat(db.Model):
     viaje_id = db.Column(db.Integer, db.ForeignKey('viaje.id'))
     remitente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
     destinatario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    tipo_receptor = db.Column(db.String(20), default='admin') # 'admin' o 'chofer'
     contenido = db.Column(db.Text, nullable=False)
     leido = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)

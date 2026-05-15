@@ -52,25 +52,25 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
     this.socketSub = this.socketService.listen('nuevo_mensaje').subscribe((data: any) => {
       console.log('[ChatPanel] nuevo_mensaje recibido:', data, '| otroId:', this.otroId, '| miId:', this.usuario?.id);
 
-      // Aceptar el mensaje si involucra a ambas partes de esta conversación
       const miId = this.usuario?.id;
       const otro = this.otroId;
 
       const involucraAMi = (data.remitente_id === miId || data.destinatario_id === miId);
       const involucraAlOtro = (data.remitente_id === otro || data.destinatario_id === otro);
-
-      // También aceptar si el mensaje pertenece al viaje actual
+      const esCanalAdmin = (this.usuario?.rol?.toLowerCase() === 'admin' && data.tipo_receptor === 'admin');
       const esDelViajeActual = this.viajeId && data.viaje_id === this.viajeId;
 
-      if ((involucraAMi && involucraAlOtro) || esDelViajeActual) {
-        const existe = this.mensajes.find(m => m.id === data.id);
+      console.log('[ChatPanel] Check:', { involucraAMi, involucraAlOtro, esCanalAdmin, esDelViajeActual });
+
+      if ((involucraAMi && involucraAlOtro) || esDelViajeActual || (esCanalAdmin && involucraAlOtro)) {
+        const existe = this.mensajes.find(m => (m.id && m.id === data.id) || (m.contenido === data.contenido && m.timestamp === data.timestamp));
         if (!existe) {
-          console.log('[ChatPanel] Agregando mensaje al chat:', data.contenido);
+          console.log('[ChatPanel] Agregando mensaje:', data.contenido);
           this.mensajes.push(data);
           this.processMessages();
         }
       } else {
-        console.log('[ChatPanel] Mensaje DESCARTADO — no pertenece a este chat.');
+        console.log('[ChatPanel] Mensaje descartado por filtro');
       }
     });
   }
@@ -90,7 +90,9 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
 
   scrollToBottom(): void {
     try {
-      this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+      if (this.myScrollContainer) {
+        this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+      }
     } catch(err) { }
   }
 
@@ -122,8 +124,18 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
       viaje_id: this.viajeId || null,
       remitente_id: this.usuario.id,
       destinatario_id: this.otroId,
+      tipo_receptor: 'admin',
       contenido: this.nuevoMensaje.trim()
     };
+
+    // Optimistic Update: Mostrar el mensaje de inmediato en la UI
+    const msjOptimista = {
+      ...payload,
+      id: 0,
+      timestamp: new Date().toISOString().replace('T', ' ').split('.')[0]
+    };
+    this.mensajes.push(msjOptimista);
+    this.processMessages();
 
     console.log('[ChatPanel] Enviando mensaje:', payload);
     this.socketService.emit('enviar_mensaje', payload);

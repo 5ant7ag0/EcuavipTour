@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
+import { ChatSidebarComponent } from '../../shared/components/chat-sidebar/chat-sidebar.component';
+
 @Component({
   selector: 'app-contacto',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ChatSidebarComponent],
   template: `
     <div class="min-h-screen bg-white">
       <!-- HERO CONTACTO (DARK PREMIUM) -->
@@ -98,8 +100,8 @@ import { AuthService } from '../../core/services/auth.service';
             </a>
           </div>
 
-          <!-- CHAT INTERNO (OPCIONAL/MANTENIDO) -->
-          <div class="group bg-ecuavip-blue p-8 rounded-[2rem] border border-ecuavip-blue shadow-xl shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-1">
+          <!-- CHAT INTERNO -->
+          <div class="group bg-ecuavip-blue p-8 rounded-[2rem] border border-ecuavip-blue shadow-xl shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-1 cursor-pointer" (click)="handleChatAction()">
             <div class="flex justify-between items-start mb-10">
               <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white">
                 <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -109,7 +111,7 @@ import { AuthService } from '../../core/services/auth.service';
             <h3 class="text-xl font-black text-white mb-2">Chat en Vivo</h3>
             <p class="text-white/80 font-medium text-sm mb-8 leading-snug">Conversa con nosotros en tiempo real si estás registrado.</p>
             
-            <button (click)="handleChatAction()" class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-white hover:opacity-80 transition-opacity border-b-2 border-white/20 pb-1">
+            <button class="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-white hover:opacity-80 transition-opacity border-b-2 border-white/20 pb-1">
               {{ isLoggedIn ? 'Ir al Chat' : 'Iniciar Sesión' }}
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
@@ -162,6 +164,14 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
         </div>
       </section>
+      
+      <!-- INTEGRACIÓN CHAT SIDEBAR (SOPORTE) -->
+      <app-chat-sidebar 
+        [isOpen]="isChatOpen" 
+        tipoReceptor="admin" 
+        tituloCabecera="Soporte VIP Ecuavip" 
+        (closed)="isChatOpen = false">
+      </app-chat-sidebar>
     </div>
   `,
   styles: [`
@@ -170,6 +180,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class ContactoComponent {
   isLoggedIn = false;
+  isChatOpen = false;
 
   constructor(private authService: AuthService, private router: Router) {
     this.isLoggedIn = this.authService.isLoggedIn();
@@ -177,7 +188,7 @@ export class ContactoComponent {
 
   handleChatAction() {
     if (this.isLoggedIn) {
-      this.router.navigate(['/cliente/mensajes']);
+      this.isChatOpen = true;
     } else {
       this.authService.openAuthModal();
     }

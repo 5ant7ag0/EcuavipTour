@@ -6,29 +6,33 @@ import { ClienteService } from '../../../core/services/cliente.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { ChatService } from '../../../core/services/chat.service';
-import { ChatPanelComponent } from '../../../shared/components/chat-panel/chat-panel.component';
+import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/chat-sidebar.component';
 import { Subscription } from 'rxjs';
+
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-tracking-viaje',
   standalone: true,
-  imports: [CommonModule, RouterModule, QRCodeModule, ChatPanelComponent],
+  imports: [CommonModule, RouterModule, QRCodeModule, ChatSidebarComponent, FormsModule],
   templateUrl: './tracking-viaje.component.html'
 })
 export class TrackingViajeComponent implements OnInit, OnDestroy {
   viajeActual: any = null;
   historial: any[] = [];
   loading = true;
-  usuario: any = null;
-  adminId: number = 0; // Se carga dinámicamente desde el backend
-  
-  // Chat State
-  isChatOpen = false;
-  isChatOnly = false; // Nueva bandera para modo Inbox
-  unreadMessages = 0;
-
-  // Ticket Modal State
   isTicketModalOpen = false;
+  toast: string | null = null;
+  usuario: any = null;
+  isChatOpen = false;
+  isChatOnly = false;
+  unreadMessages = 0;
+  adminId = 1;
+
+  // Calificación
+  showRatingModal = false;
+  rating = 0;
+  comentario = '';
 
   // Map state
   map: any;
@@ -93,9 +97,49 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     // Escuchar si se asigna un chofer en tiempo real
     this.assignmentSub = this.socketService.listen('chofer_asignado').subscribe((data) => {
       console.log('Chofer asignado en tiempo real!', data);
-      if (this.viajeActual && data.viaje_id === this.viajeActual.viaje_id) {
+      if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id)) {
         this.viajeActual.chofer_id = data.chofer_id;
         this.viajeActual.nombre_chofer = data.nombre_chofer;
+        this.viajeActual.estado_logistico = data.estado;
+        this.showToast(`¡Un chofer ha aceptado tu viaje! ${data.nombre_chofer} está en camino.`);
+        if (this.directionsRenderer) this.calculateRoute();
+      }
+    });
+
+    // Escuchar cuando el chofer llega al punto
+    this.socketService.listen('chofer_en_punto').subscribe((data: any) => {
+      console.log('Chofer en punto!', data);
+      if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id)) {
+        this.viajeActual.estado_logistico = 'esperando_cliente';
+        this.showToast('¡Tu chofer ha llegado al punto de inicio!');
+        if (this.directionsRenderer) this.calculateRoute();
+      }
+    });
+
+    // Escuchar cuando el viaje finaliza
+    this.socketService.listen('viaje_finalizado').subscribe((data: any) => {
+      console.log('Viaje finalizado!', data);
+      if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id)) {
+        this.viajeActual.estado_logistico = 'finalizado';
+        this.showToast('Tu viaje ha finalizado. ¡Gracias por usar Ecuavip Tour!');
+        this.showRatingModal = true; // ACTIVAR BURBUJA DE CALIFICACIÓN
+        // No cargamos viajes aún para no quitar el modal de golpe
+      }
+    });
+    
+    // Escuchar cuando el viaje es cancelado
+    this.socketService.listen('viaje_cancelado').subscribe((data: any) => {
+      console.log('Viaje cancelado!', data);
+      if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id)) {
+        this.viajeActual.estado_logistico = 'cancelado';
+        this.showToast(data.mensaje);
+        setTimeout(() => this.cargarViajes(), 3000); // Dar tiempo a ver el toast
+      }
+    });
+
+    // Escuchar cualquier actualización de estado genérica
+    this.socketService.listen('viaje_actualizado_cliente').subscribe((data: any) => {
+      if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id)) {
         this.viajeActual.estado_logistico = data.estado;
       }
     });
@@ -222,10 +266,11 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
   getProgreso(): number {
     if (!this.viajeActual) return 0;
     const est = this.viajeActual.estado_logistico;
-    if (est === 'pendiente') return 20;
-    if (est === 'buscando_chofer') return 40;
-    if (est === 'asignado') return 60;
-    if (est === 'en_viaje') return 85;
+    if (est === 'pendiente') return 10;
+    if (est === 'buscando_chofer') return 30;
+    if (est === 'aceptado' || est === 'asignado') return 50;
+    if (est === 'esperando_cliente') return 70;
+    if (est === 'en_curso' || est === 'en_viaje') return 90;
     if (est === 'finalizado') return 100;
     return 0;
   }
@@ -238,12 +283,49 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
   toggleTicketModal() {
     this.isTicketModalOpen = !this.isTicketModalOpen;
     console.log('[Tracking] Ticket Modal toggled:', this.isTicketModalOpen);
-    // Alert temporal para debug
-    if (this.isTicketModalOpen) alert('Abriendo Ticket...');
   }
 
   getPIN(): string {
-    if (!this.viajeActual || !this.viajeActual.qr_hash) return '0000';
-    return this.viajeActual.qr_hash.slice(-4).toUpperCase();
+    if (!this.viajeActual) return '0000';
+    if (this.viajeActual.qr_hash) {
+      return this.viajeActual.qr_hash.slice(-4).toUpperCase();
+    }
+    // Fallback: usar los últimos 4 dígitos del ID formateados
+    const idStr = (this.viajeActual.viaje_id || this.viajeActual.id || 0).toString().padStart(4, '0');
+    return idStr.slice(-4);
+  }
+
+  showToast(msg: string) {
+    this.toast = msg;
+    setTimeout(() => this.toast = null, 4000);
+  }
+
+  enviarCalificacion() {
+    if (!this.viajeActual || this.rating === 0) return;
+    
+    const datos = {
+      viaje_id: this.viajeActual.viaje_id || this.viajeActual.id,
+      cliente_id: this.usuario.id,
+      estrellas: this.rating,
+      comentario: this.comentario
+    };
+
+    this.clienteService.calificarViaje(datos).subscribe({
+      next: () => {
+        this.showToast('¡Gracias por tu calificación!');
+        this.showRatingModal = false;
+        this.cargarViajes(); // Ahora sí movemos al historial
+      },
+      error: () => {
+        this.showToast('Error al enviar calificación');
+        this.showRatingModal = false;
+        this.cargarViajes();
+      }
+    });
+  }
+
+  omitirCalificacion() {
+    this.showRatingModal = false;
+    this.cargarViajes();
   }
 }

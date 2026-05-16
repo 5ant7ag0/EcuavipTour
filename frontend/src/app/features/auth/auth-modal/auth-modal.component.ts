@@ -19,6 +19,7 @@ export class AuthModalComponent {
     password: '',
     nombre: '',
     telefono: '',
+    cedula: '',
     rol: 'cliente'
   };
   

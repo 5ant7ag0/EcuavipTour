@@ -8,6 +8,8 @@ class Usuario(db.Model):
     correo = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.Text, nullable=False)
     telefono = db.Column(db.String(20))
+    cedula = db.Column(db.String(15), unique=True)
+    foto_perfil_url = db.Column(db.Text)
     rol = db.Column(db.String(20)) # admin, chofer, cliente
     activo = db.Column(db.Boolean, default=True)
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
@@ -16,11 +18,22 @@ class Vehiculo(db.Model):
     __tablename__ = 'vehiculo'
     id = db.Column(db.Integer, primary_key=True)
     placa = db.Column(db.String(20), unique=True, nullable=False)
+    marca = db.Column(db.String(30))
     modelo = db.Column(db.String(50))
+    anio = db.Column(db.Integer)
     tipo_vehiculo = db.Column(db.String(20)) # furgoneta, sedan, suv
     capacidad_max = db.Column(db.Integer, nullable=False)
+    color = db.Column(db.String(30)) # Color de la unidad
     es_privado = db.Column(db.Boolean, default=False)
-    estado = db.Column(db.String(20), default='activo')
+    estado = db.Column(db.String(20), default='pendiente') # pendiente, activo, rechazado
+    
+    # Nuevos campos para documentación y fotos
+    foto_auto_url = db.Column(db.Text)
+    foto_matricula_url = db.Column(db.Text)
+    foto_licencia_url = db.Column(db.Text)
+    
+    # Relación con el chofer
+    chofer_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
 
 class Viaje(db.Model):
     __tablename__ = 'viaje'

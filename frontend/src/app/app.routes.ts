@@ -59,6 +59,7 @@ export const routes: Routes = [
       { path: 'disponible', loadComponent: () => import('./features/chofer/solicitudes/solicitudes.component').then(m => m.SolicitudesComponent) },
       { path: 'ruta', loadComponent: () => import('./features/chofer/hoja-ruta/hoja-ruta.component').then(m => m.HojaRutaComponent) },
       { path: 'en-curso', loadComponent: () => import('./features/chofer/operacion-viaje/operacion-viaje.component').then(m => m.OperacionViajeComponent) },
+      { path: 'vehiculo', loadComponent: () => import('./features/chofer/vehiculo/vehiculo.component').then(m => m.VehiculoComponent) },
       { path: 'perfil', loadComponent: () => import('./features/cliente/perfil/perfil.component').then(m => m.PerfilComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

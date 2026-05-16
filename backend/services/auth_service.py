@@ -19,6 +19,7 @@ class AuthService:
             correo=datos.get('correo'),
             password_hash=generate_password_hash(datos.get('password')),
             telefono=datos.get('telefono', ''),
+            cedula=datos.get('cedula', ''),
             rol=datos.get('rol', 'cliente')
         )
         
@@ -31,7 +32,9 @@ class AuthService:
                 "nombre": nuevo_usuario.nombre, 
                 "correo": nuevo_usuario.correo,
                 "rol": nuevo_usuario.rol,
-                "telefono": nuevo_usuario.telefono
+                "telefono": nuevo_usuario.telefono,
+                "cedula": nuevo_usuario.cedula,
+                "foto_perfil_url": nuevo_usuario.foto_perfil_url
             }
         }, 201
 
@@ -47,7 +50,15 @@ class AuthService:
         return {
             "mensaje": "Login exitoso", 
             "token": token, 
-            "usuario": {"id": usuario.id, "nombre": usuario.nombre, "correo": usuario.correo, "rol": usuario.rol, "telefono": usuario.telefono}
+            "usuario": {
+                "id": usuario.id, 
+                "nombre": usuario.nombre, 
+                "correo": usuario.correo, 
+                "rol": usuario.rol, 
+                "telefono": usuario.telefono,
+                "cedula": usuario.cedula,
+                "foto_perfil_url": usuario.foto_perfil_url
+            }
         }, 200
 
     def update_profile(self, usuario_id, datos):
@@ -61,6 +72,10 @@ class AuthService:
             update_data['nombre'] = datos['nombre']
         if 'telefono' in datos:
             update_data['telefono'] = datos['telefono']
+        if 'cedula' in datos:
+            update_data['cedula'] = datos['cedula']
+        if 'foto_perfil_url' in datos:
+            update_data['foto_perfil_url'] = datos['foto_perfil_url']
         if 'password' in datos and datos['password']:
             update_data['password_hash'] = generate_password_hash(datos['password'])
 
@@ -73,6 +88,8 @@ class AuthService:
                 "nombre": updated_user.nombre,
                 "correo": updated_user.correo,
                 "rol": updated_user.rol,
-                "telefono": updated_user.telefono
+                "telefono": updated_user.telefono,
+                "cedula": updated_user.cedula,
+                "foto_perfil_url": updated_user.foto_perfil_url
             }
         }, 200

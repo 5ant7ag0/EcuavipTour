@@ -90,6 +90,16 @@ def home():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/uploads/vehiculos/<filename>')
+def uploaded_vehiculo(filename):
+    vehiculos_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads/vehiculos')
+    return send_from_directory(vehiculos_folder, filename)
+
+@app.route('/uploads/avatars/<filename>')
+def uploaded_avatar(filename):
+    avatars_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads/avatars')
+    return send_from_directory(avatars_folder, filename)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

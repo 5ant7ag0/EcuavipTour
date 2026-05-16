@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from services import PagoService, ChatService, AdminUserService, AnalyticsService
+from services import PagoService, ChatService, AdminUserService, AnalyticsService, AdminVehiculoService
 import os
 
 admin_bp = Blueprint('admin_bp', __name__)
@@ -9,6 +9,29 @@ pago_service = PagoService(upload_folder=os.path.join(os.path.dirname(os.path.ab
 chat_service = ChatService()
 user_service = AdminUserService()
 analytics_service = AnalyticsService()
+vehiculo_service = AdminVehiculoService()
+
+@admin_bp.route('/vehiculos', methods=['GET'])
+@jwt_required()
+def get_vehiculos():
+    estado = request.args.get('estado')
+    search = request.args.get('search')
+    marca = request.args.get('marca')
+    modelo = request.args.get('modelo')
+    anio = request.args.get('anio')
+    tipo = request.args.get('tipo')
+    asientos = request.args.get('asientos')
+    
+    resultado, status_code = vehiculo_service.get_all_vehiculos(estado, search, marca, modelo, anio, tipo, asientos)
+    return jsonify(resultado), status_code
+
+@admin_bp.route('/vehiculos/estado', methods=['POST'])
+@jwt_required()
+def cambiar_estado_vehiculo():
+    vehiculo_id = request.json.get('vehiculo_id')
+    nuevo_estado = request.json.get('estado')
+    resultado, status_code = vehiculo_service.cambiar_estado(vehiculo_id, nuevo_estado)
+    return jsonify(resultado), status_code
 
 @admin_bp.route('/stats', methods=['GET'])
 @jwt_required()
@@ -59,7 +82,11 @@ def get_inbox():
 def get_usuarios():
     rol = request.args.get('rol')
     search = request.args.get('search')
-    resultado, status_code = user_service.get_all_users(rol, search)
+    activo = request.args.get('activo')
+    sort = request.args.get('sort', 'desc')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    resultado, status_code = user_service.get_all_users(rol, search, activo, sort, start_date, end_date)
     return jsonify(resultado), status_code
 
 @admin_bp.route('/usuarios/toggle_status', methods=['POST'])
@@ -67,4 +94,26 @@ def get_usuarios():
 def toggle_usuario_status():
     usuario_id = request.json.get('usuario_id')
     resultado, status_code = user_service.toggle_user_status(usuario_id)
+    return jsonify(resultado), status_code
+
+@admin_bp.route('/usuarios/update', methods=['POST'])
+@jwt_required()
+def update_usuario_admin():
+    data = request.json
+    usuario_id = data.get('usuario_id')
+    resultado, status_code = user_service.update_user_admin(usuario_id, data)
+    return jsonify(resultado), status_code
+
+@admin_bp.route('/usuarios/update_photo', methods=['POST'])
+@jwt_required()
+def update_usuario_photo():
+    usuario_id = request.form.get('usuario_id')
+    if 'foto' not in request.files:
+        return jsonify({"error": "No hay archivo"}), 400
+        
+    file = request.files['foto']
+    if file.filename == '':
+        return jsonify({"error": "Nombre de archivo vacío"}), 400
+        
+    resultado, status_code = user_service.update_user_photo(usuario_id, file)
     return jsonify(resultado), status_code

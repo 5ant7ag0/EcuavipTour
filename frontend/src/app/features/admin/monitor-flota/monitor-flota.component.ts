@@ -44,19 +44,20 @@ export type ChartOptions = {
   imports: [CommonModule, NgApexchartsModule],
   template: `
     <div class="space-y-8 pb-8 animate-in fade-in duration-700">
-      <!-- Header con Selector de Periodo -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 class="text-3xl font-black text-slate-900 tracking-tight">Consola de Inteligencia</h1>
-          <p class="text-slate-500 font-medium">Análisis en tiempo real y rendimiento del ecosistema VIP</p>
-        </div>
+      <!-- Header / Toolbar Única Alineada con Bordes -->
+      <div class="mb-10 flex items-center justify-between gap-4 w-full">
+        <!-- Título Limpio -->
+        <h1 class="text-xl font-black text-slate-900 tracking-tight uppercase">Dashboard</h1>
         
-        <div class="flex items-center bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+        <!-- Cápsula de Periodos -->
+        <div class="flex items-center gap-1 bg-white p-1 rounded-2xl shadow-sm border border-slate-100 flex-shrink-0">
           <button 
             *ngFor="let p of periods" 
             (click)="setPeriod(p.id)"
-            [class]="selectedPeriod === p.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'"
-            class="px-5 py-2 rounded-xl text-sm font-bold transition-all duration-300"
+            [class.bg-blue-600]="selectedPeriod === p.id"
+            [class.text-white]="selectedPeriod === p.id"
+            [class.text-slate-500]="selectedPeriod !== p.id"
+            class="px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300"
           >
             {{ p.label }}
           </button>

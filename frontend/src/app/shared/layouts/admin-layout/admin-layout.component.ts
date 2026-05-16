@@ -17,31 +17,38 @@ import { AdminNavComponent } from '../../components/admin-nav/admin-nav.componen
       
       <!-- Navegación Lateral y Mobile para Admin -->
       <app-admin-nav 
-        [isSidebarOpen]="isSidebarOpen" 
-        [notificacionesNuevas]="notificacionesNuevas"
-        (toggleSidebar)="toggleSidebar()">
+        [isSidebarOpen]="true" 
+        [notificacionesNuevas]="notificacionesNuevas">
       </app-admin-nav>
 
       <!-- ===== CONTENT AREA ===== -->
       <div class="flex-1 flex flex-col min-w-0 my-4 mr-4 h-[calc(100vh-2rem)] rounded-[2.5rem] bg-slate-50 shadow-xl shadow-slate-200/50 border border-gray-100 overflow-hidden">
         
         <!-- Top Header -->
-        <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 z-10 shrink-0 shadow-sm">
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 z-[100] shrink-0 shadow-sm">
           <div class="flex items-center gap-4">
-            <h2 class="text-xl font-black text-slate-900 tracking-tight hidden sm:block">Admin<span class="text-blue-600">Console</span></h2>
-            <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest hidden lg:block">Panel de Control Ecuavip</p>
+            <!-- Espacio para breadcrumbs o estado global si se desea, ahora limpio -->
           </div>
 
-          <div class="flex items-center gap-6">
+          <div class="flex items-center gap-4">
+            <!-- Campana de Notificaciones -->
+            <button class="relative w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all group">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+            </button>
+
+            <!-- Separador sutil -->
+            <div class="h-8 w-px bg-slate-100 mx-1"></div>
+
             <!-- Profile Dropdown -->
             <div class="relative group">
-              <button class="flex items-center gap-3 p-1.5 pr-4 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200">
-                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-600/20">
-                  {{ usuario?.nombre?.charAt(0) }}
+              <button class="flex items-center gap-3 p-1.5 pr-4 rounded-full hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200">
+                <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-600/20 overflow-hidden">
+                  <span *ngIf="!usuario?.foto_perfil_url">{{ usuario?.nombre?.charAt(0) }}</span>
+                  <img *ngIf="usuario?.foto_perfil_url" [src]="'http://localhost:5001/' + usuario.foto_perfil_url" class="w-full h-full object-cover">
                 </div>
                 <div class="text-left hidden lg:block">
-                  <p class="text-xs font-black text-slate-900 leading-tight">{{ usuario?.nombre?.split(' ')[0] }}</p>
+                  <p class="text-xs font-black text-slate-900 leading-tight">{{ usuario?.nombre }}</p>
                   <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrador</p>
                 </div>
                 <svg class="text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
@@ -141,12 +148,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.socketSub) this.socketSub.unsubscribe();
     if (this.countSub) this.countSub.unsubscribe();
-    // No desconectar el socket al navegar entre rutas admin
-    // El socket es un singleton y debe permanecer activo durante toda la sesión
-  }
-
-  toggleSidebar() {
-    this.isSidebarOpen = !this.isSidebarOpen;
   }
 
   logout() {

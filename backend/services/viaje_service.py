@@ -83,27 +83,34 @@ class ViajeService:
         return {"mensaje": "Reserva creada exitosamente", "viaje_id": nuevo_viaje.id}, 201
 
     def get_viajes_cliente(self, cliente_id):
-        from database import TicketQR, Usuario
+        from database import TicketQR, Usuario, Vehiculo
         viajes = self.viaje_repo.get_by_cliente_id(cliente_id)
         resultado = []
         for v in viajes:
-            # Buscar el hash del ticket QR si existe de forma segura
             qr = TicketQR.query.filter_by(viaje_id=v.id).first()
             
-            # Buscar nombre del chofer de forma segura
             nombre_chofer = None
             if v.chofer_id:
                 chofer = Usuario.query.get(v.chofer_id)
                 if chofer:
                     nombre_chofer = chofer.nombre
             
+            vehiculo_data = None
+            if v.vehiculo_id:
+                veh = Vehiculo.query.get(v.vehiculo_id)
+                if veh:
+                    vehiculo_data = {
+                        "placa": veh.placa,
+                        "modelo": veh.modelo,
+                        "tipo": veh.tipo_vehiculo,
+                        "foto_auto_url": veh.foto_auto_url
+                    }
+            
             resultado.append({
                 "id": v.id,
                 "viaje_id": v.id,
                 "origen": v.dir_origen,
-                "dir_origen": v.dir_origen,
                 "destino": v.dir_destino,
-                "dir_destino": v.dir_destino,
                 "distancia_km": float(v.distancia_km) if v.distancia_km else 0,
                 "monto": float(v.monto_total) if v.monto_total else 0,
                 "estado_pago": v.estado_pago,
@@ -112,13 +119,13 @@ class ViajeService:
                 "fecha": v.fecha_creacion.strftime("%Y-%m-%d %H:%M") if v.fecha_creacion else "Sin fecha",
                 "fecha_limite_pago": v.fecha_limite_pago.isoformat() if v.fecha_limite_pago else None,
                 "qr_hash": qr.codigo_hash if qr else None,
-                "nombre_chofer": nombre_chofer
+                "nombre_chofer": nombre_chofer,
+                "vehiculo": vehiculo_data
             })
         return resultado, 200
+
     def get_viaje_activo(self, user_id):
-        from database import Viaje, Usuario, TicketQR, db
-        # Buscamos el viaje más reciente que no esté finalizado ni cancelado
-        # Donde el usuario sea cliente o chofer
+        from database import Viaje, Usuario, TicketQR, Vehiculo, db
         v = Viaje.query.filter(
             db.or_(Viaje.cliente_id == user_id, Viaje.chofer_id == user_id),
             Viaje.estado_logistico.in_(['pendiente', 'aceptado', 'esperando_cliente', 'en_curso'])
@@ -127,18 +134,27 @@ class ViajeService:
         if not v:
             return None, 200
 
-        # Datos del chofer si hay uno
         chofer_data = None
         if v.chofer_id:
             chofer = Usuario.query.get(v.chofer_id)
             if chofer:
-                chofer_data = {"id": chofer.id, "nombre": chofer.nombre}
+                chofer_data = {"id": chofer.id, "nombre": chofer.nombre, "telefono": chofer.telefono}
 
-        # Datos del cliente
+        vehiculo_data = None
+        if v.vehiculo_id:
+            veh = Vehiculo.query.get(v.vehiculo_id)
+            if veh:
+                vehiculo_data = {
+                    "placa": veh.placa,
+                    "marca": veh.marca,
+                    "modelo": veh.modelo,
+                    "anio": veh.anio,
+                    "tipo": veh.tipo_vehiculo,
+                    "foto_auto_url": veh.foto_auto_url
+                }
+
         cliente = Usuario.query.get(v.cliente_id)
         nombre_cliente = cliente.nombre if cliente else "Cliente Desconocido"
-
-        # QR si hay uno
         qr = TicketQR.query.filter_by(viaje_id=v.id).first()
 
         resultado = {
@@ -152,6 +168,7 @@ class ViajeService:
             "estado_logistico": v.estado_logistico,
             "tipo_servicio": v.tipo_servicio,
             "chofer": chofer_data,
+            "vehiculo": vehiculo_data,
             "nombre_cliente": nombre_cliente,
             "qr_hash": qr.codigo_hash if qr else None
         }

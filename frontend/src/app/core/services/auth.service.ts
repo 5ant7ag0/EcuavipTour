@@ -70,6 +70,18 @@ export class AuthService {
     );
   }
 
+  uploadAvatar(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('foto', file);
+    return this.http.post(`${this.apiUrl}/upload-avatar`, formData, { headers: this.getHeaders() }).pipe(
+      tap((res: any) => {
+        if (res.usuario && this.isBrowser) {
+          localStorage.setItem('ecuavip_user', JSON.stringify(res.usuario));
+        }
+      })
+    );
+  }
+
   redirectByRole(rol: string): void {
     if (rol === 'admin') {
       this.router.navigate(['/admin/monitor']);

@@ -15,9 +15,24 @@ import { FormsModule } from '@angular/forms';
         <div class="absolute top-0 right-0 w-32 h-32 bg-ecuavip-blue/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
         
         <div class="flex flex-col items-center mb-10">
-          <div class="w-24 h-24 rounded-[2rem] bg-ecuavip-blue/10 flex items-center justify-center text-ecuavip-blue text-4xl font-black mb-4 border-4 border-white shadow-sm">
-            {{ usuario?.nombre?.charAt(0) || 'U' }}
+          <div class="relative group">
+            <div class="w-28 h-28 rounded-full bg-ecuavip-blue/10 flex items-center justify-center text-ecuavip-blue text-4xl font-black mb-4 border-4 border-white shadow-sm overflow-hidden aspect-square">
+              <img *ngIf="usuario?.foto_perfil_url" [src]="'http://localhost:5001/' + usuario.foto_perfil_url" class="w-full h-full object-cover rounded-full">
+              <span *ngIf="!usuario?.foto_perfil_url">{{ usuario?.nombre?.charAt(0) || 'U' }}</span>
+              
+              <!-- Overlay de edición sobre la foto -->
+              <div 
+                *ngIf="isEditing"
+                (click)="fileInput.click()"
+                class="absolute inset-0 bg-ecuavip-blue/60 flex items-center justify-center text-white cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
+            </div>
+            
+            <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
           </div>
+
           <h2 class="text-2xl font-black text-ecuavip-dark">{{ usuario?.nombre }}</h2>
           <p class="text-ecuavip-blue font-black uppercase tracking-widest text-[10px] mt-1">{{ usuario?.rol }} VIP</p>
         </div>
@@ -36,6 +51,11 @@ import { FormsModule } from '@angular/forms';
           <div class="bg-gray-50 p-6 rounded-3xl">
             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Teléfono de Contacto</p>
             <p class="font-bold text-gray-900">{{ usuario?.telefono || 'No registrado' }}</p>
+          </div>
+
+          <div class="bg-gray-50 p-6 rounded-3xl">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Número de Cédula</p>
+            <p class="font-bold text-gray-900">{{ usuario?.cedula || 'No registrada' }}</p>
           </div>
 
           <div class="bg-gray-50 p-6 rounded-3xl">
@@ -68,6 +88,11 @@ import { FormsModule } from '@angular/forms';
           <div class="space-y-2">
             <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Teléfono</label>
             <input [(ngModel)]="editForm.telefono" type="text" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-ecuavip-blue transition-all">
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Número de Cédula</label>
+            <input [(ngModel)]="editForm.cedula" type="text" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-ecuavip-blue transition-all">
           </div>
 
           <div class="space-y-2">
@@ -108,6 +133,7 @@ export class PerfilComponent implements OnInit {
   editForm = {
     nombre: '',
     telefono: '',
+    cedula: '',
     password: ''
   };
 
@@ -123,6 +149,7 @@ export class PerfilComponent implements OnInit {
   startEditing() {
     this.editForm.nombre = this.usuario.nombre;
     this.editForm.telefono = this.usuario.telefono || '';
+    this.editForm.cedula = this.usuario.cedula || '';
     this.editForm.password = '';
     this.isEditing = true;
   }
@@ -134,13 +161,13 @@ export class PerfilComponent implements OnInit {
   saveChanges() {
     this.isLoading = true;
     this.authService.updateProfile(this.editForm).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.usuario = res.usuario;
         this.isEditing = false;
         this.isLoading = false;
         // Opcional: mostrar un toast de éxito
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error(err);
         this.isLoading = false;
         alert('Error al actualizar el perfil');
@@ -151,5 +178,23 @@ export class PerfilComponent implements OnInit {
   logout() {
     this.authService.logout();
     window.location.reload();
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.isLoading = true;
+      this.authService.uploadAvatar(file).subscribe({
+        next: (res: any) => {
+          this.usuario = res.usuario;
+          this.isLoading = false;
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.isLoading = false;
+          alert('Error al subir la foto');
+        }
+      });
+    }
   }
 }

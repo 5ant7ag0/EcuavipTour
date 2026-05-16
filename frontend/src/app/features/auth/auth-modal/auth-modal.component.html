@@ -60,6 +60,9 @@
           <input type="email" [(ngModel)]="formData.correo" name="correo" class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-blue-500 focus:bg-white transition-all" placeholder="Correo Electrónico">
         </div>
         <div *ngIf="!isLogin">
+          <input type="text" [(ngModel)]="formData.cedula" name="cedula" class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-blue-500 focus:bg-white transition-all" placeholder="Número de Cédula">
+        </div>
+        <div *ngIf="!isLogin">
           <input type="text" [(ngModel)]="formData.telefono" name="telefono" class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-blue-500 focus:bg-white transition-all" placeholder="Teléfono Móvil">
         </div>
         <div>

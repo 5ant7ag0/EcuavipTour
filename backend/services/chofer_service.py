@@ -1,11 +1,78 @@
-from repositories import ViajeRepository, UsuarioRepository
+from repositories import ViajeRepository, UsuarioRepository, VehiculoRepository
+from database import db
 
 class ChoferService:
     def __init__(self):
         self.viaje_repo = ViajeRepository()
         self.usuario_repo = UsuarioRepository()
+        self.vehiculo_repo = VehiculoRepository()
+
+    def get_vehiculo(self, chofer_id):
+        v = self.vehiculo_repo.get_by_chofer_id(chofer_id)
+        if not v:
+            return None, 200 # No tiene vehículo registrado aún
+        
+        return {
+            "id": v.id,
+            "placa": v.placa,
+            "marca": v.marca,
+            "modelo": v.modelo,
+            "anio": v.anio,
+            "tipo_vehiculo": v.tipo_vehiculo,
+            "capacidad_max": v.capacidad_max,
+            "color": v.color,
+            "estado": v.estado,
+            "foto_auto_url": v.foto_auto_url,
+            "foto_matricula_url": v.foto_matricula_url,
+            "foto_licencia_url": v.foto_licencia_url
+        }, 200
+
+    def update_vehiculo(self, chofer_id, data):
+        try:
+            v = self.vehiculo_repo.get_by_chofer_id(chofer_id)
+            
+            # Si no existe, crear uno nuevo
+            if not v:
+                from database import Vehiculo
+                v = Vehiculo(chofer_id=chofer_id)
+                db.session.add(v)
+            
+            # Lógica de permisos por estado
+            if v.estado == 'activo':
+                # Solo permitir modelo, marca, año y capacidad
+                if 'marca' in data: v.marca = data['marca']
+                if 'modelo' in data: v.modelo = data['modelo']
+                if 'anio' in data: v.anio = int(data['anio']) if data.get('anio') else None
+                if 'capacidad_max' in data: v.capacidad_max = int(data['capacidad_max']) if data.get('capacidad_max') else 0
+                if 'color' in data: v.color = data['color']
+            else:
+                # En pendiente o rechazado permite todo
+                if 'placa' in data: v.placa = data['placa']
+                if 'marca' in data: v.marca = data['marca']
+                if 'modelo' in data: v.modelo = data['modelo']
+                if 'anio' in data: v.anio = int(data['anio']) if data.get('anio') else None
+                if 'tipo_vehiculo' in data: v.tipo_vehiculo = data['tipo_vehiculo']
+                if 'capacidad_max' in data: v.capacidad_max = int(data['capacidad_max']) if data.get('capacidad_max') else 0
+                if 'color' in data: v.color = data['color']
+            
+            # URLs de fotos
+            if 'foto_auto_url' in data: v.foto_auto_url = data['foto_auto_url']
+            if 'foto_matricula_url' in data: v.foto_matricula_url = data['foto_matricula_url']
+            if 'foto_licencia_url' in data: v.foto_licencia_url = data['foto_licencia_url']
+            
+            # Si se edita algo y estaba rechazado, vuelve a pendiente
+            if v.estado == 'rechazado':
+                v.estado = 'pendiente'
+                
+            db.session.commit()
+            return {"message": "Vehículo actualizado correctamente", "estado": v.estado}, 200
+        except Exception as e:
+            db.session.rollback()
+            print(f"DEBUG: Error actualizando vehículo: {str(e)}")
+            return {"error": f"Error en el servidor: {str(e)}"}, 500
 
     def get_viajes_chofer(self, chofer_id):
+        # ... (rest of the file remains same)
         viajes = self.viaje_repo.get_by_chofer_id(chofer_id)
         resultado = []
         for v in viajes:

@@ -9,7 +9,7 @@ import { AuthModalComponent } from '../../../features/auth/auth-modal/auth-modal
   standalone: true,
   imports: [CommonModule, RouterModule, ClientNavbarComponent, AuthModalComponent],
   template: `
-    <div class="min-h-screen bg-gray-50 flex flex-col">
+    <div class="min-h-screen bg-slate-50 flex flex-col">
       <!-- Navbar global para cliente -->
       <app-client-navbar (onLoginRequest)="showAuthModal = true"></app-client-navbar>
 

@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="max-w-2xl mx-auto px-4 pt-12 pb-24">
-      <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 relative overflow-hidden">
+      <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 relative overflow-hidden">
         <!-- Decoration -->
         <div class="absolute top-0 right-0 w-32 h-32 bg-ecuavip-blue/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
         

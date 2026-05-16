@@ -24,7 +24,7 @@ import { ChoferService } from '../../../core/services/chofer.service';
         <!-- Profile-style Vehicle Photo Header -->
         <div class="flex flex-col items-center mb-12 animate-in fade-in slide-in-from-top duration-700">
           <div class="relative group w-full max-w-lg">
-            <div class="aspect-[16/9] w-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl shadow-slate-200 border-4 border-white relative transition-all duration-500 hover:rounded-[1.5rem] group">
+            <div class="aspect-[16/9] w-full rounded-3xl overflow-hidden bg-white shadow-sm border-4 border-white relative transition-all duration-500 group">
               <img *ngIf="vehiculo.foto_auto_url || vehiculo.foto_auto_url_temp" 
                    [src]="vehiculo.foto_auto_url_temp || ('http://localhost:5001/' + vehiculo.foto_auto_url)" 
                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
@@ -65,7 +65,7 @@ import { ChoferService } from '../../../core/services/chofer.service';
           <div class="lg:col-span-2 space-y-8">
             
             <!-- Datos Principales Card -->
-            <div class="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100 transition-all hover:shadow-2xl hover:shadow-slate-200/60 relative group">
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 transition-all hover:shadow-md relative group">
               
               <!-- Edit Icon -->
               <button 
@@ -174,7 +174,7 @@ import { ChoferService } from '../../../core/services/chofer.service';
             </div>
 
             <!-- Documents Card -->
-            <div class="bg-white rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
               <div class="flex items-center gap-4 mb-8">
                 <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-inner">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -228,7 +228,7 @@ import { ChoferService } from '../../../core/services/chofer.service';
           <div class="space-y-8">
             
             <!-- Help/Tips Card -->
-            <div class="bg-slate-900 rounded-[2rem] p-8 shadow-xl shadow-slate-200/50 text-white relative overflow-hidden">
+            <div class="bg-slate-900 rounded-3xl p-8 shadow-sm text-white relative overflow-hidden">
               <div class="absolute top-0 right-0 p-4 opacity-10">
                 <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
@@ -243,7 +243,7 @@ import { ChoferService } from '../../../core/services/chofer.service';
             </div>
 
             <!-- Save Button Card: Only show if there are changes and we are editing -->
-            <div *ngIf="isEditing && hayCambios" class="bg-blue-600 rounded-[2rem] p-8 shadow-xl shadow-blue-200/50 text-center relative overflow-hidden group animate-in slide-in-from-right duration-500">
+            <div *ngIf="isEditing && hayCambios" class="bg-blue-600 rounded-3xl p-8 shadow-sm text-center relative overflow-hidden group animate-in slide-in-from-right duration-500">
               <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
               
               <p class="text-blue-100 text-[10px] font-black uppercase tracking-widest mb-2">Acción Requerida</p>

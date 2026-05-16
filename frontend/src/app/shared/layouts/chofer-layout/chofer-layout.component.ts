@@ -10,7 +10,7 @@ import { ChoferNavbarComponent } from '../../components/chofer-navbar/chofer-nav
   standalone: true,
   imports: [CommonModule, RouterModule, ChoferNavbarComponent],
   template: `
-    <div class="min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div class="min-h-screen bg-slate-50 flex flex-col font-sans">
       <!-- Navbar dedicado para chofer -->
       <app-chofer-navbar></app-chofer-navbar>
 

@@ -81,7 +81,7 @@ import { AdminService } from '../../../core/services/admin.service';
 
       <!-- Grid de Vehículos -->
       <div *ngIf="!loading && vehiculos.length > 0" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-        <div *ngFor="let v of vehiculos" class="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div *ngFor="let v of vehiculos" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
           <!-- Header: Marca/Modelo & Estado -->
           <div class="flex items-start justify-between gap-4">

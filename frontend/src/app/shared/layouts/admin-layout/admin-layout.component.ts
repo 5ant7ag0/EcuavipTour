@@ -13,7 +13,7 @@ import { AdminNavComponent } from '../../components/admin-nav/admin-nav.componen
   standalone: true,
   imports: [CommonModule, RouterModule, AdminNavComponent],
   template: `
-    <div class="flex h-screen bg-gray-50 font-sans overflow-hidden">
+    <div class="flex h-screen bg-slate-50 font-sans overflow-hidden">
       
       <!-- Navegación Lateral y Mobile para Admin -->
       <app-admin-nav 
@@ -22,7 +22,7 @@ import { AdminNavComponent } from '../../components/admin-nav/admin-nav.componen
       </app-admin-nav>
 
       <!-- ===== CONTENT AREA ===== -->
-      <div class="flex-1 flex flex-col min-w-0 my-4 mr-4 h-[calc(100vh-2rem)] rounded-[2.5rem] bg-slate-50 shadow-xl shadow-slate-200/50 border border-gray-100 overflow-hidden">
+      <div class="flex-1 flex flex-col min-w-0 my-4 mr-4 h-[calc(100vh-2rem)] rounded-3xl bg-slate-50 shadow-sm border border-gray-100 overflow-hidden">
         
         <!-- Top Header -->
         <header class="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 z-[100] shrink-0 shadow-sm">
@@ -56,7 +56,7 @@ import { AdminNavComponent } from '../../components/admin-nav/admin-nav.componen
 
               <!-- Dropdown menu -->
               <div class="absolute right-0 top-full mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 p-2">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-2">
                   <div class="px-4 py-3 border-b border-slate-50 mb-1">
                     <p class="text-sm font-black text-slate-900">{{ usuario?.nombre }}</p>
                     <p class="text-[10px] text-slate-400 font-bold truncate">{{ usuario?.correo }}</p>

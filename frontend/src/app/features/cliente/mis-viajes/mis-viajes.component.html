@@ -16,7 +16,7 @@
     <p class="text-gray-400 font-bold animate-pulse uppercase tracking-widest text-xs">Cargando bitácora...</p>
   </div>
 
-  <div *ngIf="!loading && getViajesFiltrados().length === 0" class="bg-white rounded-[2.5rem] p-12 text-center shadow-sm border border-gray-100">
+  <div *ngIf="!loading && getViajesFiltrados().length === 0" class="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100">
     <div class="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-300">
       <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
     </div>
@@ -29,7 +29,7 @@
     <div *ngFor="let v of getViajesFiltrados()" 
          [class.opacity-0]="cancellingId === v.viaje_id"
          [class.scale-95]="cancellingId === v.viaje_id"
-         class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-500 group overflow-hidden relative transform">
+         class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-500 group overflow-hidden relative transform">
       
       <!-- Loading Overlay while cancelling -->
       <div *ngIf="cancellingId === v.viaje_id" class="absolute inset-0 bg-white/80 backdrop-blur-[2px] z-10 flex items-center justify-center">
@@ -188,7 +188,7 @@
     <div class="absolute inset-0 bg-ecuavip-dark/40 backdrop-blur-sm" (click)="cerrarModalCancelacion()"></div>
     
     <!-- Modal Content -->
-    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative animate-fade-in-up">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-sm relative animate-fade-in-up">
       <div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </div>

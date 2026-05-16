@@ -1,20 +1,20 @@
-<div class="min-h-screen bg-[#f8fafc] p-4 md:p-8 lg:p-12 overflow-y-auto">
+<div class="min-h-screen bg-slate-50 p-4 md:p-8 lg:p-12 overflow-y-auto">
 
   <!-- MODAL TICKET DE ABORDAJE -->
   <div *ngIf="isTicketModalOpen && viajeActual" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 animate-fade-in">
     <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-xl" (click)="toggleTicketModal()"></div>
-    <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 relative z-10 shadow-2xl border border-white/20">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-10 relative z-10 shadow-sm border border-white/20">
       <div class="text-center mb-10">
         <span class="inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest mb-4">Boarding Pass</span>
         <h3 class="text-3xl font-black text-gray-900">Tu Ticket VIP</h3>
       </div>
-      <div class="bg-gray-50 aspect-square rounded-[3rem] mb-10 flex items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden group">
-         <div class="p-6 bg-white rounded-[2rem] shadow-xl border border-gray-100 group-hover:scale-105 transition-transform duration-500">
+      <div class="bg-gray-50 aspect-square rounded-3xl mb-10 flex items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden group">
+         <div class="p-6 bg-white rounded-3xl shadow-sm border border-gray-100 group-hover:scale-105 transition-transform duration-500">
            <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + viajeActual.qr_hash" 
                 class="w-48 h-48" alt="QR Ticket">
          </div>
       </div>
-      <div class="text-center bg-blue-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-600/30">
+      <div class="text-center bg-blue-600 rounded-3xl p-8 text-white shadow-sm">
         <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-2">PIN de Abordaje</p>
         <p class="text-5xl font-black tracking-[0.2em]">{{ getPIN() }}</p>
       </div>
@@ -27,7 +27,7 @@
     
     <!-- COLUMNA INFO (Móvil: Segundo, Desktop: Izquierda - 5 cols) -->
     <div class="lg:col-span-5 order-2 lg:order-1 flex flex-col gap-6 animate-slide-up">
-      <div class="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-2xl shadow-gray-200/40 border border-white space-y-10">
+      <div class="bg-white rounded-3xl p-8 lg:p-10 shadow-sm border border-white space-y-10">
         
         <!-- Info Chofer y Vehículo -->
         <div *ngIf="viajeActual.nombre_chofer" class="space-y-6">
@@ -48,7 +48,7 @@
           </div>
 
           <!-- Info Vehículo -->
-          <div *ngIf="viajeActual.vehiculo" class="bg-blue-50/30 p-5 rounded-[2rem] border border-blue-100/50 flex items-center gap-4">
+          <div *ngIf="viajeActual.vehiculo" class="bg-blue-50/30 p-5 rounded-3xl border border-blue-100/50 flex items-center gap-4">
              <div class="w-20 h-14 bg-white rounded-xl overflow-hidden border border-blue-100 shadow-sm relative shrink-0">
                <img *ngIf="viajeActual.vehiculo.foto_auto_url" [src]="'http://localhost:5001/' + viajeActual.vehiculo.foto_auto_url" class="w-full h-full object-cover">
                <div *ngIf="!viajeActual.vehiculo.foto_auto_url" class="w-full h-full flex items-center justify-center text-blue-200">
@@ -91,7 +91,7 @@
         </div>
 
         <!-- Trayecto Details -->
-        <div class="p-6 lg:p-8 bg-gray-50 rounded-[2rem] border border-gray-100 space-y-8">
+        <div class="p-6 lg:p-8 bg-gray-50 rounded-3xl border border-gray-100 space-y-8">
           <div class="flex items-start gap-4">
             <div class="w-10 h-10 bg-white text-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-blue-50">
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
@@ -129,7 +129,7 @@
 
     <!-- COLUMNA MAPA (Móvil: Primero, Desktop: Derecha - 7 cols) -->
     <div class="lg:col-span-7 order-1 lg:order-2">
-      <div class="h-[60vh] lg:h-[calc(100vh-160px)] lg:sticky lg:top-12 w-full bg-white rounded-[2.5rem] lg:rounded-[3.5rem] shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] overflow-hidden border-4 lg:border-8 border-white group">
+      <div class="h-[60vh] lg:h-[calc(100vh-160px)] lg:sticky lg:top-12 w-full bg-white rounded-3xl shadow-sm overflow-hidden border-4 lg:border-8 border-white group">
 
 
         <div id="trackingMap" class="w-full h-full grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"></div>
@@ -146,12 +146,12 @@
   <!-- ESTADO SIN VIAJE -->
   <div *ngIf="!loading && !viajeActual" class="min-h-[70vh] flex items-center justify-center p-8">
     <div class="max-w-sm w-full text-center">
-       <div class="w-24 h-24 bg-white rounded-[3rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-gray-200/50 border border-gray-100">
+       <div class="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm border border-gray-100">
          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
        </div>
        <h3 class="text-4xl font-black text-gray-900 mb-4">Consola Inactiva</h3>
        <h2 class="text-lg font-bold text-gray-500 mb-12">No hay ningún rastreo sincronizado en este momento. Solicita un nuevo servicio para activar la consola.</h2>
-       <button routerLink="/cliente/cotizar" class="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-600/40 hover:scale-105 transition-all">Solicitar Ecuavip</button>
+       <button routerLink="/cliente/cotizar" class="w-full py-6 bg-blue-600 text-white rounded-3xl font-black text-sm uppercase tracking-widest shadow-sm hover:scale-105 transition-all">Solicitar Ecuavip</button>
     </div>
   </div>
 
@@ -185,8 +185,8 @@
   <!-- MODAL CALIFICACIÓN -->
   <div *ngIf="showRatingModal" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
     <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-xl"></div>
-    <div class="bg-white w-full max-w-sm rounded-[4rem] p-12 relative z-10 shadow-2xl text-center border border-white/20">
-      <div class="w-24 h-24 bg-yellow-50 text-yellow-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-yellow-500/10">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-12 relative z-10 shadow-sm text-center border border-white/20">
+      <div class="w-24 h-24 bg-yellow-50 text-yellow-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       </div>
       <h3 class="text-3xl font-black text-gray-900 mb-2">¡Llegaste!</h3>
@@ -199,7 +199,7 @@
         </button>
       </div>
       <div class="space-y-4">
-        <button (click)="enviarCalificacion()" [disabled]="rating === 0" class="w-full h-20 bg-blue-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl shadow-blue-600/30 disabled:opacity-30">Enviar Opinión</button>
+        <button (click)="enviarCalificacion()" [disabled]="rating === 0" class="w-full h-20 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-sm disabled:opacity-30">Enviar Opinión</button>
         <button (click)="omitirCalificacion()" class="w-full py-4 text-gray-400 font-black text-[10px] uppercase tracking-widest">Ahora No</button>
       </div>
     </div>

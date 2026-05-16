@@ -67,7 +67,7 @@ export type ChartOptions = {
       <!-- Fila 1: KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Ingresos -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
           <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-500">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
@@ -79,7 +79,7 @@ export type ChartOptions = {
         </div>
 
         <!-- Viajes Activos -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
           <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-500">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
@@ -94,7 +94,7 @@ export type ChartOptions = {
         </div>
 
         <!-- Pagos Pendientes -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
           <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors duration-500">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
@@ -106,7 +106,7 @@ export type ChartOptions = {
         </div>
 
         <!-- Choferes Online -->
-        <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:scale-[1.02] transition-all duration-500 group">
           <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-500">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -124,7 +124,7 @@ export type ChartOptions = {
       <!-- Fila 2: Gráfico de Ingresos y Distribución -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Gráfico de Ingresos (Area) -->
-        <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div class="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
           <div class="flex items-center justify-between mb-8">
             <div>
               <h3 class="text-xl font-black text-slate-800 tracking-tight">Rendimiento Financiero</h3>
@@ -147,7 +147,7 @@ export type ChartOptions = {
         </div>
 
         <!-- Distribución de Estados (Donut) -->
-        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col">
+        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col">
           <div class="mb-8">
             <h3 class="text-xl font-black text-slate-800 tracking-tight">Estados de Viaje</h3>
             <p class="text-sm text-slate-400">Distribución porcentual operativa</p>

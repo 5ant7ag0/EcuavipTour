@@ -75,7 +75,7 @@ import { filter } from 'rxjs/operators';
                 <svg class="text-gray-400 ml-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
               </button>
               <div class="absolute right-0 top-full mt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[110]">
-                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 overflow-hidden">
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-2 overflow-hidden">
                   <div class="px-4 py-3 border-b border-gray-50 mb-1">
                     <p class="text-sm font-extrabold text-gray-900 truncate">{{ usuario?.nombre }}</p>
                     <p class="text-xs text-gray-400 truncate mt-0.5">{{ usuario?.correo }}</p>

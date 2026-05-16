@@ -37,7 +37,7 @@
   </div>
 
   <!-- Empty State -->
-  <div *ngIf="!loading && pagos.length === 0" class="bg-white rounded-[2.5rem] p-20 text-center shadow-xl shadow-gray-200/50 border border-gray-50">
+  <div *ngIf="!loading && pagos.length === 0" class="bg-white rounded-3xl p-20 text-center shadow-sm border border-gray-50">
     <div class="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
       <svg class="text-gray-200" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
     </div>
@@ -47,13 +47,13 @@
 
   <!-- Lista de Tarjetas Estilo Grid -->
   <div *ngIf="!loading && pagos.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    <div *ngFor="let pago of pagos" 
-         [class.opacity-0]="processingId === pago.pago_id"
-         [class.scale-95]="processingId === pago.pago_id"
-         class="bg-white rounded-[2.2rem] shadow-xl shadow-gray-200/40 border border-gray-100 p-7 flex flex-col hover:-translate-y-2 transition-all duration-500 group relative transform">
+     <div *ngFor="let pago of pagos" 
+          [class.opacity-0]="processingId === pago.pago_id"
+          [class.scale-95]="processingId === pago.pago_id"
+          class="bg-white rounded-3xl shadow-sm border border-gray-100 p-7 flex flex-col hover:-translate-y-2 transition-all duration-500 group relative transform">
       
       <!-- Card Loader Overlay -->
-      <div *ngIf="processingId === pago.pago_id" class="absolute inset-0 bg-white/80 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-[2.2rem]">
+      <div *ngIf="processingId === pago.pago_id" class="absolute inset-0 bg-white/80 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-3xl">
         <div class="animate-spin h-8 w-8 border-4 border-ecuavip-blue border-t-transparent rounded-full"></div>
       </div>
 

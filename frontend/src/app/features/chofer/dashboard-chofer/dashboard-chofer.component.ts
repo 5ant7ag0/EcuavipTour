@@ -14,11 +14,11 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
   imports: [CommonModule, FormsModule, ChatSidebarComponent],
   template: `
     <!-- VISTA CONSOLA FIJA (SIN SCROLL) -->
-    <div class="h-screen w-full bg-[#f8fafc] flex flex-col lg:flex-row lg:p-8 lg:gap-8 overflow-hidden">
+    <div class="h-screen w-full bg-slate-50 flex flex-col lg:flex-row lg:p-8 lg:gap-8 overflow-hidden">
       
       <!-- SECCIÓN MAPA (Móvil: 68%, Desktop: 60%) -->
       <div class="h-[68vh] lg:h-full lg:flex-[7] order-1 lg:order-2 relative">
-        <div class="w-full h-full lg:rounded-[3rem] lg:shadow-2xl lg:border-8 lg:border-white overflow-hidden relative">
+        <div class="w-full h-full lg:rounded-3xl lg:shadow-sm lg:border-8 lg:border-white overflow-hidden relative">
           <div id="choferMap" class="w-full h-full"></div>
           
           <!-- Radar Effect (Sólo si no hay viaje) -->
@@ -39,7 +39,7 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
       <!-- SECCIÓN INFORMACIÓN / ACCIONES (Móvil: 32%, Desktop: 40%) -->
       <div class="h-[32vh] lg:h-full lg:flex-[5] order-2 lg:order-1 p-3 lg:p-0 flex flex-col">
         
-        <div class="h-full bg-white lg:bg-transparent rounded-[2.5rem] lg:rounded-none p-5 lg:p-0 shadow-2xl lg:shadow-none border border-gray-100 lg:border-none flex flex-col justify-between">
+        <div class="h-full bg-white lg:bg-transparent rounded-3xl lg:rounded-none p-5 lg:p-0 shadow-sm lg:shadow-none border border-gray-100 lg:border-none flex flex-col justify-between">
           
           <!-- CONTENIDO DINÁMICO SEGÚN ESTADO -->
           <div class="flex-1 flex flex-col justify-center">
@@ -119,8 +119,8 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
     </div>
 
       <!-- ALERTA DE NUEVO VIAJE (OVERLAY) -->
-      <div *ngIf="nuevoViaje" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-gray-900/60 backdrop-blur-xl animate-fade-in">
-        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl relative overflow-hidden">
+      <div *ngIf="nuevoViaje" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl animate-fade-in">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-10 shadow-sm relative overflow-hidden">
            <div class="absolute bottom-0 left-0 right-0 h-2 bg-gray-100 overflow-hidden">
              <div class="h-full bg-blue-600 animate-notification-timeout" [style.animationDuration.ms]="10000"></div>
            </div>
@@ -146,7 +146,7 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
               </div>
            </div>
            <div class="grid grid-cols-1 gap-4">
-              <button (click)="aceptarViaje()" class="w-full h-20 bg-blue-600 text-white rounded-[2rem] font-black text-lg uppercase tracking-widest shadow-2xl shadow-blue-600/30 active:scale-95">Aceptar</button>
+              <button (click)="aceptarViaje()" class="w-full h-20 bg-blue-600 text-white rounded-3xl font-black text-lg uppercase tracking-widest shadow-sm active:scale-95">Aceptar</button>
               <button (click)="rechazarViaje()" class="w-full py-4 text-gray-400 font-black text-xs uppercase tracking-widest">Ignorar</button>
            </div>
         </div>
@@ -156,16 +156,16 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
       <!-- Scanner -->
       <div *ngIf="isScannerOpen" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
         <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-xl" (click)="isScannerOpen = false"></div>
-        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-12 relative z-10 shadow-2xl text-center">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-12 relative z-10 shadow-sm text-center">
           <h3 class="text-3xl font-black text-gray-900 mb-8">Validar Abordaje</h3>
-          <div class="bg-gray-50 aspect-square rounded-[2.5rem] mb-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden">
+          <div class="bg-gray-50 aspect-square rounded-3xl mb-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden">
              <div class="w-40 h-40 border-4 border-blue-500/30 rounded-3xl relative">
                 <div class="absolute top-0 left-0 w-full h-1 bg-blue-500 animate-scanner-line shadow-[0_0_15px_rgba(59,130,246,0.8)]"></div>
              </div>
           </div>
           <div class="space-y-4">
             <input type="text" [(ngModel)]="pinIngresado" maxlength="4" placeholder="PIN de 4 dígitos" class="w-full py-6 bg-gray-50 rounded-2xl text-center font-black text-3xl tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-            <button (click)="confirmarAbordaje()" class="w-full h-20 bg-blue-600 text-white font-black rounded-[2rem] shadow-xl shadow-blue-600/30 active:scale-95 transition-all uppercase tracking-widest text-xs">Confirmar</button>
+            <button (click)="confirmarAbordaje()" class="w-full h-20 bg-blue-600 text-white font-black rounded-3xl shadow-sm active:scale-95 transition-all uppercase tracking-widest text-xs">Confirmar</button>
           </div>
         </div>
       </div>
@@ -173,8 +173,8 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
       <!-- Finalizar -->
       <div *ngIf="showFinishModal" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
         <div class="absolute inset-0 bg-blue-900/40 backdrop-blur-xl" (click)="showFinishModal = false"></div>
-        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 relative z-10 shadow-2xl text-center">
-          <div class="w-20 h-20 bg-green-50 text-green-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/10">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-10 relative z-10 shadow-sm text-center">
+          <div class="w-20 h-20 bg-green-50 text-green-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
           </div>
           <h3 class="text-2xl font-black text-gray-900 mb-4">¿Viaje Terminado?</h3>
@@ -189,8 +189,8 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
       <!-- Cancelar -->
       <div *ngIf="showCancelModal" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
         <div class="absolute inset-0 bg-red-900/40 backdrop-blur-xl" (click)="showCancelModal = false"></div>
-        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 relative z-10 shadow-2xl text-center border border-white/20">
-          <div class="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-10 relative z-10 shadow-sm text-center border border-white/20">
+          <div class="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </div>
           <h3 class="text-2xl font-black text-gray-900 mb-4 font-black">¿Cancelar Viaje?</h3>

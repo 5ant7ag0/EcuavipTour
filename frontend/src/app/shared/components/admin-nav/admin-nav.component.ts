@@ -11,11 +11,11 @@ import { AuthService } from '../../../core/services/auth.service';
   <!-- ===== SIDEBAR DESKTOP ===== -->
   <!-- ===== SIDEBAR DESKTOP ===== -->
   <aside 
-    class="hidden md:flex bg-[#1e293b] text-white flex-col transition-all duration-300 ease-in-out z-20 shadow-2xl relative shrink-0 my-4 ml-4 h-[calc(100vh-2rem)] rounded-[2.5rem] overflow-hidden border border-white/5 w-64">
+    class="hidden md:flex bg-slate-950 text-white flex-col transition-all duration-300 ease-in-out z-20 shadow-2xl relative shrink-0 my-4 ml-4 h-[calc(100vh-2rem)] rounded-[2.5rem] overflow-hidden border border-white/5 w-64">
     
     <!-- Logo area -->
-    <div class="h-24 flex items-center justify-center border-b border-white/5 overflow-hidden shrink-0">
-      <img src="assets/logo.png" alt="Logo" class="h-14 w-auto drop-shadow-2xl">
+    <div class="h-48 flex items-center justify-center border-b border-white/5 overflow-hidden shrink-0">
+      <img src="assets/logo.png" alt="Logo" class="h-32 w-auto drop-shadow-2xl transition-transform duration-500 hover:scale-110">
     </div>
 
     <!-- Navigation Links -->

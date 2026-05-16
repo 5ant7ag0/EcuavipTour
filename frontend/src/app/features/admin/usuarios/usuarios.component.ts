@@ -95,7 +95,7 @@ import { AdminService } from '../../../core/services/admin.service';
       </div>
 
       <!-- Tabla de Usuarios -->
-      <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>

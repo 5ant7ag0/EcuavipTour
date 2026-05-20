@@ -178,14 +178,36 @@ def register_socket_events(socketio):
         motivo = data.get('motivo', 'Cancelado por el chofer')
         viaje = Viaje.query.get(viaje_id)
         if viaje:
-            viaje.estado_logistico = 'cancelado'
+            # En lugar de cancelar todo el viaje, liberamos el chofer y lo regresamos a 'buscando_chofer'
+            viaje.chofer_id = None
+            viaje.vehiculo_id = None
+            viaje.estado_logistico = 'buscando_chofer'
             db.session.commit()
             
+            # Emitir al cliente que se está buscando otro chofer
             room_cliente = f"cliente_{viaje.cliente_id}"
-            emit('viaje_cancelado', {
+            socketio.emit('buscando_nuevo_chofer', {
                 'viaje_id': viaje_id, 
-                'mensaje': f'El transporte ha cancelado el viaje: {motivo}'
+                'mensaje': 'El chofer asignado canceló el viaje. Estamos buscando otro conductor de inmediato...'
             }, room=room_cliente)
             
-            emit('viaje_actualizado_admin', {'viaje_id': viaje_id, 'estado': 'cancelado'}, room='admins')
+            # Notificar a todos los choferes en tiempo real que hay un viaje disponible
+            cliente_usuario = Usuario.query.get(viaje.cliente_id)
+            socketio.emit('nuevo_viaje_disponible', {
+                'viaje_id': viaje.id,
+                'cliente_id': viaje.cliente_id,
+                'nombre_cliente': cliente_usuario.nombre if cliente_usuario else 'Cliente VIP',
+                'origen': viaje.dir_origen,
+                'destino': viaje.dir_destino,
+                'tarifa': float(viaje.monto_total),
+                'tipo_servicio': viaje.tipo_servicio
+            }, room='choferes')
+            
+            # Emitir viaje_actualizado globalmente para refrescar vistas reactivamente
+            socketio.emit('viaje_actualizado', {
+                'viaje_id': viaje_id,
+                'estado': 'buscando_chofer'
+            })
+            
+            socketio.emit('viaje_actualizado_admin', {'viaje_id': viaje_id, 'estado': 'buscando_chofer'}, room='admins')
 

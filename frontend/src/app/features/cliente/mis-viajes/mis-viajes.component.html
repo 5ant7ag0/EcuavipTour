@@ -1,13 +1,13 @@
 <div class="max-w-4xl mx-auto px-4 pt-8">
-  <div class="flex justify-between items-end mb-8">
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6 mb-8">
     <div>
       <h1 class="text-3xl font-black text-ecuavip-dark tracking-tight">Mis Viajes</h1>
       <p class="text-gray-500 font-medium mt-1">Gestiona tus reservas y solicita asistencia.</p>
     </div>
-    <div class="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100 hidden md:flex">
-      <button (click)="filtro = 'todos'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'todos'}" class="px-6 py-2 rounded-xl text-sm font-bold transition-all">Todos</button>
-      <button (click)="filtro = 'pendientes'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'pendientes'}" class="px-6 py-2 rounded-xl text-sm font-bold transition-all">Activos</button>
-      <button (click)="filtro = 'finalizados'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'finalizados'}" class="px-6 py-2 rounded-xl text-sm font-bold transition-all">Historial</button>
+    <div class="flex w-full sm:w-auto bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+      <button (click)="filtro = 'todos'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'todos'}" class="flex-1 sm:flex-initial px-6 py-2 rounded-xl text-sm font-bold transition-all text-center">Todos</button>
+      <button (click)="filtro = 'pendientes'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'pendientes'}" class="flex-1 sm:flex-initial px-6 py-2 rounded-xl text-sm font-bold transition-all text-center">Activos</button>
+      <button (click)="filtro = 'finalizados'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'finalizados'}" class="flex-1 sm:flex-initial px-6 py-2 rounded-xl text-sm font-bold transition-all text-center">Historial</button>
     </div>
   </div>
 
@@ -171,9 +171,23 @@
         </div>
 
         <!-- FINALIZADO -->
-        <div *ngIf="v.estado_logistico === 'finalizado'" class="flex gap-3">
-          <button class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-2xl font-bold text-sm">Ver Factura</button>
-          <button class="flex-1 bg-ecuavip-blue/10 text-ecuavip-blue py-3 rounded-2xl font-bold text-sm">Calificar</button>
+        <div *ngIf="v.estado_logistico === 'finalizado'" class="flex items-center gap-3">
+          <button (click)="verFactura(v)" class="flex-1 bg-gray-50 text-gray-600 hover:bg-gray-100 py-3 rounded-2xl font-black text-xs transition-colors">
+            Ver Factura
+          </button>
+          
+          <ng-container *ngIf="!v.calificacion">
+            <button (click)="calificar(v)" class="flex-1 bg-ecuavip-blue/10 text-ecuavip-blue hover:bg-ecuavip-blue/20 py-3 rounded-2xl font-black text-xs transition-all">
+              Calificar
+            </button>
+          </ng-container>
+          
+          <ng-container *ngIf="v.calificacion">
+            <div class="flex-1 bg-amber-50 text-amber-600 py-2.5 rounded-2xl font-black text-xs flex items-center justify-center gap-1 border border-amber-100">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-amber-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>{{ v.calificacion.estrellas }}/5 Estrellas</span>
+            </div>
+          </ng-container>
         </div>
       </div>
 
@@ -207,6 +221,153 @@
         </button>
       </div>
     </div>
+  </div>
+  
+  <!-- Modal de Factura -->
+  <div *ngIf="showInvoiceModal && selectedViaje" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-ecuavip-dark/40 backdrop-blur-sm" (click)="cerrarModalFactura()"></div>
+    
+    <!-- Modal Content -->
+    <div class="bg-white w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl relative animate-fade-in-up print:shadow-none print:p-0">
+      
+      <!-- Close button -->
+      <button (click)="cerrarModalFactura()" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 print:hidden transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <!-- Receipt Header -->
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-blue-50 text-ecuavip-blue rounded-3xl flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <h3 class="text-2xl font-black text-ecuavip-dark">Factura Digital</h3>
+        <p class="text-xs font-bold text-gray-400 mt-1">Comprobante de Servicio Ecuavip Tour</p>
+      </div>
+
+      <!-- Receipt Body -->
+      <div class="border-t border-b border-dashed border-gray-200 py-6 my-6 space-y-4 font-medium text-sm">
+        <div class="flex justify-between items-center text-gray-500">
+          <span>Servicio ID:</span>
+          <span class="font-bold text-ecuavip-dark font-mono">#{{ selectedViaje.viaje_id.toString().padStart(6, '0') }}</span>
+        </div>
+        <div class="flex justify-between items-center text-gray-500">
+          <span>Fecha y Hora:</span>
+          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.fecha }}</span>
+        </div>
+        <div class="flex justify-between items-center text-gray-500">
+          <span>Tipo de Servicio:</span>
+          <span class="font-bold text-ecuavip-dark capitalize">{{ selectedViaje.tipo_servicio }}</span>
+        </div>
+        <div class="flex justify-between items-center text-gray-500">
+          <span>Conductor:</span>
+          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.nombre_chofer || 'No asignado' }}</span>
+        </div>
+        <div *ngIf="selectedViaje.vehiculo" class="flex justify-between items-center text-gray-500">
+          <span>Vehículo:</span>
+          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.vehiculo.modelo }} ({{ selectedViaje.vehiculo.placa }})</span>
+        </div>
+        <div class="flex justify-between items-center text-gray-500">
+          <span>Distancia Aprox:</span>
+          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.distancia_km | number:'1.1-2' }} km</span>
+        </div>
+        
+        <div class="pt-4 border-t border-gray-100 space-y-3">
+          <div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Punto de Origen</span>
+            <span class="text-xs font-bold text-ecuavip-dark block leading-normal">{{ selectedViaje.origen }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Punto de Destino</span>
+            <span class="text-xs font-bold text-ecuavip-dark block leading-normal">{{ selectedViaje.destino }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Breakdown -->
+      <div class="bg-slate-50 p-5 rounded-2xl flex justify-between items-center mb-8">
+        <div>
+          <span class="text-xs text-gray-500 font-bold uppercase block tracking-wider leading-none mb-1">Monto Pagado</span>
+          <span class="text-[10px] text-emerald-600 font-black uppercase tracking-wider">Aprobado via Transferencia</span>
+        </div>
+        <span class="text-3xl font-black text-ecuavip-dark font-mono">${{ selectedViaje.monto | number:'1.2-2' }}</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col gap-3 print:hidden">
+        <div class="grid grid-cols-2 gap-3">
+          <button (click)="descargarPDF()" class="bg-gray-50 text-gray-600 hover:bg-gray-100 py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-colors border border-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Imprimir / PDF
+          </button>
+          
+          <button (click)="compartirWhatsApp(selectedViaje)" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-colors border border-emerald-100">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Compartir
+          </button>
+        </div>
+        
+        <button (click)="cerrarModalFactura()" class="w-full bg-ecuavip-dark text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-ecuavip-dark/95 transition-colors">
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Calificación -->
+  <div *ngIf="showRatingModal && ratingViaje" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-ecuavip-dark/40 backdrop-blur-sm" (click)="cerrarModalRating()"></div>
+    
+    <!-- Modal Content -->
+    <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl relative animate-fade-in-up">
+      <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      
+      <h3 class="text-xl font-black text-ecuavip-dark text-center mb-2">¿Cómo estuvo tu viaje?</h3>
+      <p class="text-gray-500 text-center text-xs font-medium mb-6">
+        Tu calificación ayuda a mantener el alto estándar de calidad de Ecuavip Tour.
+      </p>
+
+      <!-- Stars selector -->
+      <div class="flex items-center justify-center gap-2 mb-8">
+        <button *ngFor="let num of [1, 2, 3, 4, 5]" (click)="seleccionarEstrellas(num)" class="focus:outline-none transition-transform hover:scale-125 duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" 
+               width="36" 
+               height="36" 
+               viewBox="0 0 24 24" 
+               [attr.fill]="ratingStars >= num ? 'currentColor' : 'none'" 
+               stroke="currentColor" 
+               stroke-width="1.5"
+               [ngClass]="ratingStars >= num ? 'text-amber-400' : 'text-gray-300'">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Comment textbox -->
+      <div class="mb-6">
+        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">Comentario (Opcional)</label>
+        <textarea [(ngModel)]="ratingComment" 
+                  rows="3" 
+                  placeholder="Cuéntanos más sobre el servicio, trato o vehículo..." 
+                  class="w-full border border-gray-100 rounded-2xl p-4 text-xs font-medium focus:outline-none focus:border-ecuavip-blue/30 bg-slate-50/50 resize-none"></textarea>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex flex-col gap-3">
+        <button (click)="enviarCalificacion()" [disabled]="ratingLoading" class="w-full bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/20 hover:bg-ecuavip-blue/95 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+          <span *ngIf="ratingLoading" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+          Enviar Calificación
+        </button>
+        <button (click)="cerrarModalRating()" class="w-full bg-gray-50 text-gray-500 py-4 rounded-2xl font-bold hover:bg-gray-100 transition-colors">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div *ngIf="toast.type" 
        class="fixed top-6 right-6 z-[300] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border bg-white transition-all duration-500 animate-fade-in-right"

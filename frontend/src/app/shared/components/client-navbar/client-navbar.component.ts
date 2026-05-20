@@ -180,6 +180,8 @@ export class ClientNavbarComponent implements OnInit {
     private router: Router
   ) {}
 
+  socketInitialized = false;
+
   @HostListener('window:scroll')
   onScroll() {
     this.isScrolled = window.scrollY > 20;
@@ -187,21 +189,10 @@ export class ClientNavbarComponent implements OnInit {
 
   ngOnInit() {
     this.checkAuth();
-    if (this.isLoggedIn) {
-      this.socketService.connectAndJoin();
-      if (this.isAdmin) {
-        this.adminService.getInbox().subscribe(inbox => {
-          this.unreadCount = inbox.filter((c: any) => (c.unread || 0) > 0).length;
-        });
-        this.socketService.listen('nuevo_mensaje').subscribe(() => {
-          this.adminService.getInbox().subscribe(inbox => {
-            this.unreadCount = inbox.filter((c: any) => (c.unread || 0) > 0).length;
-          });
-        });
-      }
-    }
+    this.setupSocket();
     this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
       this.checkAuth();
+      this.setupSocket();
     });
   }
 
@@ -213,6 +204,33 @@ export class ClientNavbarComponent implements OnInit {
     this.shouldShowNavbar = !this.isLoggedIn || this.usuario?.rol === 'cliente';
   }
 
+  setupSocket() {
+    if (this.socketInitialized || !this.isLoggedIn) return;
+    this.socketInitialized = true;
+    
+    this.socketService.connectAndJoin();
+    
+    if (this.usuario?.rol === 'cliente') {
+      this.socketService.listen('viaje_despachado_cliente').subscribe((data: any) => {
+        console.log('[Global Client Socket] Viaje despachado recibido:', data);
+        this.router.navigate(['/cliente/en-curso']).then(() => {
+          sessionStorage.setItem('despachado_toast', JSON.stringify(data));
+        });
+      });
+    }
+
+    if (this.isAdmin) {
+      this.adminService.getInbox().subscribe(inbox => {
+        this.unreadCount = inbox.filter((c: any) => (c.unread || 0) > 0).length;
+      });
+      this.socketService.listen('nuevo_mensaje').subscribe(() => {
+        this.adminService.getInbox().subscribe(inbox => {
+          this.unreadCount = inbox.filter((c: any) => (c.unread || 0) > 0).length;
+        });
+      });
+    }
+  }
+
   requestLogin() {
     this.onLoginRequest.emit();
   }
@@ -220,6 +238,7 @@ export class ClientNavbarComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.socketService.disconnect();
+    this.socketInitialized = false;
     this.router.navigate(['/']);
   }
 }

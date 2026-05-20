@@ -74,4 +74,17 @@ class PagoService:
         viaje = self.viaje_repo.get_by_id(pago.viaje_id)
         self.viaje_repo.update(viaje, estado_pago='aprobado', estado_logistico='buscando_chofer')
         
+        # Generar TicketQR
+        from database import TicketQR, db
+        import uuid
+        ticket_existente = TicketQR.query.filter_by(viaje_id=viaje.id).first()
+        if not ticket_existente:
+            nuevo_ticket = TicketQR(
+                viaje_id=viaje.id,
+                codigo_hash=str(uuid.uuid4()),
+                estado='generado'
+            )
+            db.session.add(nuevo_ticket)
+            db.session.commit()
+            
         return {"mensaje": "Pago aprobado, buscando chofer", "viaje_id": viaje.id}, 200

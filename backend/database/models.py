@@ -31,6 +31,8 @@ class Vehiculo(db.Model):
     foto_auto_url = db.Column(db.Text)
     foto_matricula_url = db.Column(db.Text)
     foto_licencia_url = db.Column(db.Text)
+    licencia_tipo = db.Column(db.String(100))
+    licencia_vigencia = db.Column(db.String(100))
     
     # Relación con el chofer
     chofer_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
@@ -62,6 +64,8 @@ class Viaje(db.Model):
     
     fecha_limite_pago = db.Column(db.DateTime)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_viaje = db.Column(db.DateTime, nullable=True)
+    duracion_minutos = db.Column(db.Integer, default=30)
 
 class Pago(db.Model):
     __tablename__ = 'pago'

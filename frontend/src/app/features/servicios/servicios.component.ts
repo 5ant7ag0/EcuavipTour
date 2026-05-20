@@ -58,7 +58,22 @@ interface Amenity {
           <div class="flex flex-wrap justify-center gap-8 md:gap-16">
             <div *ngFor="let amenity of amenities" class="flex items-center gap-3 group">
               <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                <i [innerHTML]="amenity.icon"></i>
+                <ng-container [ngSwitch]="amenity.name">
+                  <!-- Música -->
+                  <svg *ngSwitchCase="'Música'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                  
+                  <!-- Confort -->
+                  <svg *ngSwitchCase="'Confort'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21v-4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"/><path d="M19 21V9a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v12"/><path d="M15 5H9"/><path d="M12 7V3"/></svg>
+                  
+                  <!-- Wi-Fi -->
+                  <svg *ngSwitchCase="'Wi-Fi'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                  
+                  <!-- A/C -->
+                  <svg *ngSwitchCase="'A/C'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                  
+                  <!-- 24 Horas -->
+                  <svg *ngSwitchCase="'24 Horas'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </ng-container>
               </div>
               <span class="font-bold text-gray-700 tracking-tight">{{ amenity.name }}</span>
             </div>
@@ -81,7 +96,16 @@ interface Amenity {
             
             <div class="relative z-10">
               <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform">
-                <i [innerHTML]="service.icon"></i>
+                <ng-container [ngSwitch]="service.title">
+                  <!-- Transporte al Aeropuerto -->
+                  <svg *ngSwitchCase="'Transporte al Aeropuerto'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+                  
+                  <!-- Viajes Nacionales -->
+                  <svg *ngSwitchCase="'Viajes Nacionales'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+                  
+                  <!-- Envío de Encomiendas -->
+                  <svg *ngSwitchCase="'Envío de Encomiendas'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>
+                </ng-container>
               </div>
               <h3 class="text-2xl font-black text-gray-900 mb-4">{{ service.title }}</h3>
               <p class="text-gray-600 leading-relaxed mb-6">

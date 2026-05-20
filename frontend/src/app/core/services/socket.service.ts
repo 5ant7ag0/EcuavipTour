@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
@@ -10,7 +10,10 @@ export class SocketService {
   private socket: Socket;
   private serverUrl = 'http://localhost:5001';
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private ngZone: NgZone
+  ) {
     this.socket = io(this.serverUrl, {
       autoConnect: false,
       reconnection: true,
@@ -56,7 +59,11 @@ export class SocketService {
 
   listen(eventName: string): Observable<any> {
     return new Observable((subscriber) => {
-      const handler = (data: any) => subscriber.next(data);
+      const handler = (data: any) => {
+        this.ngZone.run(() => {
+          subscriber.next(data);
+        });
+      };
       this.socket.on(eventName, handler);
 
       // Cleanup al desuscribirse

@@ -86,7 +86,14 @@ def get_usuarios():
     sort = request.args.get('sort', 'desc')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    resultado, status_code = user_service.get_all_users(rol, search, activo, sort, start_date, end_date)
+    fecha_viaje = request.args.get('fecha_viaje')
+    duracion_minutos = request.args.get('duracion_minutos')
+    if duracion_minutos:
+        try:
+            duracion_minutos = int(duracion_minutos)
+        except ValueError:
+            duracion_minutos = 30
+    resultado, status_code = user_service.get_all_users(rol, search, activo, sort, start_date, end_date, fecha_viaje, duracion_minutos)
     return jsonify(resultado), status_code
 
 @admin_bp.route('/usuarios/toggle_status', methods=['POST'])

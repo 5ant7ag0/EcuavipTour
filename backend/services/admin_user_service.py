@@ -6,11 +6,45 @@ class AdminUserService:
     def __init__(self):
         self.usuario_repo = UsuarioRepository()
 
-    def get_all_users(self, rol=None, search=None, activo=None, sort='desc', start_date=None, end_date=None):
+    def get_all_users(self, rol=None, search=None, activo=None, sort='desc', start_date=None, end_date=None, fecha_viaje=None, duracion_minutos=None):
         query = self.usuario_repo.model.query
         
+        occupied_chofer_ids = set()
+        if rol == 'chofer' and fecha_viaje:
+            from datetime import datetime, timedelta
+            try:
+                if isinstance(fecha_viaje, str):
+                    try:
+                        proposed_start = datetime.strptime(fecha_viaje, "%Y-%m-%d %H:%M")
+                    except ValueError:
+                        proposed_start = datetime.fromisoformat(fecha_viaje)
+                else:
+                    proposed_start = fecha_viaje
+                
+                proposed_dur = int(duracion_minutos or 30)
+                proposed_end = proposed_start + timedelta(minutes=proposed_dur)
+                
+                active_viajes = Viaje.query.filter(
+                    Viaje.chofer_id.isnot(None),
+                    Viaje.fecha_viaje.isnot(None),
+                    ~Viaje.estado_logistico.in_(['finalizado', 'cancelado'])
+                ).all()
+                
+                for v in active_viajes:
+                    v_start = v.fecha_viaje
+                    v_dur = v.duracion_minutos or 30
+                    v_end = v_start + timedelta(minutes=v_dur)
+                    
+                    if v_start < proposed_end and proposed_start < v_end:
+                        occupied_chofer_ids.add(v.chofer_id)
+            except Exception as e:
+                print("Error checking driver conflicts in get_all_users:", e)
+
         if rol:
             query = query.filter_by(rol=rol)
+            
+        if occupied_chofer_ids:
+            query = query.filter(~self.usuario_repo.model.id.in_(list(occupied_chofer_ids)))
         
         if activo is not None:
             # Convertir string 'true'/'false' a boolean si es necesario

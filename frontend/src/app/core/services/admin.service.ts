@@ -61,7 +61,7 @@ export class AdminService {
     return this.http.post(`${this.apiUrl}/rechazar_pago`, { pago_id: pagoId, motivo }, { headers: this.getHeaders() });
   }
 
-  getUsuarios(rol?: string, search?: string, activo?: string, sort?: string, start_date?: string, end_date?: string): Observable<any[]> {
+  getUsuarios(rol?: string, search?: string, activo?: string, sort?: string, start_date?: string, end_date?: string, fecha_viaje?: string, duracion_minutos?: number): Observable<any[]> {
     let url = `${this.apiUrl}/usuarios`;
     const params = [];
     if (rol) params.push(`rol=${rol}`);
@@ -70,6 +70,8 @@ export class AdminService {
     if (sort) params.push(`sort=${sort}`);
     if (start_date) params.push(`start_date=${start_date}`);
     if (end_date) params.push(`end_date=${end_date}`);
+    if (fecha_viaje) params.push(`fecha_viaje=${fecha_viaje}`);
+    if (duracion_minutos) params.push(`duracion_minutos=${duracion_minutos}`);
     if (params.length > 0) url += `?${params.join('&')}`;
     
     return this.http.get<any[]>(url, { headers: this.getHeaders() });

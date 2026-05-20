@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ReservaService } from '../../../core/services/reserva.service';
+import { ClienteService } from '../../../core/services/cliente.service';
 
 @Component({
   selector: 'app-reserva-pago',
@@ -20,13 +21,36 @@ export class ReservaPagoComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private reservaService: ReservaService
+    private reservaService: ReservaService,
+    private clienteService: ClienteService
   ) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      this.reservaParams = params;
-      if (!this.reservaParams.origen || !this.reservaParams.destino) {
+      this.reservaParams = { ...params };
+      if (this.reservaParams.viajeId) {
+        this.loading = true;
+        this.clienteService.getMisViajes().subscribe({
+          next: (viajes) => {
+            this.loading = false;
+            const viaje: any = viajes.find((v: any) => Number(v.viaje_id || v.id) === Number(this.reservaParams.viajeId));
+            if (viaje) {
+              this.reservaParams.origen = viaje.origen;
+              this.reservaParams.destino = viaje.destino;
+              this.reservaParams.tarifa = viaje.tarifa;
+              this.reservaParams.tipo = viaje.tipo_servicio;
+              this.reservaParams.pasajeros = viaje.num_pasajeros;
+              this.reservaParams.hora = viaje.fecha_viaje;
+            } else {
+              this.error = 'No se encontró la reservación indicada.';
+            }
+          },
+          error: (err) => {
+            this.loading = false;
+            this.error = 'Error al cargar los detalles de la reservación.';
+          }
+        });
+      } else if (!this.reservaParams.origen || !this.reservaParams.destino) {
         this.router.navigate(['/cliente/cotizar']);
       }
     });

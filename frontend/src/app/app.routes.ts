@@ -60,7 +60,7 @@ export const routes: Routes = [
       { path: 'ruta', loadComponent: () => import('./features/chofer/hoja-ruta/hoja-ruta.component').then(m => m.HojaRutaComponent) },
       { path: 'en-curso', loadComponent: () => import('./features/chofer/operacion-viaje/operacion-viaje.component').then(m => m.OperacionViajeComponent) },
       { path: 'vehiculo', loadComponent: () => import('./features/chofer/vehiculo/vehiculo.component').then(m => m.VehiculoComponent) },
-      { path: 'perfil', loadComponent: () => import('./features/cliente/perfil/perfil.component').then(m => m.PerfilComponent) },
+      { path: 'perfil', loadComponent: () => import('./features/chofer/perfil-chofer/perfil-chofer.component').then(m => m.PerfilChoferComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
@@ -77,6 +77,7 @@ export const routes: Routes = [
       { path: 'monitor', loadComponent: () => import('./features/admin/monitor-flota/monitor-flota.component').then(m => m.MonitorFlotaComponent) },
       { path: 'vehiculos', loadComponent: () => import('./features/admin/gestion-vehiculos/gestion-vehiculos.component').then(m => m.GestionVehiculosComponent) },
       { path: 'usuarios', loadComponent: () => import('./features/admin/usuarios/usuarios.component').then(m => m.UsuariosComponent) },
+      { path: 'reservas', loadComponent: () => import('./features/admin/reservas/reservas.component').then(m => m.ReservasComponent) },
       { path: 'perfil', loadComponent: () => import('./features/cliente/perfil/perfil.component').then(m => m.PerfilComponent) },
       { path: '', redirectTo: 'monitor', pathMatch: 'full' }
     ]

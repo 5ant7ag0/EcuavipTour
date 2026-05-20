@@ -14,7 +14,15 @@ def cotizar():
 @viaje_bp.route('/reservar', methods=['POST'])
 @jwt_required()
 def reservar_viaje():
-    cliente_id = int(get_jwt_identity())
+    identity = int(get_jwt_identity())
+    from database import Usuario
+    user = Usuario.query.get(identity)
+    cliente_id = identity
+    
+    # Si es admin y envía un cliente_id en el payload, usamos ese cliente
+    if user and user.rol == 'admin' and request.json and 'cliente_id' in request.json:
+        cliente_id = int(request.json.get('cliente_id'))
+        
     resultado, status_code = viaje_service.reservar(request.json, cliente_id)
     return jsonify(resultado), status_code
 

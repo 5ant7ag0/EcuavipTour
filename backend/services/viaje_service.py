@@ -63,8 +63,70 @@ class ViajeService:
         return {"error": "Tipo de servicio inválido"}, 400
 
     def reservar(self, datos, cliente_id):
+        chofer_id = datos.get('chofer_id')
+        fecha_viaje_str = datos.get('fecha_viaje')
+        duracion_minutos = int(datos.get('duracion_minutos', 30))
+        
+        fecha_viaje = None
+        if fecha_viaje_str:
+            try:
+                fecha_viaje = datetime.strptime(fecha_viaje_str, "%Y-%m-%d %H:%M")
+            except Exception:
+                try:
+                    fecha_viaje = datetime.fromisoformat(fecha_viaje_str)
+                except Exception:
+                    pass
+
+        # 1. Validation of driver schedule conflict
+        if chofer_id and fecha_viaje:
+            chofer_id = int(chofer_id)
+            from database import Viaje
+            proposed_start = fecha_viaje
+            proposed_end = proposed_start + timedelta(minutes=duracion_minutos)
+            
+            active_viajes = Viaje.query.filter(
+                Viaje.chofer_id == chofer_id,
+                Viaje.fecha_viaje.isnot(None),
+                ~Viaje.estado_logistico.in_(['finalizado', 'cancelado'])
+            ).all()
+            
+            has_conflict = False
+            for v in active_viajes:
+                v_start = v.fecha_viaje
+                v_dur = v.duracion_minutos or 30
+                v_end = v_start + timedelta(minutes=v_dur)
+                
+                # Check overlap: start1 < end2 and start2 < end1
+                if v_start < proposed_end and proposed_start < v_end:
+                    has_conflict = True
+                    break
+            
+            if has_conflict:
+                return {
+                    "error": "El conductor seleccionado ya tiene un viaje programado, activo o en ruta que coincide o se cruza con ese horario. Por favor, seleccione otro conductor."
+                }, 409
+
+        estado_pago = datos.get('estado_pago', 'pendiente')
+        vehiculo_id = None
+        
+        if chofer_id:
+            chofer_id = int(chofer_id)
+            from database import Vehiculo
+            # Buscar el vehículo activo del chofer asignado
+            veh = Vehiculo.query.filter_by(chofer_id=chofer_id, estado='activo').first()
+            if veh:
+                vehiculo_id = veh.id
+            estado_logistico = 'aceptado'
+        else:
+            if estado_pago == 'aprobado':
+                estado_logistico = 'buscando_chofer'
+            else:
+                estado_logistico = 'pendiente'
+
         nuevo_viaje = self.viaje_repo.create(
             cliente_id=cliente_id,
+            chofer_id=chofer_id,
+            vehiculo_id=vehiculo_id,
             dir_origen=datos.get('origen'),
             lat_origen=0.0, 
             lng_origen=0.0,
@@ -75,15 +137,89 @@ class ViajeService:
             monto_total=datos.get('tarifa'),
             tipo_servicio=datos.get('tipo_servicio'),
             tipo_modalidad='compartido' if datos.get('tipo_servicio') == 'pasajero' else 'privado_express',
-            estado_pago='pendiente',
-            estado_logistico='pendiente',
-            fecha_limite_pago=datetime.utcnow() + timedelta(minutes=15)
+            estado_pago=estado_pago,
+            estado_logistico=estado_logistico,
+            fecha_limite_pago=datetime.utcnow() + timedelta(minutes=15),
+            fecha_viaje=fecha_viaje,
+            duracion_minutos=duracion_minutos
         )
+
+        if estado_pago == 'aprobado':
+            from database import TicketQR, db
+            import uuid
+            ticket_existente = TicketQR.query.filter_by(viaje_id=nuevo_viaje.id).first()
+            if not ticket_existente:
+                nuevo_ticket = TicketQR(
+                    viaje_id=nuevo_viaje.id,
+                    codigo_hash=str(uuid.uuid4()),
+                    estado='generado'
+                )
+                db.session.add(nuevo_ticket)
+                db.session.commit()
         
+        # 3. Sockets Notifications in Real Time
+        try:
+            from app import socketio
+            
+            # Notification to Client
+            room_cliente = f"cliente_{cliente_id}"
+            chofer_nombre = ""
+            vehiculo_placa = ""
+            vehiculo_marca = ""
+            vehiculo_modelo = ""
+            
+            if chofer_id:
+                from database import Usuario
+                chof = Usuario.query.get(chofer_id)
+                if chof:
+                    chofer_nombre = chof.nombre
+                if vehiculo_id:
+                    from database import Vehiculo
+                    veh = Vehiculo.query.get(vehiculo_id)
+                    if veh:
+                        vehiculo_placa = veh.placa
+                        vehiculo_marca = veh.marca
+                        vehiculo_modelo = veh.modelo
+            
+            socketio.emit('viaje_despachado_cliente', {
+                'viaje_id': nuevo_viaje.id,
+                'estado': estado_logistico,
+                'chofer_id': chofer_id,
+                'chofer_nombre': chofer_nombre,
+                'vehiculo_placa': vehiculo_placa,
+                'vehiculo_marca': vehiculo_marca,
+                'vehiculo_modelo': vehiculo_modelo,
+                'mensaje': "¡Tu viaje ha sido despachado!"
+            }, room=room_cliente)
+            
+            # Notification to Driver
+            if chofer_id:
+                room_chofer = f"chofer_{chofer_id}"
+                socketio.emit('nuevo_viaje_chofer', {
+                    'viaje_id': nuevo_viaje.id,
+                    'origen': nuevo_viaje.dir_origen,
+                    'destino': nuevo_viaje.dir_destino,
+                    'mensaje': "Nuevo viaje manual asignado por administración"
+                }, room=room_chofer)
+            
+            # Broadcast to Fleet Monitor (Admin panel)
+            socketio.emit('viaje_creado_admin', {
+                'viaje_id': nuevo_viaje.id,
+                'estado': estado_logistico
+            }, room='admins')
+            
+            # Standard updates for general screens
+            socketio.emit('viaje_actualizado', {
+                'viaje_id': nuevo_viaje.id,
+                'estado': estado_logistico
+            })
+        except Exception as se:
+            print("Error sending socket notifications:", se)
+            
         return {"mensaje": "Reserva creada exitosamente", "viaje_id": nuevo_viaje.id}, 201
 
     def get_viajes_cliente(self, cliente_id):
-        from database import TicketQR, Usuario, Vehiculo
+        from database import TicketQR, Usuario, Vehiculo, Calificacion
         viajes = self.viaje_repo.get_by_cliente_id(cliente_id)
         resultado = []
         for v in viajes:
@@ -106,6 +242,12 @@ class ViajeService:
                         "foto_auto_url": veh.foto_auto_url
                     }
             
+            calif = Calificacion.query.filter_by(viaje_id=v.id).first()
+            calificacion_data = {
+                "estrellas": calif.estrellas,
+                "comentario": calif.comentario
+            } if calif else None
+            
             resultado.append({
                 "id": v.id,
                 "viaje_id": v.id,
@@ -120,7 +262,8 @@ class ViajeService:
                 "fecha_limite_pago": v.fecha_limite_pago.isoformat() if v.fecha_limite_pago else None,
                 "qr_hash": qr.codigo_hash if qr else None,
                 "nombre_chofer": nombre_chofer,
-                "vehiculo": vehiculo_data
+                "vehiculo": vehiculo_data,
+                "calificacion": calificacion_data
             })
         return resultado, 200
 
@@ -128,7 +271,7 @@ class ViajeService:
         from database import Viaje, Usuario, TicketQR, Vehiculo, db
         v = Viaje.query.filter(
             db.or_(Viaje.cliente_id == user_id, Viaje.chofer_id == user_id),
-            Viaje.estado_logistico.in_(['pendiente', 'aceptado', 'esperando_cliente', 'en_curso'])
+            Viaje.estado_logistico.in_(['pendiente', 'buscando_chofer', 'aceptado', 'esperando_cliente', 'en_curso'])
         ).order_by(Viaje.fecha_creacion.desc()).first()
 
         if not v:
@@ -202,6 +345,8 @@ class ViajeService:
         
         viaje.estado_logistico = 'cancelado'
         viaje.estado_pago = 'cancelado'
+        viaje.chofer_id = None
+        viaje.vehiculo_id = None
         db.session.commit()
         return {"mensaje": "Viaje cancelado correctamente"}, 200
 

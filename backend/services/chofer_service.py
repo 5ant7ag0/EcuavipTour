@@ -24,7 +24,9 @@ class ChoferService:
             "estado": v.estado,
             "foto_auto_url": v.foto_auto_url,
             "foto_matricula_url": v.foto_matricula_url,
-            "foto_licencia_url": v.foto_licencia_url
+            "foto_licencia_url": v.foto_licencia_url,
+            "licencia_tipo": v.licencia_tipo,
+            "licencia_vigencia": v.licencia_vigencia
         }, 200
 
     def update_vehiculo(self, chofer_id, data):
@@ -39,7 +41,7 @@ class ChoferService:
             
             # Lógica de permisos por estado
             if v.estado == 'activo':
-                # Solo permitir modelo, marca, año y capacidad
+                # Solo permitir modelo, marca, año, capacidad y color (los documentos e identificación quedan bloqueados)
                 if 'marca' in data: v.marca = data['marca']
                 if 'modelo' in data: v.modelo = data['modelo']
                 if 'anio' in data: v.anio = int(data['anio']) if data.get('anio') else None
@@ -54,11 +56,13 @@ class ChoferService:
                 if 'tipo_vehiculo' in data: v.tipo_vehiculo = data['tipo_vehiculo']
                 if 'capacidad_max' in data: v.capacidad_max = int(data['capacidad_max']) if data.get('capacidad_max') else 0
                 if 'color' in data: v.color = data['color']
-            
-            # URLs de fotos
-            if 'foto_auto_url' in data: v.foto_auto_url = data['foto_auto_url']
-            if 'foto_matricula_url' in data: v.foto_matricula_url = data['foto_matricula_url']
-            if 'foto_licencia_url' in data: v.foto_licencia_url = data['foto_licencia_url']
+                
+                # Campos de licencia y fotos solo modificables antes de la aprobación activa
+                if 'licencia_tipo' in data: v.licencia_tipo = data['licencia_tipo']
+                if 'licencia_vigencia' in data: v.licencia_vigencia = data['licencia_vigencia']
+                if 'foto_auto_url' in data: v.foto_auto_url = data['foto_auto_url']
+                if 'foto_matricula_url' in data: v.foto_matricula_url = data['foto_matricula_url']
+                if 'foto_licencia_url' in data: v.foto_licencia_url = data['foto_licencia_url']
             
             # Si se edita algo y estaba rechazado, vuelve a pendiente
             if v.estado == 'rechazado':

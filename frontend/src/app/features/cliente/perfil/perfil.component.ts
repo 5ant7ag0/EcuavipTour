@@ -9,192 +9,356 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="max-w-2xl mx-auto px-4 pt-12 pb-24">
-      <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 relative overflow-hidden">
-        <!-- Decoration -->
-        <div class="absolute top-0 right-0 w-32 h-32 bg-ecuavip-blue/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+
+      <!-- Alertas de estado -->
+      <div *ngIf="successMsg" class="mb-6 bg-emerald-50 text-emerald-800 p-4 rounded-2xl border border-emerald-200 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-emerald-500 shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <p class="text-xs font-bold uppercase tracking-wider">{{ successMsg }}</p>
+      </div>
+
+      <div *ngIf="errorMsg" class="mb-6 bg-red-50 text-red-800 p-4 rounded-2xl border border-red-200 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-red-500 shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p class="text-xs font-bold uppercase tracking-wider">{{ errorMsg }}</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        <div class="flex flex-col items-center mb-10">
-          <div class="relative group">
-            <div class="w-28 h-28 rounded-full bg-ecuavip-blue/10 flex items-center justify-center text-ecuavip-blue text-4xl font-black mb-4 border-4 border-white shadow-sm overflow-hidden aspect-square">
-              <img *ngIf="usuario?.foto_perfil_url" [src]="'http://localhost:5001/' + usuario.foto_perfil_url" class="w-full h-full object-cover rounded-full">
-              <span *ngIf="!usuario?.foto_perfil_url">{{ usuario?.nombre?.charAt(0) || 'U' }}</span>
+        <!-- TARJETA IZQUIERDA: RESUMEN DE USUARIO -->
+        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-between min-h-[420px] relative overflow-hidden">
+          <!-- Glow superior decorativo -->
+          <div class="absolute -top-10 -right-10 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
+          
+          <!-- Contenedor de Foto (UI Premium Círculo Perfecto) -->
+          <div class="flex flex-col items-center w-full mt-4">
+            <div class="relative w-36 h-36 rounded-full border-4 border-slate-100 shadow-md group shrink-0 aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
+              <img 
+                *ngIf="usuario?.foto_perfil_url" 
+                [src]="'http://localhost:5001/' + usuario.foto_perfil_url" 
+                class="w-full h-full object-cover rounded-full"
+                alt="Foto de Perfil">
+              <span *ngIf="!usuario?.foto_perfil_url" class="text-3xl font-black text-blue-600 select-none">
+                {{ nombre.charAt(0) || 'U' }}
+              </span>
               
-              <!-- Overlay de edición sobre la foto -->
+              <!-- Botón flotante de cámara (Solo se activa al dar en editar) -->
               <div 
                 *ngIf="isEditing"
                 (click)="fileInput.click()"
-                class="absolute inset-0 bg-ecuavip-blue/60 flex items-center justify-center text-white cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                class="absolute bottom-1 right-1 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center cursor-pointer shadow-md transition-all scale-100 active:scale-95 group-hover:scale-105 duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
               </div>
             </div>
-            
+            <!-- Input de archivo oculto -->
             <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
-          </div>
 
-          <h2 class="text-2xl font-black text-ecuavip-dark">{{ usuario?.nombre }}</h2>
-          <p class="text-ecuavip-blue font-black uppercase tracking-widest text-[10px] mt-1">{{ usuario?.rol }} VIP</p>
+            <!-- Nombre e Indicador de Estado -->
+            <h2 class="text-xl font-black text-slate-800 mt-6 tracking-tight text-center">{{ usuario?.nombre }}</h2>
+            
+            <!-- Badge de Estado según el Rol -->
+            <div 
+              [ngClass]="usuario?.rol === 'admin' ? 'bg-amber-50 text-amber-700 border-amber-100/60' : 'bg-blue-50 text-blue-700 border-blue-100/60'"
+              class="mt-2.5 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider inline-flex items-center gap-1.5 border">
+              <span 
+                [ngClass]="usuario?.rol === 'admin' ? 'bg-amber-500' : 'bg-blue-500'"
+                class="w-2 h-2 rounded-full animate-pulse"></span>
+              {{ usuario?.rol === 'admin' ? 'Administrador' : 'Cliente VIP' }}
+            </div>
+          </div>
         </div>
 
-        <div *ngIf="!isEditing" class="space-y-6">
-          <div class="bg-gray-50 p-6 rounded-3xl">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nombre Completo</p>
-            <p class="font-bold text-gray-900">{{ usuario?.nombre }}</p>
+        <!-- TARJETA DERECHA: FORMULARIO DE DETALLES -->
+        <div class="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 class="text-lg font-black text-slate-900 tracking-tight pb-4 border-b border-slate-100 mb-6">Información Personal & Acceso</h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <!-- Campo: Cédula (Siempre Solo Lectura) -->
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Número de Cédula</label>
+                <input 
+                  [value]="cedula || 'No Registrada'" 
+                  type="text" 
+                  readonly 
+                  class="w-full bg-slate-50 border border-slate-200/50 rounded-2xl px-5 py-3.5 font-bold text-slate-400 cursor-not-allowed focus:outline-none"
+                  title="Este campo está bloqueado por seguridad.">
+              </div>
+
+              <!-- Campo: Correo -->
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Correo Electrónico</label>
+                <input 
+                  [(ngModel)]="correo" 
+                  [disabled]="!isEditing"
+                  type="email" 
+                  [ngClass]="isEditing ? 'bg-white border-slate-200 hover:border-slate-300 text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100' : 'bg-slate-50 border-slate-200/50 text-slate-500 cursor-default select-none'"
+                  class="w-full border rounded-2xl px-5 py-3.5 font-bold transition-all outline-none">
+              </div>
+
+              <!-- Campo: Nombre -->
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Nombre</label>
+                <input 
+                  [(ngModel)]="nombre" 
+                  [disabled]="!isEditing"
+                  type="text" 
+                  [ngClass]="isEditing ? 'bg-white border-slate-200 hover:border-slate-300 text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100' : 'bg-slate-50 border-slate-200/50 text-slate-500 cursor-default select-none'"
+                  class="w-full border rounded-2xl px-5 py-3.5 font-bold transition-all outline-none">
+              </div>
+
+              <!-- Campo: Apellido -->
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Apellido</label>
+                <input 
+                  [(ngModel)]="apellido" 
+                  [disabled]="!isEditing"
+                  type="text" 
+                  [ngClass]="isEditing ? 'bg-white border-slate-200 hover:border-slate-300 text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100' : 'bg-slate-50 border-slate-200/50 text-slate-500 cursor-default select-none'"
+                  class="w-full border rounded-2xl px-5 py-3.5 font-bold transition-all outline-none">
+              </div>
+
+              <!-- Campo: Teléfono -->
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Teléfono de Contacto</label>
+                <input 
+                  [(ngModel)]="telefono" 
+                  [disabled]="!isEditing"
+                  type="text" 
+                  [ngClass]="isEditing ? 'bg-white border-slate-200 hover:border-slate-300 text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100' : 'bg-slate-50 border-slate-200/50 text-slate-500 cursor-default select-none'"
+                  class="w-full border rounded-2xl px-5 py-3.5 font-bold transition-all outline-none">
+              </div>
+            </div>
+
+            <!-- Bloque de Cambio de Contraseña (Solo en Modo Edición) -->
+            <div *ngIf="isEditing">
+              
+              <!-- Botón de disparo si showPasswordForm es falso -->
+              <div *ngIf="!showPasswordForm" class="mt-8 pt-8 border-t border-slate-100 flex justify-start">
+                <button 
+                  type="button"
+                  (click)="showPasswordForm = true"
+                  class="px-5 py-3.5 bg-slate-50 hover:bg-slate-100 text-blue-600 font-black rounded-2xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 border border-slate-100 active:scale-95 duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Cambiar Contraseña
+                </button>
+              </div>
+
+              <!-- Campos de contraseña si showPasswordForm es verdadero -->
+              <div *ngIf="showPasswordForm" class="mt-8 pt-8 border-t border-slate-100 animate-fade-in">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="text-blue-600" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Cambiar Contraseña de Acceso</h4>
+                  </div>
+                  <button 
+                    type="button" 
+                    (click)="showPasswordForm = false; passwordActual = ''; passwordNueva = ''"
+                    class="text-xs font-black text-red-500 hover:text-red-700 transition-colors uppercase tracking-wider">
+                    Cancelar Cambio
+                  </button>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Contraseña Anterior</label>
+                    <input 
+                      [(ngModel)]="passwordActual" 
+                      type="password" 
+                      placeholder="Ingresar contraseña anterior"
+                      class="w-full bg-white border border-slate-200 hover:border-slate-300 rounded-2xl px-5 py-3.5 font-bold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Nueva Contraseña</label>
+                    <input 
+                      [(ngModel)]="passwordNueva" 
+                      type="password" 
+                      placeholder="Nueva contraseña deseada"
+                      class="w-full bg-white border border-slate-200 hover:border-slate-300 rounded-2xl px-5 py-3.5 font-bold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="bg-gray-50 p-6 rounded-3xl">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Correo Electrónico</p>
-            <p class="font-bold text-gray-900">{{ usuario?.correo }}</p>
-          </div>
-
-          <div class="bg-gray-50 p-6 rounded-3xl">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Teléfono de Contacto</p>
-            <p class="font-bold text-gray-900">{{ usuario?.telefono || 'No registrado' }}</p>
-          </div>
-
-          <div class="bg-gray-50 p-6 rounded-3xl">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Número de Cédula</p>
-            <p class="font-bold text-gray-900">{{ usuario?.cedula || 'No registrada' }}</p>
-          </div>
-
-          <div class="bg-gray-50 p-6 rounded-3xl">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Rol de Acceso</p>
-            <p class="font-bold text-gray-900 capitalize">{{ usuario?.rol }}</p>
-          </div>
-
-          <div class="pt-6 space-y-3">
-            <button (click)="startEditing()" class="w-full bg-ecuavip-blue text-white py-4 rounded-2xl font-black hover:bg-ecuavip-dark transition-all shadow-lg shadow-ecuavip-blue/20">
+          <!-- Footer de Acciones -->
+          <div class="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              {{ isEditing ? 'Ingresa tu clave anterior para aplicar los cambios de contraseña.' : 'Los datos de Cédula solo pueden ser modificados por un Admin.' }}
+            </p>
+            
+            <!-- Estado de visualización: Botón Editar Perfil -->
+            <button 
+              *ngIf="!isEditing"
+              (click)="startEditing()" 
+              class="w-full sm:w-auto px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-lg shadow-blue-500/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Editar Perfil
             </button>
-            <button (click)="logout()" class="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-black hover:bg-red-100 transition-colors">
-              Cerrar Sesión
-            </button>
+
+            <!-- Estado de edición: Cancelar y Guardar Cambios -->
+            <div *ngIf="isEditing" class="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
+              <button 
+                (click)="cancelEditing()" 
+                [disabled]="isLoading" 
+                class="px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-2xl text-xs uppercase tracking-wider transition-all disabled:opacity-50">
+                Cancelar
+              </button>
+              
+              <button 
+                (click)="saveChanges()" 
+                [disabled]="isLoading" 
+                class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-lg shadow-blue-500/10 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                <svg *ngIf="isLoading" class="animate-spin text-white" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                {{ isLoading ? 'Guardando...' : 'Guardar Cambios' }}
+              </button>
+            </div>
           </div>
+
         </div>
 
-        <!-- MODO EDICION -->
-        <div *ngIf="isEditing" class="space-y-5">
-          <div class="space-y-2">
-            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Nombre Completo</label>
-            <input [(ngModel)]="editForm.nombre" type="text" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-ecuavip-blue transition-all">
-          </div>
-
-          <div class="space-y-2 opacity-60">
-            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Correo (No editable)</label>
-            <input [value]="usuario?.correo" type="email" disabled class="w-full bg-gray-100 border-none rounded-2xl px-6 py-4 font-bold text-gray-400 cursor-not-allowed">
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Teléfono</label>
-            <input [(ngModel)]="editForm.telefono" type="text" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-ecuavip-blue transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Número de Cédula</label>
-            <input [(ngModel)]="editForm.cedula" type="text" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-ecuavip-blue transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Nueva Contraseña (Opcional)</label>
-            <input [(ngModel)]="editForm.password" type="password" placeholder="Dejar en blanco para no cambiar" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 font-bold text-gray-900 focus:ring-2 focus:ring-ecuavip-blue transition-all">
-          </div>
-
-          <div class="pt-6 grid grid-cols-2 gap-4">
-            <button (click)="cancelEditing()" [disabled]="isLoading" class="bg-gray-100 text-gray-600 py-4 rounded-2xl font-black hover:bg-gray-200 transition-all disabled:opacity-50">
-              Cancelar
-            </button>
-            <button (click)="saveChanges()" [disabled]="isLoading" class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black hover:bg-ecuavip-dark transition-all shadow-lg shadow-ecuavip-blue/20 disabled:opacity-50 flex items-center justify-center gap-2">
-              <svg *ngIf="isLoading" class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-              {{ isLoading ? 'Guardando...' : 'Guardar' }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-8 text-center">
-        <p class="text-gray-400 text-xs font-medium">Ecuavip Tour v2.4.0 • Logística de Confianza</p>
       </div>
     </div>
   `,
   styles: [`
     :host { display: block; }
-    .bg-ecuavip-blue { background-color: #2563eb; }
-    .text-ecuavip-blue { color: #2563eb; }
-    .bg-ecuavip-blue\/5 { background-color: rgba(37, 99, 235, 0.05); }
-    .bg-ecuavip-blue\/10 { background-color: rgba(37, 99, 235, 0.1); }
   `]
 })
 export class PerfilComponent implements OnInit {
   usuario: any;
-  isEditing = false;
   isLoading = false;
-  
-  editForm = {
-    nombre: '',
-    telefono: '',
-    cedula: '',
-    password: ''
-  };
+  isEditing = false;
+  showPasswordForm = false;
+  successMsg: string | null = null;
+  errorMsg: string | null = null;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  // Form Fields
+  nombre: string = '';
+  apellido: string = '';
+  telefono: string = '';
+  correo: string = '';
+  cedula: string = '';
+
+  // Password Fields
+  passwordActual: string = '';
+  passwordNueva: string = '';
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
+    this.cargarUsuario();
+  }
+
+  cargarUsuario() {
     this.usuario = this.authService.getUsuario();
     if (!this.usuario) {
       this.router.navigate(['/']);
+      return;
     }
+
+    // Split name and surname
+    const partes = (this.usuario.nombre || '').split(' ');
+    this.nombre = partes[0] || '';
+    this.apellido = partes.slice(1).join(' ') || '';
+
+    this.telefono = this.usuario.telefono || '';
+    this.correo = this.usuario.correo || '';
+    this.cedula = this.usuario.cedula || '';
   }
 
   startEditing() {
-    this.editForm.nombre = this.usuario.nombre;
-    this.editForm.telefono = this.usuario.telefono || '';
-    this.editForm.cedula = this.usuario.cedula || '';
-    this.editForm.password = '';
     this.isEditing = true;
+    this.showPasswordForm = false;
+    this.successMsg = null;
+    this.errorMsg = null;
+    this.passwordActual = '';
+    this.passwordNueva = '';
   }
 
   cancelEditing() {
     this.isEditing = false;
+    this.showPasswordForm = false;
+    this.cargarUsuario();
   }
 
   saveChanges() {
     this.isLoading = true;
-    this.authService.updateProfile(this.editForm).subscribe({
+    this.successMsg = null;
+    this.errorMsg = null;
+
+    // Join name and surname
+    const nombreCompleto = (this.nombre.trim() + ' ' + this.apellido.trim()).trim();
+
+    const payload: any = {
+      nombre: nombreCompleto,
+      telefono: this.telefono,
+      cedula: this.cedula,
+      correo: this.correo
+    };
+
+    if (this.passwordNueva) {
+      payload.password = this.passwordNueva;
+    }
+
+    this.authService.updateProfile(payload).subscribe({
       next: (res: any) => {
         this.usuario = res.usuario;
-        this.isEditing = false;
+        this.authService.updateProfile(res.usuario); // refresh localStorage user state
+
+        // Split name back
+        const partes = (this.usuario.nombre || '').split(' ');
+        this.nombre = partes[0] || '';
+        this.apellido = partes.slice(1).join(' ') || '';
+
         this.isLoading = false;
-        // Opcional: mostrar un toast de éxito
+        this.isEditing = false;
+        this.showPasswordForm = false;
+        this.successMsg = '¡Tu perfil ha sido actualizado con éxito!';
+        
+        // Reset password fields
+        this.passwordActual = '';
+        this.passwordNueva = '';
+        
+        setTimeout(() => this.successMsg = null, 4000);
       },
       error: (err: any) => {
         console.error(err);
         this.isLoading = false;
-        alert('Error al actualizar el perfil');
+        this.errorMsg = 'Error al actualizar el perfil. Por favor, reintenta.';
+        setTimeout(() => this.errorMsg = null, 4000);
       }
     });
-  }
-
-  logout() {
-    this.authService.logout();
-    window.location.reload();
   }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
       this.isLoading = true;
+      this.successMsg = null;
+      this.errorMsg = null;
+      
       this.authService.uploadAvatar(file).subscribe({
         next: (res: any) => {
           this.usuario = res.usuario;
           this.isLoading = false;
+          this.successMsg = 'Foto de perfil actualizada correctamente.';
+          setTimeout(() => this.successMsg = null, 4000);
         },
         error: (err: any) => {
           console.error(err);
           this.isLoading = false;
-          alert('Error al subir la foto');
+          this.errorMsg = 'Error al subir la imagen. Intente de nuevo.';
+          setTimeout(() => this.errorMsg = null, 4000);
         }
       });
     }
+  }
+
+  logout() {
+    this.authService.logout();
+    window.location.reload();
   }
 }

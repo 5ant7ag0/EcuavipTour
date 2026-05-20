@@ -57,6 +57,26 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     this.usuario = this.authService.getUsuario();
     this.cargarViajes();
     
+    const despachadoInfo = sessionStorage.getItem('despachado_toast');
+    if (despachadoInfo) {
+      try {
+        const data = JSON.parse(despachadoInfo);
+        sessionStorage.removeItem('despachado_toast');
+        setTimeout(() => {
+          this.showToast(`¡Tu viaje ha sido despachado! Conductor: ${data.chofer_nombre}. Vehículo: ${data.vehiculo_marca} ${data.vehiculo_modelo} (${data.vehiculo_placa})`);
+        }, 1000);
+      } catch (e) {
+        sessionStorage.removeItem('despachado_toast');
+      }
+    }
+
+    // Escuchar si se despacha en tiempo real estando en la pagina
+    this.socketService.listen('viaje_despachado_cliente').subscribe((data: any) => {
+      console.log('Viaje despachado en tiempo real!', data);
+      this.cargarViajes();
+      this.showToast(`¡Tu viaje ha sido despachado! Conductor: ${data.chofer_nombre}. Vehículo: ${data.vehiculo_marca} ${data.vehiculo_modelo} (${data.vehiculo_placa})`);
+    });
+    
     // Obtener el ID real del admin desde el backend
     this.chatService.getAdminInfo().subscribe({
       next: (info) => {
@@ -134,6 +154,22 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
         this.viajeActual.estado_logistico = 'cancelado';
         this.showToast(data.mensaje);
         setTimeout(() => this.cargarViajes(), 3000); // Dar tiempo a ver el toast
+      }
+    });
+
+    // Escuchar cuando el chofer cancela el viaje y vuelve a buscar chofer
+    this.socketService.listen('buscando_nuevo_chofer').subscribe((data: any) => {
+      console.log('Chofer canceló el viaje, buscando nuevo conductor...', data);
+      if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id)) {
+        this.viajeActual.chofer_id = null;
+        this.viajeActual.nombre_chofer = null;
+        this.viajeActual.estado_logistico = 'buscando_chofer';
+        if (this.viajeActual.vehiculo) {
+          this.viajeActual.vehiculo = null;
+        }
+        this.showToast('El chofer asignado canceló el viaje. Buscando otro conductor de inmediato...');
+        // Recargar los viajes para actualizar el mapa, quitar la ruta del conductor, etc.
+        this.cargarViajes();
       }
     });
 
@@ -297,7 +333,7 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
 
   showToast(msg: string) {
     this.toast = msg;
-    setTimeout(() => this.toast = null, 4000);
+    setTimeout(() => this.toast = null, 6000);
   }
 
   enviarCalificacion() {

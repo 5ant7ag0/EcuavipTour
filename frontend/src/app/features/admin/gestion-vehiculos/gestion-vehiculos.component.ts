@@ -238,7 +238,34 @@ export class GestionVehiculosComponent implements OnInit {
       this.selectedAsientos
     ).subscribe({
       next: (data) => {
-        this.vehiculos = data;
+        // Filtrar localmente en el frontend para Año, Tipo y Capacidad
+        let filtered = [...data];
+
+        // 1. Filtrar por Año (selectedAnio)
+        if (this.selectedAnio && this.selectedAnio.trim() !== '') {
+          const searchAnio = this.selectedAnio.trim();
+          filtered = filtered.filter(v => v.anio && v.anio.toString().includes(searchAnio));
+        }
+
+        // 2. Filtrar por Tipo (selectedTipo)
+        if (this.selectedTipo && this.selectedTipo !== '') {
+          const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
+          const targetTipo = normalize(this.selectedTipo);
+          filtered = filtered.filter(v => normalize(v.tipo_vehiculo) === targetTipo);
+        }
+
+        // 3. Filtrar por Capacidad / Asientos (selectedAsientos)
+        if (this.selectedAsientos && this.selectedAsientos !== '') {
+          if (this.selectedAsientos === '4') {
+            filtered = filtered.filter(v => v.capacidad_max === 4);
+          } else if (this.selectedAsientos === '7') {
+            filtered = filtered.filter(v => v.capacidad_max === 7);
+          } else if (this.selectedAsientos === '+7') {
+            filtered = filtered.filter(v => v.capacidad_max > 7);
+          }
+        }
+
+        this.vehiculos = filtered;
         this.loading = false;
       },
       error: (err) => {

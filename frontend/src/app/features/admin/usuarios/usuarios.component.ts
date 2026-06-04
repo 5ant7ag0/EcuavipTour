@@ -21,16 +21,16 @@ import { AdminService } from '../../../core/services/admin.service';
             [(ngModel)]="searchQuery"
             (input)="onSearchChange()"
             placeholder="Buscar por nombre, correo o cédula..." 
-            class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm font-medium text-xs"
+            class="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm font-medium text-xs"
           >
         </div>
 
         <!-- Cápsula de Filtros Desplegables -->
-        <div class="flex items-center gap-1.5 bg-white p-1 rounded-2xl shadow-sm border border-slate-100 flex-shrink-0">
+        <div class="flex items-center gap-1.5 bg-white p-1 rounded-2xl shadow-sm border border-slate-100 flex-grow lg:max-w-md w-full justify-between h-11">
           <select 
             [(ngModel)]="selectedRole"
             (change)="loadUsuarios()"
-            class="px-3 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer min-w-[130px]"
+            class="h-full px-3 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer flex-1 w-0"
           >
             <option value="">Cualquier Rol</option>
             <option value="admin">Admin</option>
@@ -41,7 +41,7 @@ import { AdminService } from '../../../core/services/admin.service';
           <select 
             [(ngModel)]="selectedStatus"
             (change)="loadUsuarios()"
-            class="px-3 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer min-w-[130px]"
+            class="h-full px-3 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer flex-1 w-0"
           >
             <option value="">Cualquier Estado</option>
             <option value="true">Activos</option>
@@ -51,7 +51,7 @@ import { AdminService } from '../../../core/services/admin.service';
           <select 
             [(ngModel)]="datePreset"
             (change)="onDatePresetChange()"
-            class="px-3 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer min-w-[130px]"
+            class="h-full px-3 bg-slate-50 border-none rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none cursor-pointer flex-1 w-0"
           >
             <option value="all">Todas las fechas</option>
             <option value="today">Hoy</option>
@@ -64,7 +64,7 @@ import { AdminService } from '../../../core/services/admin.service';
           <button 
             *ngIf="hasActiveFilters"
             (click)="clearFilters()"
-            class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition-all"
+            class="h-full w-9 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition-all flex-shrink-0"
             title="Limpiar filtros"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -331,8 +331,14 @@ export class UsuariosComponent implements OnInit {
       yearAgo.setFullYear(now.getFullYear() - 1);
       start = yearAgo.toISOString();
     } else if (this.datePreset === 'custom') {
-      if (this.customStartDate) start = new Date(this.customStartDate).toISOString();
-      if (this.customEndDate) end = new Date(this.customEndDate).toISOString();
+      if (this.customStartDate) {
+        const d = this.parseDateString(this.customStartDate + 'T00:00:00');
+        if (d) start = d.toISOString();
+      }
+      if (this.customEndDate) {
+        const d = this.parseDateString(this.customEndDate + 'T23:59:59');
+        if (d) end = d.toISOString();
+      }
     }
 
     this.adminService.getUsuarios(
@@ -424,8 +430,102 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
+  private parseDateString(str: any): Date | null {
+    if (!str) return null;
+    if (str instanceof Date) return str;
+    if (typeof str !== 'string') return null;
+
+    let normalized = str.trim().replace(' ', 'T');
+    
+    // Si contiene punto, puede tener microsegundos.
+    // Truncamos la parte decimal a 3 dígitos (milisegundos) para evitar que falle en Safari.
+    const dotIndex = normalized.indexOf('.');
+    if (dotIndex !== -1) {
+      const base = normalized.substring(0, dotIndex);
+      let ms = normalized.substring(dotIndex + 1);
+      // Descartamos cualquier indicador de zona horaria temporalmente para truncar
+      const tzMatch = ms.match(/([Z+\-])/);
+      let tz = '';
+      if (tzMatch && tzMatch.index !== undefined) {
+        tz = ms.substring(tzMatch.index);
+        ms = ms.substring(0, tzMatch.index);
+      }
+      ms = ms.substring(0, 3).padEnd(3, '0');
+      normalized = base + '.' + ms + tz;
+    }
+
+    const d = new Date(normalized);
+    if (!isNaN(d.getTime())) {
+      return d;
+    }
+
+    // Fallback de parseo manual regex si falla
+    const match = str.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d{3,6}))?/);
+    if (match) {
+      const y = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10) - 1;
+      const day = parseInt(match[3], 10);
+      const hr = parseInt(match[4], 10);
+      const min = parseInt(match[5], 10);
+      const sec = parseInt(match[6], 10);
+      const ms = match[7] ? parseInt(match[7].substring(0, 3), 10) : 0;
+      return new Date(y, m, day, hr, min, sec, ms);
+    }
+
+    return null;
+  }
+
   get filteredUsers() {
-    return this.usuarios;
+    if (!this.usuarios) return [];
+    let filtered = [...this.usuarios];
+
+    const now = new Date();
+
+    if (this.datePreset === 'today') {
+      const startOfDay = new Date(now.setHours(0,0,0,0));
+      filtered = filtered.filter(u => {
+        const d = this.parseDateString(u.fecha_registro);
+        return d && d >= startOfDay;
+      });
+    } else if (this.datePreset === 'week') {
+      const weekAgo = new Date();
+      weekAgo.setDate(now.getDate() - 7);
+      filtered = filtered.filter(u => {
+        const d = this.parseDateString(u.fecha_registro);
+        return d && d >= weekAgo;
+      });
+    } else if (this.datePreset === 'month') {
+      const monthAgo = new Date();
+      monthAgo.setMonth(now.getMonth() - 1);
+      filtered = filtered.filter(u => {
+        const d = this.parseDateString(u.fecha_registro);
+        return d && d >= monthAgo;
+      });
+    } else if (this.datePreset === 'year') {
+      const yearAgo = new Date();
+      yearAgo.setFullYear(now.getFullYear() - 1);
+      filtered = filtered.filter(u => {
+        const d = this.parseDateString(u.fecha_registro);
+        return d && d >= yearAgo;
+      });
+    } else if (this.datePreset === 'custom') {
+      if (this.customStartDate) {
+        const start = new Date(this.customStartDate + 'T00:00:00');
+        filtered = filtered.filter(u => {
+          const d = this.parseDateString(u.fecha_registro);
+          return d && d >= start;
+        });
+      }
+      if (this.customEndDate) {
+        const end = new Date(this.customEndDate + 'T23:59:59');
+        filtered = filtered.filter(u => {
+          const d = this.parseDateString(u.fecha_registro);
+          return d && d <= end;
+        });
+      }
+    }
+
+    return filtered;
   }
 
   onSearchChange(): void {

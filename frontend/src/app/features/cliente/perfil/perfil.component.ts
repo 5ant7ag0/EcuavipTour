@@ -33,11 +33,11 @@ import { FormsModule } from '@angular/forms';
           <div class="flex flex-col items-center w-full mt-4">
             <div class="relative w-36 h-36 rounded-full border-4 border-slate-100 shadow-md group shrink-0 aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
               <img 
-                *ngIf="usuario?.foto_perfil_url" 
-                [src]="'http://localhost:5001/' + usuario.foto_perfil_url" 
+                *ngIf="previewUrl || (usuario?.foto_perfil_url || usuario?.fotoPerfilUrl)" 
+                [src]="previewUrl || ('http://localhost:5001/' + (usuario.foto_perfil_url || usuario.fotoPerfilUrl))" 
                 class="w-full h-full object-cover rounded-full"
                 alt="Foto de Perfil">
-              <span *ngIf="!usuario?.foto_perfil_url" class="text-3xl font-black text-blue-600 select-none">
+              <span *ngIf="!previewUrl && !(usuario?.foto_perfil_url || usuario?.fotoPerfilUrl)" class="text-3xl font-black text-blue-600 select-none">
                 {{ nombre.charAt(0) || 'U' }}
               </span>
               
@@ -232,6 +232,9 @@ export class PerfilComponent implements OnInit {
   successMsg: string | null = null;
   errorMsg: string | null = null;
 
+  selectedFile: File | null = null;
+  previewUrl: string | null = null;
+
   // Form Fields
   nombre: string = '';
   apellido: string = '';
@@ -281,6 +284,8 @@ export class PerfilComponent implements OnInit {
   cancelEditing() {
     this.isEditing = false;
     this.showPasswordForm = false;
+    this.selectedFile = null;
+    this.previewUrl = null;
     this.cargarUsuario();
   }
 
@@ -303,57 +308,67 @@ export class PerfilComponent implements OnInit {
       payload.password = this.passwordNueva;
     }
 
-    this.authService.updateProfile(payload).subscribe({
-      next: (res: any) => {
-        this.usuario = res.usuario;
-        this.authService.updateProfile(res.usuario); // refresh localStorage user state
-
-        // Split name back
-        const partes = (this.usuario.nombre || '').split(' ');
-        this.nombre = partes[0] || '';
-        this.apellido = partes.slice(1).join(' ') || '';
-
-        this.isLoading = false;
-        this.isEditing = false;
-        this.showPasswordForm = false;
-        this.successMsg = '¡Tu perfil ha sido actualizado con éxito!';
-        
-        // Reset password fields
-        this.passwordActual = '';
-        this.passwordNueva = '';
-        
-        setTimeout(() => this.successMsg = null, 4000);
-      },
-      error: (err: any) => {
-        console.error(err);
-        this.isLoading = false;
-        this.errorMsg = 'Error al actualizar el perfil. Por favor, reintenta.';
-        setTimeout(() => this.errorMsg = null, 4000);
-      }
-    });
-  }
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.isLoading = true;
-      this.successMsg = null;
-      this.errorMsg = null;
-      
-      this.authService.uploadAvatar(file).subscribe({
+    const performUpdateProfile = () => {
+      this.authService.updateProfile(payload).subscribe({
         next: (res: any) => {
           this.usuario = res.usuario;
+
+          // Split name back
+          const partes = (this.usuario.nombre || '').split(' ');
+          this.nombre = partes[0] || '';
+          this.apellido = partes.slice(1).join(' ') || '';
+
           this.isLoading = false;
-          this.successMsg = 'Foto de perfil actualizada correctamente.';
+          this.isEditing = false;
+          this.showPasswordForm = false;
+          this.selectedFile = null;
+          this.previewUrl = null;
+          this.successMsg = '¡Tu perfil ha sido actualizado con éxito!';
+          
+          // Reset password fields
+          this.passwordActual = '';
+          this.passwordNueva = '';
+          
           setTimeout(() => this.successMsg = null, 4000);
         },
         error: (err: any) => {
           console.error(err);
           this.isLoading = false;
-          this.errorMsg = 'Error al subir la imagen. Intente de nuevo.';
+          this.errorMsg = 'Error al actualizar el perfil. Por favor, reintenta.';
           setTimeout(() => this.errorMsg = null, 4000);
         }
       });
+    };
+
+    if (this.selectedFile) {
+      this.authService.uploadAvatar(this.selectedFile).subscribe({
+        next: (res: any) => {
+          this.usuario = res.usuario;
+          performUpdateProfile();
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.isLoading = false;
+          this.errorMsg = 'Error al subir la imagen de perfil.';
+          setTimeout(() => this.errorMsg = null, 4000);
+        }
+      });
+    } else {
+      performUpdateProfile();
+    }
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+      
+      // Local preview using FileReader
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.previewUrl = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
   }
 

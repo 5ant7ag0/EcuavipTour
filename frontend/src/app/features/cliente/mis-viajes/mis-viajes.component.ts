@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { ViajeService } from '../../../core/services/viaje.service';
+import { CountdownService } from '../../../core/services/countdown.service';
 
 @Component({
   selector: 'app-mis-viajes',
@@ -28,7 +29,7 @@ import { ViajeService } from '../../../core/services/viaje.service';
 export class MisViajesComponent implements OnInit, OnDestroy {
   viajes: any[] = [];
   loading = true;
-  filtro = 'activos';
+  filtro = 'finalizados';
   
   // Modal de cancelación
   showCancelModal = false;
@@ -53,7 +54,8 @@ export class MisViajesComponent implements OnInit, OnDestroy {
   constructor(
     private clienteService: ClienteService,
     private socketService: SocketService,
-    private viajeService: ViajeService
+    private viajeService: ViajeService,
+    private countdownService: CountdownService
   ) {}
 
   ngOnInit() {
@@ -84,7 +86,12 @@ export class MisViajesComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.clienteService.getMisViajes().subscribe({
       next: (res) => {
-        this.viajes = (res || []).filter(v => (v.tipo_servicio || '').toLowerCase() !== 'encomienda');
+        this.viajes = (res || []).filter(v => (v.tipo_servicio || '').toLowerCase() !== 'encomienda').map((v: any) => {
+          if (v.fecha_limite_pago) {
+            v.timer$ = this.countdownService.getCountdown(v.fecha_limite_pago);
+          }
+          return v;
+        });
         this.loading = false;
       },
       error: () => this.loading = false

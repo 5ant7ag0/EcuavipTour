@@ -14,15 +14,15 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
   imports: [CommonModule, FormsModule, ChatSidebarComponent],
   template: `
     <!-- VISTA CONSOLA FIJA (SIN SCROLL) -->
-    <div class="h-screen w-full bg-slate-50 flex flex-col lg:flex-row lg:p-8 lg:gap-8 overflow-hidden">
+    <div class="h-screen w-full flex flex-col overflow-hidden bg-slate-50 lg:flex-row lg:p-8 lg:gap-8">
       
-      <!-- SECCIÓN MAPA (Móvil: 68%, Desktop: 60%) -->
-      <div class="h-[68vh] lg:h-full lg:flex-[7] order-1 lg:order-2 relative">
+      <!-- SECCIÓN MAPA (Elástica en móvil) -->
+      <div class="flex-1 w-full min-h-0 lg:h-full lg:flex-[7] order-1 lg:order-2 relative">
         <div class="w-full h-full lg:rounded-3xl lg:shadow-sm lg:border-8 lg:border-white overflow-hidden relative">
           <div id="choferMap" class="w-full h-full"></div>
           
           <!-- Radar Effect (Sólo si no hay viaje) -->
-          <div *ngIf="!viajeActual && !nuevoViaje" class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center bg-blue-600/5">
+          <div *ngIf="!viajeActual && nuevosViajes.length === 0" class="absolute inset-0 z-10 pointer-events-none flex items-center justify-center bg-blue-600/5">
              <div class="relative">
                <div class="absolute inset-0 -m-20 border border-blue-500/20 rounded-full animate-ping"></div>
                <div class="absolute inset-0 -m-40 border border-blue-500/10 rounded-full animate-ping" style="animation-delay: 1s"></div>
@@ -36,10 +36,10 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
         </div>
       </div>
 
-      <!-- SECCIÓN INFORMACIÓN / ACCIONES (Móvil: 32%, Desktop: 40%) -->
-      <div class="h-[32vh] lg:h-full lg:flex-[5] order-2 lg:order-1 p-3 lg:p-0 flex flex-col">
+      <!-- SECCIÓN INFORMACIÓN / ACCIONES (Compacta) -->
+      <div class="shrink-0 w-full p-4 pb-[84px] lg:pb-0 lg:h-full lg:flex-[5] order-2 lg:order-1 lg:p-0 flex flex-col">
         
-        <div class="h-full bg-white lg:bg-transparent rounded-3xl lg:rounded-none p-5 lg:p-0 shadow-sm lg:shadow-none border border-gray-100 lg:border-none flex flex-col justify-between">
+        <div class="w-full bg-white lg:bg-transparent rounded-3xl lg:rounded-none p-4 pb-2 lg:p-0 shadow-sm lg:shadow-none border border-gray-100 lg:border-none flex flex-col gap-3 justify-between lg:h-full">
           
           <!-- CONTENIDO DINÁMICO SEGÚN ESTADO -->
           <div class="flex-1 flex flex-col justify-center">
@@ -51,14 +51,15 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
               </div>
               <h3 class="text-base font-black text-gray-900">Buscando Servicios</h3>
             </div>
-
+ 
             <!-- ESTADO: EN VIAJE -->
             <div *ngIf="viajeActual" class="space-y-4 animate-slide-up">
               <!-- Info Cliente Compacta -->
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-gray-900 text-white rounded-xl flex items-center justify-center shadow-lg">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <div class="w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center shadow-lg overflow-hidden border border-gray-800 shrink-0">
+                    <img *ngIf="viajeActual.foto_cliente_url" [src]="'http://localhost:5001/' + viajeActual.foto_cliente_url" class="w-full h-full object-cover rounded-full">
+                    <svg *ngIf="!viajeActual.foto_cliente_url" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   </div>
                   <div>
                     <h4 class="text-base font-black text-gray-900 leading-tight">{{ viajeActual.nombre_cliente || 'Pasajero VIP' }}</h4>
@@ -92,8 +93,11 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
 
             <!-- Chat -->
             <button (click)="openChat()" 
-                   class="w-12 h-12 bg-gray-50 text-gray-900 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-100 active:scale-95 shrink-0">
+                   class="w-12 h-12 bg-gray-50 text-gray-900 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-100 active:scale-95 shrink-0 relative">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7c1.1 0 2.2.3 3.2.8l4.4-1.1-1.1 4.4z"/></svg>
+              <div *ngIf="unreadMessages > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+                {{ unreadMessages }}
+              </div>
             </button>
 
             <!-- Acción Dinámica -->
@@ -118,36 +122,35 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
 
     </div>
 
-      <!-- ALERTA DE NUEVO VIAJE (OVERLAY) -->
-      <div *ngIf="nuevoViaje" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-xl animate-fade-in">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-10 shadow-sm relative overflow-hidden">
-           <div class="absolute bottom-0 left-0 right-0 h-2 bg-gray-100 overflow-hidden">
-             <div class="h-full bg-blue-600 animate-notification-timeout" [style.animationDuration.ms]="10000"></div>
+      <!-- STACK DE SOLICITUDES DE VIAJE EN PARALELO (FLOTANTE) -->
+      <div *ngIf="!viajeActual && nuevosViajes.length > 0" class="fixed top-24 right-6 left-6 md:left-auto md:w-96 z-[10000] flex flex-col gap-4 pointer-events-none">
+        <div *ngFor="let viaje of nuevosViajes" class="pointer-events-auto bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 relative overflow-hidden animate-fade-in-right">
+           <!-- Barra de progreso individual (15s) -->
+           <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-100 overflow-hidden">
+             <div class="h-full bg-blue-600 animate-notification-timeout" [style.animationDuration.ms]="15000"></div>
            </div>
-           <div class="text-center mb-8">
-              <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+           
+           <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
               </div>
-              <h2 class="text-3xl font-black text-gray-900 mb-1">¡Nuevo Viaje!</h2>
-              <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">A {{ nuevoViaje.distancia || '2.4' }} km</p>
-           </div>
-           <div class="space-y-6 mb-10 text-center">
-              <div>
-                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Ganancia Estimada</p>
-                <p class="text-4xl font-black text-green-600">$ {{ nuevoViaje.tarifa }}</p>
+              <div class="flex-1 min-w-0">
+                 <div class="flex justify-between items-start">
+                    <h4 class="text-sm font-black text-gray-900">¡Nuevo Viaje!</h4>
+                    <span class="text-lg font-black text-green-600 leading-none">$ {{ viaje.tarifa }}</span>
+                 </div>
+                 <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-0.5">A {{ viaje.distancia || '2.4' }} km</p>
+                 
+                 <div class="mt-3 space-y-1.5">
+                    <p class="text-[10px] font-bold text-gray-700 truncate"><span class="text-blue-500 font-extrabold">De:</span> {{ viaje.origen }}</p>
+                    <p class="text-[10px] font-bold text-gray-700 truncate"><span class="text-gray-900 font-extrabold">A:</span> {{ viaje.destino }}</p>
+                 </div>
+                 
+                 <div class="mt-4 flex gap-3">
+                    <button (click)="aceptarViaje(viaje)" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-wider shadow-md hover:bg-blue-700 transition-all active:scale-95">Aceptar</button>
+                    <button (click)="rechazarViaje(viaje)" class="py-2.5 px-4 bg-gray-50 text-gray-400 rounded-xl font-black text-[10px] uppercase tracking-wider border border-gray-100 hover:bg-gray-100 transition-all active:scale-95">Ignorar</button>
+                 </div>
               </div>
-              <div class="flex flex-col gap-3">
-                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <p class="text-xs font-bold text-gray-700 truncate">De: {{ nuevoViaje.origen }}</p>
-                </div>
-                <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <p class="text-xs font-bold text-gray-700 truncate">A: {{ nuevoViaje.destino }}</p>
-                </div>
-              </div>
-           </div>
-           <div class="grid grid-cols-1 gap-4">
-              <button (click)="aceptarViaje()" class="w-full h-20 bg-blue-600 text-white rounded-3xl font-black text-lg uppercase tracking-widest shadow-sm active:scale-95">Aceptar</button>
-              <button (click)="rechazarViaje()" class="w-full py-4 text-gray-400 font-black text-xs uppercase tracking-widest">Ignorar</button>
            </div>
         </div>
       </div>
@@ -203,10 +206,17 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
       </div>
 
       <!-- TOAST -->
-      <div *ngIf="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[20000] animate-slide-up w-[90%] max-w-xs">
-        <div class="bg-gray-900/95 backdrop-blur-xl text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
-          <div class="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
-          <p class="text-[10px] font-black uppercase tracking-widest leading-tight">{{ toast }}</p>
+      <div *ngIf="toast" (click)="openChat()" class="cursor-pointer fixed top-24 left-1/2 -translate-x-1/2 z-[20000] w-[92%] max-w-lg transition-all duration-500 ease-out transform active:scale-95">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-blue-500/20 flex items-center gap-4 border border-blue-400/25 relative overflow-hidden backdrop-blur-md animate-slide-up">
+          <!-- Glow effect -->
+          <div class="absolute -right-10 -top-10 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+          <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md shrink-0 animate-pulse">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div>
+            <span class="text-[8px] font-black uppercase tracking-[0.2em] text-blue-100 block mb-0.5">Notificación en tiempo real</span>
+            <p class="text-xs font-black leading-snug text-white">{{ toast }}</p>
+          </div>
         </div>
       </div>
 
@@ -217,6 +227,7 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
         [destinatarioId]="viajeActual?.cliente_id"
         [tipoReceptor]="'chofer'"
         [tituloCabecera]="'Cliente: ' + (viajeActual?.nombre_cliente || 'Pasajero VIP')"
+        [fotoPerfilUrl]="viajeActual?.foto_cliente_url"
         (closed)="isChatOpen = false">
       </app-chat-sidebar>
 
@@ -270,7 +281,7 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
 export class DashboardChoferComponent implements OnInit, OnDestroy {
   usuario: any = null;
   viajeActual: any = null;
-  nuevoViaje: any = null;
+  nuevosViajes: any[] = [];
   isScannerOpen = false;
   isChatOpen = false;
   showCancelModal = false;
@@ -278,6 +289,11 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   showFinishModal = false;
   pinIngresado = '';
   toast: string | null = null;
+  private componentSubs: Subscription[] = [];
+
+  get unreadMessages(): number {
+    return this.socketService.unreadMessages;
+  }
   
   // Map State
   map: any;
@@ -301,10 +317,22 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
     this.setupListeners();
     this.checkActiveTrip();
     setTimeout(() => this.initMap(), 500);
+
+    // Escuchar el evento reactivo global para abrir el chat
+    const chatSub = this.socketService.triggerChatOpen.subscribe(() => {
+      this.openChat();
+    });
+    this.componentSubs.push(chatSub);
+
+    if (this.socketService.openChatOnLoad) {
+      this.openChat();
+      this.socketService.openChatOnLoad = false;
+    }
   }
 
   ngOnDestroy() {
     if (this.socketSub) this.socketSub.unsubscribe();
+    this.componentSubs.forEach(s => s.unsubscribe());
     this.stopGPS();
   }
 
@@ -383,17 +411,31 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
 
   setupListeners() {
     // Escuchar nuevos viajes disponibles
-    this.socketService.listen('nuevo_viaje_disponible').subscribe((data) => {
-      this.nuevoViaje = data;
-      // Auto-ocultar después de 10 segundos
-      setTimeout(() => this.nuevoViaje = null, 10000);
+    this.socketService.listen('nuevo_viaje_disponible').subscribe((data: any) => {
+      if (data && data.viaje_id) {
+        const exists = this.nuevosViajes.some(v => v.viaje_id === data.viaje_id);
+        if (!exists) {
+          this.nuevosViajes.unshift(data);
+          // Auto-ocultar después de 15 segundos
+          setTimeout(() => {
+            this.nuevosViajes = this.nuevosViajes.filter(v => v.viaje_id !== data.viaje_id);
+          }, 15000);
+        }
+      }
     });
 
     // Escuchar confirmación de aceptación
-    this.socketService.listen('viaje_confirmado_chofer').subscribe((data) => {
-      this.viajeActual = { ...this.nuevoViaje, estado_logistico: 'aceptado' };
-      this.nuevoViaje = null;
+    this.socketService.listen('viaje_confirmado_chofer').subscribe((data: any) => {
+      const confirmedViaje = this.nuevosViajes.find(v => v.viaje_id === data.viaje_id);
+      this.viajeActual = {
+        viaje_id: data.viaje_id,
+        id: data.viaje_id,
+        estado_logistico: 'aceptado',
+        ...(confirmedViaje || {})
+      };
+      this.nuevosViajes = [];
       this.showToast(data.mensaje);
+      this.checkActiveTrip();
       // Inicializar mapa y ruta después de aceptar
       setTimeout(() => {
         this.initMap();
@@ -402,16 +444,20 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
     });
 
     // Escuchar si alguien más lo tomó
-    this.socketService.listen('viaje_ya_tomado').subscribe((data) => {
-      this.nuevoViaje = null;
-      this.showToast(data.mensaje);
+    this.socketService.listen('viaje_ya_tomado').subscribe((data: any) => {
+      if (data && data.viaje_id) {
+        this.nuevosViajes = this.nuevosViajes.filter(v => v.viaje_id !== data.viaje_id);
+      }
+      if (data && data.chofer_id !== this.usuario?.id) {
+        this.showToast(data.mensaje);
+      }
     });
   }
 
   checkActiveTrip() {
     this.viajeService.getViajeActivo().subscribe({
       next: (viaje) => {
-        if (viaje) {
+        if (viaje && (viaje.viaje_id || viaje.id)) {
           console.log('[DashboardChofer] Viaje activo detectado:', viaje);
           console.log('[DashboardChofer] Estado logístico:', viaje.estado_logistico);
           this.viajeActual = viaje;
@@ -419,22 +465,26 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
           if (this.map) {
             this.calculateRoute();
           }
+        } else {
+          this.viajeActual = null;
         }
       },
       error: (err) => console.error('[DashboardChofer] Error al buscar viaje activo:', err)
     });
   }
 
-  aceptarViaje() {
-    if (!this.nuevoViaje || !this.usuario) return;
+  aceptarViaje(viaje: any) {
+    if (!viaje || !this.usuario) return;
     this.socketService.emit('aceptar_viaje', {
-      viaje_id: this.nuevoViaje.viaje_id,
+      viaje_id: viaje.viaje_id,
       chofer_id: this.usuario.id
     });
   }
 
-  rechazarViaje() {
-    this.nuevoViaje = null;
+  rechazarViaje(viaje: any) {
+    if (viaje) {
+      this.nuevosViajes = this.nuevosViajes.filter(v => v.viaje_id !== viaje.viaje_id);
+    }
   }
 
   startGPS() {
@@ -511,6 +561,7 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
 
   openChat() {
     this.isChatOpen = true;
+    this.socketService.unreadMessages = 0;
   }
 
   cancelarViaje() {

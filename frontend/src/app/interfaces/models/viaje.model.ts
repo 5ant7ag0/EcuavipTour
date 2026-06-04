@@ -12,7 +12,7 @@ export interface Viaje {
   tarifa: number;
   tipo_servicio: 'pasajero' | 'encomienda' | 'express';
   estado_pago?: 'pendiente' | 'comprobante_subido' | 'aprobado' | 'rechazado';
-  estado_logistico?: 'pendiente' | 'buscando_chofer' | 'en_curso' | 'finalizado';
+  estado_logistico?: 'pendiente' | 'buscando_chofer' | 'en_curso' | 'finalizado' | 'cancelado' | 'esperando_cliente' | 'aceptado' | 'asignado' | 'en_viaje';
   fecha?: string;
   // Extra fields that API might return
   monto?: number;

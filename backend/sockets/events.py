@@ -34,10 +34,12 @@ def register_socket_events(socketio):
                 print(f"   -> Chofer {user_id} unido a sala '{room}'")
             viajes_pendientes = Viaje.query.filter_by(estado_logistico='buscando_chofer').all()
             for v in viajes_pendientes:
+                cliente_user = Usuario.query.get(v.cliente_id)
                 emit('nuevo_viaje_disponible', {
                     'viaje_id': v.id,
                     'cliente_id': v.cliente_id,
-                    'nombre_cliente': Usuario.query.get(v.cliente_id).nombre,
+                    'nombre_cliente': cliente_user.nombre if cliente_user else 'Cliente VIP',
+                    'foto_cliente_url': cliente_user.foto_perfil_url if (cliente_user and cliente_user.foto_perfil_url) else None,
                     'origen': v.dir_origen,
                     'destino': v.dir_destino,
                     'tarifa': float(v.monto_total),
@@ -197,6 +199,7 @@ def register_socket_events(socketio):
                 'viaje_id': viaje.id,
                 'cliente_id': viaje.cliente_id,
                 'nombre_cliente': cliente_usuario.nombre if cliente_usuario else 'Cliente VIP',
+                'foto_cliente_url': cliente_usuario.foto_perfil_url if (cliente_usuario and cliente_usuario.foto_perfil_url) else None,
                 'origen': viaje.dir_origen,
                 'destino': viaje.dir_destino,
                 'tarifa': float(viaje.monto_total),

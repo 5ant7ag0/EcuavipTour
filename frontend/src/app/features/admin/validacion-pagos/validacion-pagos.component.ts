@@ -58,7 +58,7 @@ export class ValidacionPagosComponent implements OnInit, OnDestroy {
     });
 
     this.socketService.listen('pago_actualizado').subscribe(() => {
-      this.cargarPagos(false);
+      setTimeout(() => this.cargarPagos(false), 300);
     });
   }
 
@@ -83,6 +83,16 @@ export class ValidacionPagosComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.pagos = res;
         this.loading = false;
+
+        // Si el modal está abierto, actualizamos la referencia de selectedPago para que refleje el nuevo comprobante
+        if (this.selectedPago) {
+          const updatedPago = this.pagos.find(
+            p => p.pago_id === this.selectedPago.pago_id || p.viaje_id === this.selectedPago.viaje_id
+          );
+          if (updatedPago) {
+            this.selectedPago = updatedPago;
+          }
+        }
       },
       error: (err) => {
         this.error = 'No se pudieron cargar los pagos.';
@@ -91,8 +101,8 @@ export class ValidacionPagosComponent implements OnInit, OnDestroy {
     });
   }
 
-  abrirChat(viajeId: number) {
-    this.router.navigate(['/admin/mensajeria'], { queryParams: { viajeId } });
+  abrirChat(viajeId: number, clienteId: number) {
+    this.router.navigate(['/admin/mensajeria'], { queryParams: { viajeId, clienteId } });
   }
 
   verComprobante(pago: any) {

@@ -25,7 +25,7 @@ export class AdminService {
   }
 
   getPagos(estado: string = 'pendientes'): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/pagos?estado=${estado}`, { headers: this.getHeaders() })
+    return this.http.get<any[]>(`${this.apiUrl}/pagos?estado=${estado}&_t=${Date.now()}`, { headers: this.getHeaders() })
       .pipe(tap(pagos => {
         if (estado === 'pendientes') {
           this.pendingCountSource.next(pagos.length);
@@ -92,8 +92,11 @@ export class AdminService {
     return this.http.post(`${this.apiUrl}/usuarios/update_photo`, formData, { headers: this.getHeaders() });
   }
 
-  getStats(period: string = 'month'): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/stats?period=${period}`, { headers: this.getHeaders() });
+  getStats(period: string = 'month', startDate?: string, endDate?: string): Observable<any> {
+    let url = `${this.apiUrl}/stats?period=${period}`;
+    if (startDate) url += `&start_date=${startDate}`;
+    if (endDate) url += `&end_date=${endDate}`;
+    return this.http.get<any>(url, { headers: this.getHeaders() });
   }
 
   getVehiculos(estado?: string, search?: string, marca?: string, modelo?: string, anio?: string, tipo?: string, asientos?: string): Observable<any[]> {

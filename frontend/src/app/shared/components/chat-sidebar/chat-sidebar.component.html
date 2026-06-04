@@ -14,10 +14,56 @@
   
   <!-- Header -->
   <div class="bg-ecuavip-blue text-white p-5 flex justify-between items-center shadow-sm">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md">
-        <svg *ngIf="tipoReceptor === 'admin'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <svg *ngIf="tipoReceptor === 'chofer'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+    <!-- Support Chat (Admin) -->
+    <div class="flex items-center gap-3" *ngIf="tipoReceptor === 'admin'">
+      <!-- Avatar Section -->
+      <div *ngIf="estadoCaso !== 'asignado'" class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md shrink-0 shadow-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div *ngIf="estadoCaso === 'asignado' && soporteAsignado" class="w-12 h-12 rounded-full overflow-hidden bg-white/25 border border-white/20 shadow-md shrink-0 flex items-center justify-center font-bold">
+        <img *ngIf="soporteAsignado.fotoPerfilUrl" [src]="'http://localhost:5001/' + soporteAsignado.fotoPerfilUrl" class="w-full h-full object-cover">
+        <div *ngIf="!soporteAsignado.fotoPerfilUrl" class="w-full h-full bg-white/20 flex items-center justify-center font-black text-white uppercase text-base">
+          {{ soporteAsignado.nombre.charAt(0) }}
+        </div>
+      </div>
+
+      <!-- Text Section -->
+      <div>
+        <h3 class="font-black text-base leading-tight tracking-tight">Soporte EcuavipTour</h3>
+        <!-- Subtitle showing the case state -->
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <!-- Waiting state -->
+          <ng-container *ngIf="estadoCaso === 'esperando'">
+            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span>
+            <p class="text-white/90 text-[10px] font-black uppercase tracking-wider">Esperando admin</p>
+          </ng-container>
+          <!-- Assigned state -->
+          <ng-container *ngIf="estadoCaso === 'asignado' && soporteAsignado">
+            <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+            <p class="text-white/95 text-[10px] font-black uppercase tracking-wider truncate max-w-[160px]">
+              {{ soporteAsignado.nombre }}
+            </p>
+          </ng-container>
+          <!-- Resolved state -->
+          <ng-container *ngIf="estadoCaso === 'resuelto'">
+            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+            <p class="text-white/60 text-[10px] font-black uppercase tracking-wider">Resuelto</p>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- Driver Chat (Chofer) -->
+    <div class="flex items-center gap-3" *ngIf="tipoReceptor === 'chofer'">
+      <!-- Client avatar (round) if current user is chofer -->
+      <div *ngIf="miRol === 'chofer'" class="w-12 h-12 rounded-full overflow-hidden bg-white/20 flex items-center justify-center backdrop-blur-md shrink-0 shadow-md">
+        <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl.indexOf('http') === 0 ? fotoPerfilUrl : 'http://localhost:5001/' + fotoPerfilUrl" class="w-full h-full object-cover rounded-full">
+        <svg *ngIf="!fotoPerfilUrl" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <!-- Driver avatar (round) if current user is client -->
+      <div *ngIf="miRol !== 'chofer'" class="w-12 h-12 rounded-full overflow-hidden bg-white/20 flex items-center justify-center backdrop-blur-md shrink-0 shadow-md">
+        <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl.indexOf('http') === 0 ? fotoPerfilUrl : 'http://localhost:5001/' + fotoPerfilUrl" class="w-full h-full object-cover rounded-full">
+        <svg *ngIf="!fotoPerfilUrl" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
       </div>
       <div>
         <h3 class="font-black text-base leading-tight tracking-tight">{{ tituloCabecera }}</h3>
@@ -27,6 +73,7 @@
         </div>
       </div>
     </div>
+
     <button (click)="close()" class="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded-xl transition-colors text-white">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
@@ -45,18 +92,33 @@
     </div>
 
     <!-- Message Bubbles -->
-    <div *ngFor="let m of mensajes" class="flex flex-col" [ngClass]="{'items-end': m.remitente_id === miId, 'items-start': m.remitente_id !== miId}">
-      <div class="max-w-[85%] rounded-2xl px-4 py-3 shadow-sm text-sm leading-relaxed"
-           [ngClass]="{
-             'bg-ecuavip-blue text-white rounded-br-none font-medium': m.remitente_id === miId,
-             'bg-white border border-gray-100 text-gray-700 rounded-bl-none': m.remitente_id !== miId
-           }">
-        {{ m.contenido }}
+    <ng-container *ngFor="let m of mensajes; let i = index">
+      <!-- Case Transition Separator -->
+      <div *ngIf="i > 0 && mensajes[i-1].estado === 'resuelto' && m.estado !== 'resuelto'" 
+           class="w-full flex justify-center items-center my-8 relative shrink-0">
+        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="w-full bg-gradient-to-r from-transparent via-indigo-400/60 to-transparent h-[2px]"></div>
+        </div>
+        <div class="relative flex justify-center">
+          <span class="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50/95 px-4 py-1.5 rounded-full border border-indigo-200/60 shadow-lg shadow-indigo-100/40 backdrop-blur-md">
+            ✨ CASO PREVIO RESUELTO POR EL AGENTE {{ (mensajes[i-1].soporteAsignado?.nombre || 'ANTERIOR') | uppercase }}
+          </span>
+        </div>
       </div>
-      <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest mt-1.5 px-1">
-        {{ m.timestamp | date:'shortTime' }}
-      </span>
-    </div>
+
+      <div class="flex flex-col" [ngClass]="{'items-end': m.remitente_id === miId, 'items-start': m.remitente_id !== miId}">
+        <div class="max-w-[85%] rounded-2xl px-4 py-3 shadow-sm text-sm leading-relaxed"
+             [ngClass]="{
+               'bg-ecuavip-blue text-white rounded-br-none font-medium': m.remitente_id === miId,
+               'bg-white border border-gray-100 text-gray-700 rounded-bl-none': m.remitente_id !== miId
+             }">
+          {{ m.contenido }}
+        </div>
+        <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest mt-1.5 px-1">
+          {{ m.timestamp | date:'shortTime' }}
+        </span>
+      </div>
+    </ng-container>
     
   </div>
 
@@ -71,14 +133,34 @@
 
   <!-- Input Area -->
   <div class="p-4 bg-white border-t border-gray-100/50 backdrop-blur-md">
+    <!-- Message from system when resolved -->
+    <div *ngIf="isClienteYResuelto" class="mb-3 bg-emerald-50/95 border border-emerald-100 p-3 rounded-2xl flex flex-col gap-2.5 shadow-sm backdrop-blur-md">
+      <div class="flex items-start gap-2.5">
+        <div class="text-emerald-500 mt-0.5 flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <p class="text-xs text-emerald-800 font-medium leading-relaxed">
+          Esta conversación ha sido marcada como resuelta por el administrador. Si necesitas ayuda de nuevo, puedes iniciar un nuevo chat.
+        </p>
+      </div>
+      <button 
+        type="button"
+        (click)="iniciarNuevoChat()"
+        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-3 rounded-xl text-xs transition-all hover:scale-[1.01] active:scale-[0.99] shadow-sm flex items-center justify-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo Chat
+      </button>
+    </div>
+
     <div class="flex items-center gap-2 bg-gray-50 rounded-2xl p-1 pr-2 border border-transparent focus-within:border-ecuavip-blue/30 focus-within:ring-4 focus-within:ring-ecuavip-blue/5 transition-all">
       <input type="text" 
              [(ngModel)]="nuevoMensaje" 
-             (keyup.enter)="enviarMensaje()"
-             placeholder="Escribe tu mensaje..."
-             class="flex-1 bg-transparent border-none focus:ring-0 px-4 py-2.5 text-sm text-gray-800 font-medium placeholder-gray-400">
+             (keyup.enter)="!isClienteYResuelto && enviarMensaje()"
+             [disabled]="isClienteYResuelto"
+             placeholder="{{ isClienteYResuelto ? 'Conversación resuelta' : 'Escribe tu mensaje...' }}"
+             class="flex-1 bg-transparent border-none focus:ring-0 px-4 py-2.5 text-sm text-gray-800 font-medium placeholder-gray-400 disabled:opacity-60 disabled:cursor-not-allowed">
       <button (click)="enviarMensaje()" 
-              [disabled]="!nuevoMensaje.trim()"
+              [disabled]="isClienteYResuelto || !nuevoMensaje.trim()"
               class="w-10 h-10 rounded-xl bg-ecuavip-blue text-white flex items-center justify-center disabled:opacity-30 disabled:grayscale transition-all hover:scale-105 hover:bg-blue-700 shadow-lg shadow-blue-600/20 active:scale-95">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ml-1"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
       </button>

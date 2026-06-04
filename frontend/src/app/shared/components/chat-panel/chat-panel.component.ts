@@ -23,6 +23,8 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
 
   @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
   private socketSub: Subscription | null = null;
+  private lastMessagesLength = 0;
+  isReopening = false;
 
   constructor(
     private chatService: ChatService,
@@ -32,6 +34,7 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['otroId'] && !changes['otroId'].firstChange) {
+      this.lastMessagesLength = 0; // Reset length on change of chat
       this.reSubscribeSocket();
       this.cargarHistorial();
     }
@@ -39,6 +42,10 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
 
   ngOnInit() {
     this.usuario = this.authService.getUsuario();
+    if (this.usuario && this.usuario.id) {
+      this.usuario.id = Number(this.usuario.id);
+    }
+    this.lastMessagesLength = 0; // Reset length on init
     this.cargarHistorial();
     this.reSubscribeSocket();
   }
@@ -63,10 +70,21 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
       console.log('[ChatPanel] Check:', { involucraAMi, involucraAlOtro, esCanalAdmin, esDelViajeActual });
 
       if ((involucraAMi && involucraAlOtro) || esDelViajeActual || (esCanalAdmin && involucraAlOtro)) {
-        const existe = this.mensajes.find(m => (m.id && m.id === data.id) || (m.contenido === data.contenido && m.timestamp === data.timestamp));
-        if (!existe) {
+        // Robust de-duplication swapping optimistic message with real message
+        const yaExiste = this.mensajes.find(m => 
+          m.contenido === data.contenido && 
+          m.remitente_id === data.remitente_id &&
+          (m.id === data.id || m.id === 0)
+        );
+
+        if (!yaExiste) {
           console.log('[ChatPanel] Agregando mensaje:', data.contenido);
           this.mensajes.push(data);
+          this.processMessages();
+        } else if (data.id) {
+          // If message exists as optimistic (id=0), replace it with the real one from DB
+          const index = this.mensajes.indexOf(yaExiste);
+          this.mensajes[index] = data;
           this.processMessages();
         }
       } else {
@@ -78,14 +96,28 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
   processMessages() {
     let lastViajeId: number | null = null;
     this.mensajes = this.mensajes.map((m) => {
-      const isNewTrip = m.viaje_id && m.viaje_id !== lastViajeId;
-      if (m.viaje_id) lastViajeId = m.viaje_id;
-      return { ...m, isNewTrip };
+      const remitente_id = m.remitente_id != null ? Number(m.remitente_id) : (m.remitente ? Number(m.remitente.id) : null);
+      const destinatario_id = m.destinatario_id != null ? Number(m.destinatario_id) : (m.destinatario ? Number(m.destinatario.id) : null);
+      const viaje_id = m.viaje_id != null ? Number(m.viaje_id) : (m.viaje ? Number(m.viaje.id) : null);
+
+      const isNewTrip = viaje_id && viaje_id !== lastViajeId;
+      if (viaje_id) lastViajeId = viaje_id;
+
+      return {
+        ...m,
+        remitente_id,
+        destinatario_id,
+        viaje_id,
+        isNewTrip
+      };
     });
   }
 
   ngAfterViewChecked() {
-    this.scrollToBottom();
+    if (this.mensajes.length !== this.lastMessagesLength) {
+      this.lastMessagesLength = this.mensajes.length;
+      this.scrollToBottom();
+    }
   }
 
   scrollToBottom(): void {
@@ -104,8 +136,9 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
 
   cargarHistorial() {
     this.loading = true;
-    this.chatService.getHistorial(this.otroId).subscribe({
+    this.chatService.getHistorial(this.otroId, 'admin', this.viajeId).subscribe({
       next: (res) => {
+        this.lastMessagesLength = 0; // Reset length so it scrolls down
         this.mensajes = res;
         this.processMessages();
         this.loading = false;
@@ -117,8 +150,26 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
     });
   }
 
+  get isResuelto(): boolean {
+    if (this.mensajes.length === 0) return false;
+    const ultimo = this.mensajes[this.mensajes.length - 1];
+    return ultimo && (ultimo.estado === 'resuelto' || (ultimo.viaje_info && ultimo.viaje_info.estado === 'resuelto'));
+  }
+
+  get isClienteYResuelto(): boolean {
+    const esCliente = this.usuario?.rol?.toLowerCase() !== 'admin';
+    return esCliente && this.isResuelto && !this.isReopening;
+  }
+
+  iniciarNuevoChat() {
+    this.isReopening = true;
+    this.nuevoMensaje = '';
+  }
+
   enviar() {
     if (!this.nuevoMensaje.trim()) return;
+
+    this.isReopening = false; // Reset reopening state
 
     const payload = {
       viaje_id: this.viajeId || null,

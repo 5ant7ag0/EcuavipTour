@@ -1,4 +1,13 @@
 <div class="relative w-full h-screen">
+  <!-- Floating "Mis viajes" button -->
+  <a routerLink="/cliente/historial" class="fixed top-6 right-6 md:top-24 md:right-8 z-[90] flex items-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md border border-gray-100 rounded-2xl shadow-lg shadow-gray-200/50 hover:bg-white hover:scale-105 active:scale-95 transition-all text-xs font-black text-gray-800 uppercase tracking-wider no-underline">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600">
+      <path d="M12 8v4l3 3"/>
+      <circle cx="12" cy="12" r="10"/>
+    </svg>
+    Mis viajes
+  </a>
+
   <!-- Google Map Background -->
   <google-map 
     height="100%" 
@@ -12,7 +21,7 @@
   </google-map>
 
   <!-- Floating UI Overlay -->
-  <div class="absolute top-0 left-0 w-full md:w-[450px] h-full p-4 md:p-8 pointer-events-none z-10 flex flex-col justify-end md:justify-center">
+  <div class="absolute top-0 left-0 w-full md:w-[450px] h-full p-4 pb-20 md:p-8 pointer-events-none z-10 flex flex-col justify-end md:justify-center">
     
     <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-sm p-6 pointer-events-auto border border-ecuavip-light/50 max-h-full overflow-y-auto">
       

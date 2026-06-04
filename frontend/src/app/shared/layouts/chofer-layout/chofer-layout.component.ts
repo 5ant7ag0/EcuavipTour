@@ -34,7 +34,7 @@ import { Subscription } from 'rxjs';
       </div>
 
       <!-- Main Content -->
-      <main class="flex-1 pb-24 md:pb-8 overflow-y-auto">
+      <main [class]="isDashboardMode ? 'flex-1 overflow-hidden' : 'flex-1 pb-24 md:pb-8 overflow-y-auto'">
         <router-outlet></router-outlet>
       </main>
     </div>
@@ -50,6 +50,10 @@ export class ChoferLayoutComponent implements OnInit, OnDestroy {
     private router: Router,
     private socketService: SocketService
   ) {}
+
+  get isDashboardMode(): boolean {
+    return this.router.url.includes('/chofer/dashboard');
+  }
 
   ngOnInit() {
     this.usuario = this.authService.getUsuario();

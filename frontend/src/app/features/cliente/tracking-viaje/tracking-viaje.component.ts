@@ -7,7 +7,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/chat-sidebar.component';
-import { Subscription } from 'rxjs';
+import { Subscription, Observable } from 'rxjs';
+import { CountdownService } from '../../../core/services/countdown.service';
 
 import { FormsModule } from '@angular/forms';
 
@@ -26,8 +27,21 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
   usuario: any = null;
   isChatOpen = false;
   isChatOnly = false;
-  unreadMessages = 0;
+  private componentSubs: Subscription[] = [];
   adminId = 1;
+  countdown$: Observable<{time: string, isCritical: boolean, isExpired: boolean}> | null = null;
+  private countdownSub?: Subscription;
+
+  asTimer(timer: any): any {
+    return timer;
+  }
+
+  get unreadMessages(): number {
+    return this.socketService.unreadMessages;
+  }
+
+  // Cancelación
+  showCancelModal = false;
 
   // Calificación
   showRatingModal = false;
@@ -50,7 +64,8 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private socketService: SocketService,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private countdownService: CountdownService
   ) {}
 
   ngOnInit() {
@@ -100,13 +115,6 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Escuchar mensajes entrantes
-    this.chatSub = this.socketService.listen('nuevo_mensaje').subscribe((data) => {
-      // El mensaje es para nosotros (de admin a cliente o de chofer a cliente)
-      if (data.destinatario_id === this.usuario.id && !this.isChatOpen) {
-        this.unreadMessages++;
-      }
-    });
 
     // Escuchar ubicación del chofer
     this.locationSub = this.socketService.listen('ubicacion_chofer_actualizada').subscribe((data) => {
@@ -115,12 +123,14 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     });
 
     // Escuchar si se asigna un chofer en tiempo real
-    this.assignmentSub = this.socketService.listen('chofer_asignado').subscribe((data) => {
+    this.assignmentSub = this.socketService.listen('chofer_asignado').subscribe((data: any) => {
       console.log('Chofer asignado en tiempo real!', data);
       if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id)) {
         this.viajeActual.chofer_id = data.chofer_id;
         this.viajeActual.nombre_chofer = data.nombre_chofer;
         this.viajeActual.estado_logistico = data.estado;
+        this.viajeActual.foto_chofer_url = data.foto_chofer_url;
+        this.viajeActual.vehiculo = data.vehiculo;
         this.showToast(`¡Un chofer ha aceptado tu viaje! ${data.nombre_chofer} está en camino.`);
         if (this.directionsRenderer) this.calculateRoute();
       }
@@ -184,6 +194,17 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     if (this.router.url.includes('/mensajes')) {
       this.isChatOpen = true;
       this.isChatOnly = true;
+    }
+
+    // Escuchar el evento reactivo global para abrir el chat
+    const chatSub = this.socketService.triggerChatOpen.subscribe(() => {
+      this.isChatOpen = true;
+    });
+    this.componentSubs.push(chatSub);
+
+    if (this.socketService.openChatOnLoad) {
+      this.isChatOpen = true;
+      this.socketService.openChatOnLoad = false;
     }
   }
 
@@ -263,12 +284,15 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     if (this.chatSub) this.chatSub.unsubscribe();
     if (this.locationSub) this.locationSub.unsubscribe();
     if (this.assignmentSub) this.assignmentSub.unsubscribe();
+    if (this.countdownSub) this.countdownSub.unsubscribe();
+    this.componentSubs.forEach(s => s.unsubscribe());
   }
 
   toggleChat() {
+    if (!this.viajeActual?.nombre_chofer) return;
     this.isChatOpen = !this.isChatOpen;
     if (this.isChatOpen) {
-      this.unreadMessages = 0;
+      this.socketService.unreadMessages = 0;
       // Marcamos como leído ante la administración (ID 1)
       this.clienteService.markAsRead(1).subscribe();
     }
@@ -279,11 +303,31 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     this.clienteService.getMisViajes().subscribe({
       next: (viajes) => {
         if (viajes && viajes.length > 0) {
-          // Asumimos que el primer viaje es el actual si no está finalizado
+          // Asumimos que el primer viaje es el actual si no está finalizado o cancelado
           const ultimoViaje = viajes[0];
-          if (ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_pago !== 'rechazado') {
+          if (ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_logistico !== 'cancelado') {
+            if (ultimoViaje.estado_pago === 'pendiente') {
+              this.router.navigate(['/cliente/reserva'], {
+                queryParams: {
+                  viajeId: ultimoViaje.viaje_id || ultimoViaje.id
+                }
+              });
+              return;
+            }
             this.viajeActual = ultimoViaje;
             this.historial = viajes.slice(1);
+            
+            if (this.viajeActual.estado_pago === 'rechazado' && this.viajeActual.fecha_limite_pago) {
+              if (this.countdownSub) this.countdownSub.unsubscribe();
+              this.countdown$ = this.countdownService.getCountdown(this.viajeActual.fecha_limite_pago);
+              this.countdownSub = this.countdown$.subscribe((val: any) => {
+                if (val && val.isExpired) {
+                  this.viajeActual = null;
+                  this.cargarViajes();
+                }
+              });
+            }
+
             // Inicializar mapa después de cargar los datos
             setTimeout(() => this.initMap(), 500);
           } else {
@@ -363,5 +407,36 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
   omitirCalificacion() {
     this.showRatingModal = false;
     this.cargarViajes();
+  }
+
+  cancelarViaje() {
+    this.showCancelModal = true;
+  }
+
+  confirmarCancelacion() {
+    if (!this.viajeActual) return;
+    const viajeId = this.viajeActual.viaje_id || this.viajeActual.id;
+
+    this.clienteService.cancelarViaje(viajeId).subscribe({
+      next: () => {
+        this.showToast('Viaje cancelado con éxito.');
+        
+        // Notify driver if assigned
+        if (this.viajeActual.chofer_id) {
+          this.socketService.emit('cancelar_viaje', {
+            viaje_id: viajeId,
+            motivo: 'Cancelado por el cliente'
+          });
+        }
+
+        this.showCancelModal = false;
+        this.viajeActual = null;
+        setTimeout(() => this.cargarViajes(), 2000);
+      },
+      error: (err) => {
+        this.showToast(err.error?.error || 'Error al cancelar viaje');
+        this.showCancelModal = false;
+      }
+    });
   }
 }

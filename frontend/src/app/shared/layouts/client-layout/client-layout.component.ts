@@ -35,7 +35,7 @@ import { Subscription } from 'rxjs';
       </div>
 
       <!-- Contenido principal -->
-      <main class="flex-1 pb-24 md:pb-8">
+      <main class="flex-1" [ngClass]="isCotizarPage() ? '' : 'pb-24 md:pb-8'">
         <router-outlet></router-outlet>
       </main>
 
@@ -66,6 +66,10 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
       this.socketService.connectAndJoin();
       this.setupSocketListeners();
     }
+  }
+
+  isCotizarPage(): boolean {
+    return this.router.url.includes('/cliente/cotizar');
   }
 
   setupSocketListeners() {

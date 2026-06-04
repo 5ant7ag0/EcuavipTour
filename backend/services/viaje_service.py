@@ -301,21 +301,28 @@ class ViajeService:
             qr = TicketQR.query.filter_by(viaje_id=v.id).first()
             
             nombre_chofer = None
+            foto_chofer_url = None
             if v.chofer_id:
                 chofer = Usuario.query.get(v.chofer_id)
                 if chofer:
                     nombre_chofer = chofer.nombre
+                    foto_chofer_url = chofer.foto_perfil_url
             
             vehiculo_data = None
+            veh = None
             if v.vehiculo_id:
                 veh = Vehiculo.query.get(v.vehiculo_id)
-                if veh:
-                    vehiculo_data = {
-                        "placa": veh.placa,
-                        "modelo": veh.modelo,
-                        "tipo": veh.tipo_vehiculo,
-                        "foto_auto_url": veh.foto_auto_url
-                    }
+            elif v.chofer_id:
+                veh = Vehiculo.query.filter_by(chofer_id=v.chofer_id, estado='activo').first()
+
+            if veh:
+                vehiculo_data = {
+                    "placa": veh.placa,
+                    "marca": veh.marca,
+                    "modelo": veh.modelo,
+                    "tipo": veh.tipo_vehiculo,
+                    "foto_auto_url": veh.foto_auto_url
+                }
             
             calif = Calificacion.query.filter_by(viaje_id=v.id).first()
             calificacion_data = {
@@ -341,6 +348,7 @@ class ViajeService:
                 "fecha_limite_pago": v.fecha_limite_pago.isoformat() if v.fecha_limite_pago else None,
                 "qr_hash": qr.codigo_hash if qr else None,
                 "nombre_chofer": nombre_chofer,
+                "foto_chofer_url": foto_chofer_url,
                 "vehiculo": vehiculo_data,
                 "calificacion": calificacion_data,
                 "asientos": asientos
@@ -358,26 +366,38 @@ class ViajeService:
             return None, 200
 
         chofer_data = None
+        foto_chofer_url = None
         if v.chofer_id:
             chofer = Usuario.query.get(v.chofer_id)
             if chofer:
-                chofer_data = {"id": chofer.id, "nombre": chofer.nombre, "telefono": chofer.telefono}
+                chofer_data = {
+                    "id": chofer.id, 
+                    "nombre": chofer.nombre, 
+                    "telefono": chofer.telefono,
+                    "foto_perfil_url": chofer.foto_perfil_url
+                }
+                foto_chofer_url = chofer.foto_perfil_url
 
         vehiculo_data = None
+        veh = None
         if v.vehiculo_id:
             veh = Vehiculo.query.get(v.vehiculo_id)
-            if veh:
-                vehiculo_data = {
-                    "placa": veh.placa,
-                    "marca": veh.marca,
-                    "modelo": veh.modelo,
-                    "anio": veh.anio,
-                    "tipo": veh.tipo_vehiculo,
-                    "foto_auto_url": veh.foto_auto_url
-                }
+        elif v.chofer_id:
+            veh = Vehiculo.query.filter_by(chofer_id=v.chofer_id, estado='activo').first()
+
+        if veh:
+            vehiculo_data = {
+                "placa": veh.placa,
+                "marca": veh.marca,
+                "modelo": veh.modelo,
+                "anio": veh.anio,
+                "tipo": veh.tipo_vehiculo,
+                "foto_auto_url": veh.foto_auto_url
+            }
 
         cliente = Usuario.query.get(v.cliente_id)
         nombre_cliente = cliente.nombre if cliente else "Cliente Desconocido"
+        foto_cliente_url = cliente.foto_perfil_url if (cliente and cliente.foto_perfil_url) else None
         qr = TicketQR.query.filter_by(viaje_id=v.id).first()
 
         from database import ReservaAsiento
@@ -395,8 +415,10 @@ class ViajeService:
             "estado_logistico": v.estado_logistico,
             "tipo_servicio": v.tipo_servicio,
             "chofer": chofer_data,
+            "foto_chofer_url": foto_chofer_url,
             "vehiculo": vehiculo_data,
             "nombre_cliente": nombre_cliente,
+            "foto_cliente_url": foto_cliente_url,
             "qr_hash": qr.codigo_hash if qr else None,
             "asientos": asientos
         }

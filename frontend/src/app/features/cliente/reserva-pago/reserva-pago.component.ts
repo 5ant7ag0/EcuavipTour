@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ReservaService } from '../../../core/services/reserva.service';
 import { ClienteService } from '../../../core/services/cliente.service';
+import { CountdownService } from '../../../core/services/countdown.service';
+import { Subscription, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-reserva-pago',
@@ -10,19 +12,26 @@ import { ClienteService } from '../../../core/services/cliente.service';
   imports: [CommonModule, RouterModule],
   templateUrl: './reserva-pago.component.html'
 })
-export class ReservaPagoComponent implements OnInit {
+export class ReservaPagoComponent implements OnInit, OnDestroy {
   reservaParams: any = {};
   selectedFile: File | null = null;
   filePreview: string | null = null;
   loading = false;
   success = false;
   error = '';
+  countdown$: Observable<{time: string, isCritical: boolean, isExpired: boolean}> | null = null;
+  private countdownSub?: Subscription;
+
+  asTimer(timer: any): any {
+    return timer;
+  }
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private reservaService: ReservaService,
-    private clienteService: ClienteService
+    private clienteService: ClienteService,
+    private countdownService: CountdownService
   ) {}
 
   ngOnInit() {
@@ -41,6 +50,10 @@ export class ReservaPagoComponent implements OnInit {
               this.reservaParams.tipo = viaje.tipo_servicio;
               this.reservaParams.pasajeros = viaje.num_pasajeros;
               this.reservaParams.hora = viaje.fecha_viaje;
+              
+              if (viaje.fecha_limite_pago) {
+                this.startCountdown(viaje.fecha_limite_pago);
+              }
             } else {
               this.error = 'No se encontró la reservación indicada.';
             }
@@ -52,8 +65,43 @@ export class ReservaPagoComponent implements OnInit {
         });
       } else if (!this.reservaParams.origen || !this.reservaParams.destino) {
         this.router.navigate(['/cliente/cotizar']);
+      } else {
+        // New booking: start a 15-minute countdown on-screen
+        const targetDate = new Date(Date.now() + 15 * 60000).toISOString();
+        this.startCountdown(targetDate);
       }
     });
+  }
+
+  ngOnDestroy() {
+    if (this.countdownSub) {
+      this.countdownSub.unsubscribe();
+    }
+  }
+
+  private startCountdown(targetDate: string) {
+    if (this.countdownSub) {
+      this.countdownSub.unsubscribe();
+    }
+    this.countdown$ = this.countdownService.getCountdown(targetDate);
+    this.countdownSub = this.countdown$.subscribe((val: any) => {
+      if (val && val.isExpired) {
+        alert('El tiempo límite para realizar el pago ha expirado. Tu reservación ha sido cancelada.');
+        this.autoCancelarViaje();
+      }
+    });
+  }
+
+  autoCancelarViaje() {
+    const viajeId = this.reservaParams.viajeId;
+    if (viajeId) {
+      this.clienteService.cancelarViaje(Number(viajeId)).subscribe({
+        next: () => this.router.navigate(['/cliente/cotizar']),
+        error: () => this.router.navigate(['/cliente/cotizar'])
+      });
+    } else {
+      this.router.navigate(['/cliente/cotizar']);
+    }
   }
 
   onFileSelected(event: any) {
@@ -117,6 +165,28 @@ export class ReservaPagoComponent implements OnInit {
           this.error = 'Error al crear la reserva: ' + (err.error?.error || 'Desconocido');
         }
       });
+    }
+  }
+
+  cancelarReserva() {
+    const confirmacion = confirm('¿Estás seguro de que deseas cancelar esta reservación?');
+    if (!confirmacion) return;
+
+    const viajeId = this.reservaParams.viajeId;
+    if (viajeId) {
+      this.loading = true;
+      this.clienteService.cancelarViaje(Number(viajeId)).subscribe({
+        next: () => {
+          this.loading = false;
+          this.router.navigate(['/cliente/cotizar']);
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = 'Error al cancelar la reservación: ' + (err.error?.error || 'Desconocido');
+        }
+      });
+    } else {
+      this.router.navigate(['/cliente/cotizar']);
     }
   }
 

@@ -1,17 +1,6 @@
 <div class="flex flex-col h-full bg-gray-50/50 relative overflow-hidden font-sans">
   
-  <!-- Header -->
-  <div class="bg-ecuavip-blue px-5 py-4 text-white shadow-sm flex-shrink-0 z-10 flex justify-between items-center">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      </div>
-      <div>
-        <h3 class="font-bold leading-tight">Chat de Asistencia</h3>
-        <p class="text-xs text-white/80">Viaje #{{ viajeId }}</p>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Loading State -->
   <div *ngIf="loading" class="flex-1 flex justify-center items-center">
@@ -28,6 +17,19 @@
     </div>
 
     <ng-container *ngFor="let msg of mensajes; let i = index">
+      <!-- Case Transition Separator -->
+      <div *ngIf="i > 0 && mensajes[i-1].estado === 'resuelto' && msg.estado !== 'resuelto'" 
+           class="w-full flex justify-center items-center my-8 relative shrink-0">
+        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="w-full bg-gradient-to-r from-transparent via-indigo-400/60 to-transparent h-[2px]"></div>
+        </div>
+        <div class="relative flex justify-center">
+          <span class="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50/95 px-4 py-1.5 rounded-full border border-indigo-200/60 shadow-lg shadow-indigo-100/40 backdrop-blur-md">
+            ✨ CASO PREVIO RESUELTO POR EL AGENTE {{ (mensajes[i-1].soporteAsignado?.nombre || 'ANTERIOR') | uppercase }}
+          </span>
+        </div>
+      </div>
+
       <!-- Trip Separator Label -->
       <div *ngIf="msg.isNewTrip" class="flex items-center gap-3 my-8 opacity-70">
         <div class="h-[1px] flex-1 bg-gray-200"></div>
@@ -72,19 +74,39 @@
 
   <!-- Input Area -->
   <div class="bg-white border-t border-gray-100 p-4 flex-shrink-0">
+    <!-- Message from system when resolved -->
+    <div *ngIf="isClienteYResuelto" class="mb-3 bg-emerald-50/95 border border-emerald-100 p-3 rounded-2xl flex flex-col gap-2.5 shadow-sm backdrop-blur-md">
+      <div class="flex items-start gap-2.5">
+        <div class="text-emerald-500 mt-0.5 flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <p class="text-xs text-emerald-800 font-medium leading-relaxed">
+          Esta conversación ha sido marcada como resuelta por el administrador. Si necesitas ayuda de nuevo, puedes iniciar un nuevo chat.
+        </p>
+      </div>
+      <button 
+        type="button"
+        (click)="iniciarNuevoChat()"
+        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-3 rounded-xl text-xs transition-all hover:scale-[1.01] active:scale-[0.99] shadow-sm flex items-center justify-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo Chat
+      </button>
+    </div>
+
     <form (ngSubmit)="enviar()" class="flex items-end gap-2 relative">
       <textarea 
         [(ngModel)]="nuevoMensaje" 
         name="mensaje" 
         rows="1"
-        placeholder="Escribe un mensaje..."
-        class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-ecuavip-blue/50 focus:bg-white resize-none text-sm leading-tight max-h-32 transition-all"
-        (keydown.enter)="$event.preventDefault(); enviar()"
+        [disabled]="isClienteYResuelto"
+        placeholder="{{ isClienteYResuelto ? 'Conversación resuelta' : 'Escribe un mensaje...' }}"
+        class="flex-1 bg-gray-50 border border-gray-200 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-ecuavip-blue/50 focus:bg-white resize-none text-sm leading-tight max-h-32 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        (keydown.enter)="!isClienteYResuelto && $event.preventDefault(); !isClienteYResuelto && enviar()"
       ></textarea>
       
       <button 
         type="submit" 
-        [disabled]="!nuevoMensaje.trim()"
+        [disabled]="isClienteYResuelto || !nuevoMensaje.trim()"
         class="bg-ecuavip-blue text-white p-3 rounded-full hover:bg-ecuavip-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex-shrink-0">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>

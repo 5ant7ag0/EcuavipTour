@@ -20,6 +20,9 @@ export class PerfilChoferComponent implements OnInit {
   showPasswordForm = false;
   successMsg: string | null = null;
   errorMsg: string | null = null;
+  
+  selectedFile: File | null = null;
+  previewUrl: string | null = null;
 
   activeTab: 'perfil' | 'vehiculo' = 'perfil';
 
@@ -105,6 +108,8 @@ export class PerfilChoferComponent implements OnInit {
   cancelEditing() {
     this.isEditing = false;
     this.showPasswordForm = false;
+    this.selectedFile = null;
+    this.previewUrl = null;
     this.cargarUsuario();
     this.cargarVehiculo();
   }
@@ -128,73 +133,83 @@ export class PerfilChoferComponent implements OnInit {
       payload.password = this.passwordNueva;
     }
 
-    this.authService.updateProfile(payload).subscribe({
-      next: (res: any) => {
-        this.usuario = res.usuario;
-        this.authService.updateProfile(res.usuario); // refresh localStorage user state
-        
-        // Save license info in backend database if still editable
-        if (this.vehiculoEstado !== 'activo') {
-          const vFormData = new FormData();
-          vFormData.append('licencia_tipo', this.licenciaTipo);
-          vFormData.append('licencia_vigencia', this.licenciaVigencia);
-          this.choferService.updateVehiculo(vFormData).subscribe({
-            next: (vRes: any) => {
-              console.log('Licencia guardada en BDD:', vRes);
-              this.cargarVehiculo();
-            },
-            error: (vErr) => {
-              console.error('Error al guardar licencia en BDD:', vErr);
-            }
-          });
-        }
-
-        // Split name back
-        const partes = (this.usuario.nombre || '').split(' ');
-        this.nombre = partes[0] || '';
-        this.apellido = partes.slice(1).join(' ') || '';
-
-        this.isLoading = false;
-        this.isEditing = false;
-        this.showPasswordForm = false;
-        this.successMsg = '¡Tu perfil ha sido actualizado con éxito!';
-        
-        // Reset password fields
-        this.passwordActual = '';
-        this.passwordNueva = '';
-        
-        setTimeout(() => this.successMsg = null, 4000);
-      },
-      error: (err: any) => {
-        console.error(err);
-        this.isLoading = false;
-        this.errorMsg = 'Error al actualizar el perfil. Por favor, reintenta.';
-        setTimeout(() => this.errorMsg = null, 4000);
-      }
-    });
-  }
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.isLoading = true;
-      this.successMsg = null;
-      this.errorMsg = null;
-      
-      this.authService.uploadAvatar(file).subscribe({
+    const performUpdateProfile = () => {
+      this.authService.updateProfile(payload).subscribe({
         next: (res: any) => {
           this.usuario = res.usuario;
+          
+          // Save license info in backend database if still editable
+          if (this.vehiculoEstado !== 'activo') {
+            const vFormData = new FormData();
+            vFormData.append('licencia_tipo', this.licenciaTipo);
+            vFormData.append('licencia_vigencia', this.licenciaVigencia);
+            this.choferService.updateVehiculo(vFormData).subscribe({
+              next: (vRes: any) => {
+                console.log('Licencia guardada en BDD:', vRes);
+                this.cargarVehiculo();
+              },
+              error: (vErr) => {
+                console.error('Error al guardar licencia en BDD:', vErr);
+              }
+            });
+          }
+
+          // Split name back
+          const partes = (this.usuario.nombre || '').split(' ');
+          this.nombre = partes[0] || '';
+          this.apellido = partes.slice(1).join(' ') || '';
+
           this.isLoading = false;
-          this.successMsg = 'Foto de perfil actualizada correctamente.';
+          this.isEditing = false;
+          this.showPasswordForm = false;
+          this.selectedFile = null;
+          this.previewUrl = null;
+          this.successMsg = '¡Tu perfil ha sido actualizado con éxito!';
+          
+          // Reset password fields
+          this.passwordActual = '';
+          this.passwordNueva = '';
+          
           setTimeout(() => this.successMsg = null, 4000);
         },
         error: (err: any) => {
           console.error(err);
           this.isLoading = false;
-          this.errorMsg = 'Error al subir la imagen. Intente de nuevo.';
+          this.errorMsg = 'Error al actualizar el perfil. Por favor, reintenta.';
           setTimeout(() => this.errorMsg = null, 4000);
         }
       });
+    };
+
+    if (this.selectedFile) {
+      this.authService.uploadAvatar(this.selectedFile).subscribe({
+        next: (res: any) => {
+          this.usuario = res.usuario;
+          performUpdateProfile();
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.isLoading = false;
+          this.errorMsg = 'Error al subir la imagen de perfil.';
+          setTimeout(() => this.errorMsg = null, 4000);
+        }
+      });
+    } else {
+      performUpdateProfile();
+    }
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+      
+      // Local preview using FileReader
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.previewUrl = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
   }
 

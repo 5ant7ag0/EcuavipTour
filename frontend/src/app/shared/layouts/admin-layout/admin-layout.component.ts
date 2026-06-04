@@ -25,7 +25,7 @@ import { AdminNavComponent } from '../../components/admin-nav/admin-nav.componen
       <div class="flex-1 flex flex-col min-w-0 my-4 mr-4 h-[calc(100vh-2rem)] rounded-3xl bg-slate-50 shadow-sm border border-gray-100 overflow-hidden">
         
         <!-- Top Header -->
-        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 z-[100] shrink-0 shadow-sm">
+        <header class="bg-transparent flex items-center justify-between pt-4 pb-2 px-6 z-[100] shrink-0">
           <div class="flex items-center gap-4">
             <!-- Espacio para breadcrumbs o estado global si se desea, ahora limpio -->
           </div>
@@ -48,10 +48,10 @@ import { AdminNavComponent } from '../../components/admin-nav/admin-nav.componen
                   <img *ngIf="usuario?.foto_perfil_url" [src]="'http://localhost:5001/' + usuario.foto_perfil_url" class="w-full h-full object-cover">
                 </div>
                 <div class="text-left hidden lg:block">
-                  <p class="text-xs font-black text-slate-900 leading-tight">{{ usuario?.nombre }}</p>
-                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrador</p>
+                  <p class="text-sm font-semibold text-slate-800 leading-tight">{{ usuario?.nombre }}</p>
+                  <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Administrador</p>
                 </div>
-                <svg class="text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
+                <svg class="text-slate-600" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>
               </button>
 
               <!-- Dropdown menu -->
@@ -88,7 +88,11 @@ import { AdminNavComponent } from '../../components/admin-nav/admin-nav.componen
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   isSidebarOpen = true;
   notificacionesNuevas = 0;
-  usuario: any = null;
+
+  get usuario() {
+    return this.authService.getUsuario();
+  }
+
   private socketSub: Subscription | null = null;
   private countSub: Subscription | null = null;
 
@@ -104,7 +108,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.usuario = this.authService.getUsuario();
     // Doble verificación en el componente: si no es admin, redirigir
     if (!this.isAdmin) {
       this.router.navigate(['/cliente']);

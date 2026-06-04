@@ -41,11 +41,11 @@
       <div class="flex flex-col items-center w-full mt-4">
         <div class="relative w-36 h-36 rounded-full border-4 border-slate-100 shadow-md group shrink-0 aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
           <img 
-            *ngIf="usuario?.foto_perfil_url" 
-            [src]="'http://localhost:5001/' + usuario.foto_perfil_url" 
+            *ngIf="previewUrl || (usuario?.foto_perfil_url || usuario?.fotoPerfilUrl)" 
+            [src]="previewUrl || ('http://localhost:5001/' + (usuario.foto_perfil_url || usuario.fotoPerfilUrl))" 
             class="w-full h-full object-cover rounded-full"
             alt="Foto de Perfil">
-          <span *ngIf="!usuario?.foto_perfil_url" class="text-3xl font-black text-blue-600 select-none">
+          <span *ngIf="!previewUrl && !(usuario?.foto_perfil_url || usuario?.fotoPerfilUrl)" class="text-3xl font-black text-blue-600 select-none">
             {{ nombre.charAt(0) || 'C' }}
           </span>
           

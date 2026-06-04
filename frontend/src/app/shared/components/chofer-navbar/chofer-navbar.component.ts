@@ -39,8 +39,9 @@ import { SocketService } from '../../../core/services/socket.service';
           <!-- User Dropdown -->
           <div class="relative group">
             <button class="flex items-center gap-3 p-1.5 pr-4 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100">
-              <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-600/20">
-                {{ usuario?.nombre?.charAt(0) }}
+              <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-600/20 overflow-hidden shrink-0">
+                <img *ngIf="usuario?.foto_perfil_url" [src]="'http://localhost:5001/' + usuario.foto_perfil_url" class="w-full h-full object-cover">
+                <span *ngIf="!usuario?.foto_perfil_url">{{ usuario?.nombre?.charAt(0) }}</span>
               </div>
               <div class="text-left hidden lg:block">
                 <p class="text-sm font-black text-gray-900 leading-tight">{{ usuario?.nombre?.split(' ')[0] }}</p>

@@ -19,7 +19,7 @@ import { filter } from 'rxjs/operators';
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>Inicio</span>
       </a>
-      <a *ngIf="isLoggedIn" routerLink="/cliente/mis-viajes" routerLinkActive="active-mobile" class="nav-mobile-item">
+      <a *ngIf="isLoggedIn" routerLink="/cliente/mis-viajes" [class.active-mobile]="isMisViajesActive()" class="nav-mobile-item">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.617a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0l4.212 2.106Z"/><path d="M9 3.5v13"/><path d="M15 7.5v13"/></svg>
         <span>Mis Viajes</span>
       </a>
@@ -56,7 +56,7 @@ import { filter } from 'rxjs/operators';
           <a routerLink="/" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="nav-active" class="nav-link">Inicio</a>
           <a routerLink="/servicios" routerLinkActive="nav-active" class="nav-link">Servicios</a>
           <a routerLink="/cliente/cotizar" routerLinkActive="nav-active" class="nav-link">Cotizar</a>
-          <a *ngIf="isLoggedIn" routerLink="/cliente/mis-viajes" routerLinkActive="nav-active" class="nav-link">Mis Viajes</a>
+          <a *ngIf="isLoggedIn" routerLink="/cliente/mis-viajes" [class.nav-active]="isMisViajesActive()" class="nav-link">Mis Viajes</a>
           <a routerLink="/rastreo" routerLinkActive="nav-active" class="nav-link">Rastreo</a>
           <a routerLink="/contacto" routerLinkActive="nav-active" class="nav-link">Contacto</a>
         </nav>
@@ -64,9 +64,10 @@ import { filter } from 'rxjs/operators';
         <div class="flex items-center gap-3 flex-shrink-0">
           <ng-container *ngIf="isLoggedIn; else loginBtnTpl">
             <div class="group relative">
-              <button class="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100">
-                <div class="w-8 h-8 rounded-xl bg-ecuavip-blue/10 flex items-center justify-center text-ecuavip-blue font-black text-sm group-hover:bg-ecuavip-blue group-hover:text-white transition-all">
-                  {{ usuario?.nombre?.charAt(0)?.toUpperCase() || 'U' }}
+              <button class="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100">
+                <div class="w-8 h-8 rounded-full bg-ecuavip-blue/10 flex items-center justify-center text-ecuavip-blue font-black text-sm transition-all overflow-hidden border border-ecuavip-blue/5 shadow-sm">
+                  <span *ngIf="!(usuario?.foto_perfil_url || usuario?.fotoPerfilUrl)">{{ usuario?.nombre?.charAt(0)?.toUpperCase() || 'U' }}</span>
+                  <img *ngIf="usuario?.foto_perfil_url || usuario?.fotoPerfilUrl" [src]="'http://localhost:5001/' + (usuario.foto_perfil_url || usuario.fotoPerfilUrl)" class="w-full h-full object-cover">
                 </div>
                 <div class="text-left hidden lg:block">
                   <p class="text-sm font-bold text-gray-900 leading-none">{{ usuario?.nombre?.split(' ')[0] || 'Mi cuenta' }}</p>
@@ -165,7 +166,9 @@ import { filter } from 'rxjs/operators';
 export class ClientNavbarComponent implements OnInit {
   @Output() onLoginRequest = new EventEmitter<void>();
 
-  usuario: any = null;
+  get usuario() {
+    return this.authService.getUsuario();
+  }
   unreadCount = 0;
   isLoggedIn = false;
   isAdmin = false;
@@ -198,10 +201,18 @@ export class ClientNavbarComponent implements OnInit {
 
   checkAuth() {
     this.isLoggedIn = this.authService.isLoggedIn();
-    this.usuario = this.authService.getUsuario();
     this.isAdmin = this.usuario?.rol === 'admin';
     this.isChofer = this.usuario?.rol === 'chofer';
     this.shouldShowNavbar = !this.isLoggedIn || this.usuario?.rol === 'cliente';
+  }
+
+  isMisViajesActive(): boolean {
+    const url = this.router.url;
+    return url.includes('/cliente/mis-viajes') || 
+           url.includes('/cliente/cotizar') || 
+           url.includes('/cliente/en-curso') || 
+           url.includes('/cliente/historial') || 
+           url.includes('/cliente/reserva');
   }
 
   setupSocket() {

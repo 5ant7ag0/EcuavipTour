@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { misViajesGuard } from './core/guards/mis-viajes.guard';
 
 export const routes: Routes = [
 
@@ -39,7 +40,8 @@ export const routes: Routes = [
     loadComponent: () => import('./shared/layouts/client-layout/client-layout.component').then(m => m.ClientLayoutComponent),
     children: [
       { path: 'cotizar', loadComponent: () => import('./features/cliente/cotizador/cotizador.component').then(m => m.CotizadorComponent) },
-      { path: 'mis-viajes', loadComponent: () => import('./features/cliente/mis-viajes/mis-viajes.component').then(m => m.MisViajesComponent), canActivate: [authGuard] },
+      { path: 'mis-viajes', loadComponent: () => import('./features/cliente/mis-viajes/mis-viajes.component').then(m => m.MisViajesComponent), canActivate: [authGuard, misViajesGuard] },
+      { path: 'historial', loadComponent: () => import('./features/cliente/mis-viajes/mis-viajes.component').then(m => m.MisViajesComponent), canActivate: [authGuard] },
       { path: 'en-curso', loadComponent: () => import('./features/cliente/tracking-viaje/tracking-viaje.component').then(m => m.TrackingViajeComponent), canActivate: [authGuard] },
       { path: 'mensajes', loadComponent: () => import('./features/cliente/tracking-viaje/tracking-viaje.component').then(m => m.TrackingViajeComponent), canActivate: [authGuard] },
       { path: 'perfil', loadComponent: () => import('./features/cliente/perfil/perfil.component').then(m => m.PerfilComponent), canActivate: [authGuard] },

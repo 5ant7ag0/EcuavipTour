@@ -169,7 +169,7 @@ import { ChatSidebarComponent } from '../../shared/components/chat-sidebar/chat-
       <app-chat-sidebar 
         [isOpen]="isChatOpen" 
         tipoReceptor="admin" 
-        tituloCabecera="Soporte VIP Ecuavip" 
+        tituloCabecera="Soporte EcuavipTour" 
         (closed)="isChatOpen = false">
       </app-chat-sidebar>
     </div>

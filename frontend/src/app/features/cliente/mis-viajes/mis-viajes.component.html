@@ -1,13 +1,8 @@
 <div class="max-w-4xl mx-auto px-4 pt-8">
   <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6 mb-8">
     <div>
-      <h1 class="text-3xl font-black text-ecuavip-dark tracking-tight">Mis Viajes</h1>
-      <p class="text-gray-500 font-medium mt-1">Gestiona tus reservas y solicita asistencia.</p>
-    </div>
-    <div class="flex w-full sm:w-auto bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
-      <button (click)="filtro = 'todos'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'todos'}" class="flex-1 sm:flex-initial px-6 py-2 rounded-xl text-sm font-bold transition-all text-center">Todos</button>
-      <button (click)="filtro = 'pendientes'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'pendientes'}" class="flex-1 sm:flex-initial px-6 py-2 rounded-xl text-sm font-bold transition-all text-center">Activos</button>
-      <button (click)="filtro = 'finalizados'" [ngClass]="{'bg-ecuavip-blue text-white': filtro === 'finalizados'}" class="flex-1 sm:flex-initial px-6 py-2 rounded-xl text-sm font-bold transition-all text-center">Historial</button>
+      <h1 class="text-3xl font-black text-ecuavip-dark tracking-tight">Historial de Viajes</h1>
+      <p class="text-gray-500 font-medium mt-1">Consulta tus viajes realizados y cancelados.</p>
     </div>
   </div>
 
@@ -147,7 +142,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <div>
               <p class="text-red-600 text-[10px] font-black uppercase tracking-widest">Pago Rechazado</p>
-              <p class="text-red-700 text-xs font-bold">Verifica tu comprobante e intenta de nuevo.</p>
+              <p class="text-red-700 text-xs font-bold">{{ v.comentario_rechazo || 'Verifica tu comprobante e intenta de nuevo.' }}</p>
             </div>
           </div>
           

@@ -158,3 +158,13 @@ frontend/src/environments/environment.prod.ts
 # OS files
 .DS_Store
 Thumbs.db
+
+# Spring Boot Local Properties
+**/application-local.properties
+
+# IDE and Project files
+.idea/
+*.iml
+
+# User uploads
+**/uploads/

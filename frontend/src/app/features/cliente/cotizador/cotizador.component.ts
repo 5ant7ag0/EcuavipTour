@@ -8,12 +8,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AuthModalComponent } from '../../auth/auth-modal/auth-modal.component';
 import { Observable, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-cotizador',
   standalone: true,
-  imports: [CommonModule, FormsModule, GoogleMapsModule, AuthModalComponent],
+  imports: [CommonModule, FormsModule, GoogleMapsModule, AuthModalComponent, RouterModule],
   templateUrl: './cotizador.component.html',
   styleUrls: ['./cotizador.component.css']
 })

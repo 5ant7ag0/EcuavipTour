@@ -33,4 +33,12 @@ export class ChatService {
   getAdminInfo(): Observable<{ admin_id: number; admin_nombre: string }> {
     return this.http.get<any>(`${this.apiUrl}/admin-info`, { headers: this.getHeaders() });
   }
+
+  assignSupport(clienteId: number, categoria: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/assign/${clienteId}`, { categoria }, { headers: this.getHeaders() });
+  }
+
+  resolveCase(clienteId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/resolve/${clienteId}`, {}, { headers: this.getHeaders() });
+  }
 }

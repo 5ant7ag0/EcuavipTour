@@ -1,6 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { AuthService } from './auth.service';
 
 @Injectable({
@@ -8,7 +8,11 @@ import { AuthService } from './auth.service';
 })
 export class SocketService {
   private socket: Socket;
-  private serverUrl = 'http://localhost:5001';
+  private serverUrl = 'http://localhost:5002';
+  public isChatActive = false;
+  public unreadMessages = 0;
+  public openChatOnLoad = false;
+  public triggerChatOpen = new Subject<void>();
 
   constructor(
     private authService: AuthService,

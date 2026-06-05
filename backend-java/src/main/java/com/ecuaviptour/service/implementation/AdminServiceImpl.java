@@ -89,7 +89,7 @@ public class AdminServiceImpl implements AdminService {
         }
 
         return users.stream()
-                .filter(u -> rol == null || rol.equalsIgnoreCase(u.getRol()))
+                .filter(u -> rol == null || rol.isBlank() || rol.equalsIgnoreCase(u.getRol()))
                 .filter(u -> !busyDriverIds.contains(u.getId()))
                 .filter(u -> activo == null || activo.equals(u.getActivo()))
                 .filter(u -> search == null || search.isBlank() ||
@@ -182,7 +182,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<Vehiculo> getVehiculosFiltrados(String estado, String search) {
         return vehiculoRepository.findAll().stream()
-                .filter(v -> estado == null || estado.equalsIgnoreCase(v.getEstado()))
+                .filter(v -> estado == null || estado.isBlank() || estado.equalsIgnoreCase(v.getEstado()))
                 .filter(v -> search == null || search.isBlank() ||
                         v.getPlaca().toLowerCase().contains(search.toLowerCase()) ||
                         v.getMarca().toLowerCase().contains(search.toLowerCase()) ||

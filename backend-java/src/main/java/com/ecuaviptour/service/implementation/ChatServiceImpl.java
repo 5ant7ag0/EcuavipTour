@@ -236,7 +236,7 @@ public class ChatServiceImpl implements ChatService {
                 .soporteAsignado(admin)
                 .categoria("General")
                 .estado("resuelto")
-                .contenido("SISTEMA_RESOLUCION: Caso resuelto por @" + admin.getNombre())
+                .contenido("SISTEMA_RESOLUCION: Caso resuelto por " + admin.getNombre())
                 .tipoReceptor("admin")
                 .timestamp(LocalDateTime.now())
                 .leido(true)

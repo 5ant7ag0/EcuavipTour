@@ -60,18 +60,24 @@ export class AdminService {
     ).pipe(
       map(res => {
         const chats = (res && res.chats) || [];
-        return chats.map((c: any) => ({
-          cliente_id: c.cliente_id,
-          cliente_nombre: c.cliente_nombre,
-          ultimo_mensaje: c.ultimo_mensaje,
-          fecha_ultimo_mensaje: c.fecha,
-          unread: c.unread,
-          foto_perfil_url: c.cliente_foto_url,
-          soporte_asignado_nombre: c.asignado_a,
-          soporte_asignado_id: c.soporte_asignado_id || c.soporteAsignadoId || null,
-          categoria: c.categoria,
-          estado: c.resuelto ? 'resuelto' : 'abierto'
-        }));
+        return chats.map((c: any) => {
+          let msgStr = c.ultimo_mensaje || '';
+          if (msgStr.startsWith('SISTEMA_RESOLUCION:')) {
+            msgStr = msgStr.replace('SISTEMA_RESOLUCION:', '').replace('@', '').trim();
+          }
+          return {
+            cliente_id: c.cliente_id,
+            cliente_nombre: c.cliente_nombre,
+            ultimo_mensaje: msgStr,
+            fecha_ultimo_mensaje: c.fecha,
+            unread: c.unread,
+            foto_perfil_url: c.cliente_foto_url,
+            soporte_asignado_nombre: c.asignado_a,
+            soporte_asignado_id: c.soporte_asignado_id || c.soporteAsignadoId || null,
+            categoria: c.categoria,
+            estado: c.resuelto ? 'resuelto' : 'abierto'
+          };
+        });
       }),
       tap(inbox => {
         const chatsConUnread = inbox.filter((c: any) => (c.unread || 0) > 0).length;

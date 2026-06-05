@@ -149,6 +149,14 @@
               </p>
             </div>
           </div>
+
+          <!-- Botón Caso resuelto (parte superior izquierda) -->
+          <button *ngIf="selectedChat.soporte_asignado_id && selectedChat.estado !== 'resuelto'"
+                  (click)="resolverCaso(selectedChat.cliente_id)"
+                  class="ml-4 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5 hover:scale-[1.02] active:scale-95 duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Caso resuelto
+          </button>
         </div>
 
         <!-- Helpdesk & Ticket Assignment Controls -->
@@ -196,13 +204,6 @@
                 <p class="text-xs font-black mt-0.5 leading-none">{{ selectedChat.soporte_asignado_nombre }}</p>
               </div>
             </div>
-
-            <!-- Botón Resolver Caso (Zendesk-Style) -->
-            <button (click)="resolverCaso(selectedChat.cliente_id)"
-                    class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5 hover:scale-[1.02] active:scale-95 duration-200">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Resolver Caso
-            </button>
           </div>
           
           <!-- Comprobantes y Acciones (si aplica) -->

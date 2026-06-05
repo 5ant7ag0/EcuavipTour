@@ -103,12 +103,19 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
       const isNewTrip = viaje_id && viaje_id !== lastViajeId;
       if (viaje_id) lastViajeId = viaje_id;
 
+      const soporteAsignado = m.soporteAsignado || (m.soporte_asignado_id ? {
+        id: Number(m.soporte_asignado_id),
+        nombre: m.soporte_asignado_nombre
+      } : null);
+
       return {
         ...m,
         remitente_id,
         destinatario_id,
         viaje_id,
-        isNewTrip
+        isNewTrip,
+        estado: m.estado || 'abierto',
+        soporteAsignado
       };
     });
   }

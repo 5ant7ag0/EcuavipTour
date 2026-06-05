@@ -211,18 +211,38 @@ public class ChatServiceImpl implements ChatService {
 
     /**
      * Resuelve de manera transaccional un caso de soporte activo archivando y marcando todos
-     * los mensajes de chat asociados al cliente con el estado "resuelto".
+     * los mensajes de chat asociados al cliente con el estado "resuelto", insertando además
+     * un mensaje de sistema para dejar constancia de la resolución.
      *
      * @param clienteId Identificador único del cliente cuyo caso de soporte se cerrará.
+     * @param adminId   Identificador único del administrador que resuelve el caso.
+     * @return El mensaje de chat de sistema creado para registrar la resolución.
      */
     @Override
     @Transactional
-    public void resolverCaso(Long clienteId) {
+    public MensajeChat resolverCaso(Long clienteId, Long adminId) {
         List<MensajeChat> chats = mensajeRepository.getHistorialSoporteCliente(clienteId);
+        Usuario admin = usuarioRepository.findById(adminId)
+                .orElseThrow(() -> new ResourceNotFoundException("Administrador de soporte no encontrado"));
+
         for (MensajeChat m : chats) {
             m.setEstado("resuelto");
             mensajeRepository.save(m);
         }
+
+        MensajeChat resMsg = MensajeChat.builder()
+                .remitente(admin)
+                .destinatario(usuarioRepository.findById(clienteId).orElse(null))
+                .soporteAsignado(admin)
+                .categoria("General")
+                .estado("resuelto")
+                .contenido("SISTEMA_RESOLUCION: Caso resuelto por @" + admin.getNombre())
+                .tipoReceptor("admin")
+                .timestamp(LocalDateTime.now())
+                .leido(true)
+                .build();
+
+        return mensajeRepository.save(resMsg);
     }
 
     /**

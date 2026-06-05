@@ -541,11 +541,15 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
 
     this.viajeService.validarAbordaje(this.viajeActual.viaje_id, codigo).subscribe({
       next: (res) => {
-        this.showToast(res.mensaje);
-        this.isScannerOpen = false;
-        this.pinIngresado = '';
-        this.viajeActual.estado_logistico = 'en_curso';
-        this.calculateRoute(); // Actualizar ruta hacia el destino
+        if (res && res.estado === 'en_curso') {
+          this.showToast(res.mensaje || 'Abordaje verificado correctamente');
+          this.isScannerOpen = false;
+          this.pinIngresado = '';
+          this.viajeActual.estado_logistico = 'en_curso';
+          this.calculateRoute(); // Actualizar ruta hacia el destino
+        } else {
+          this.showToast(res.mensaje || 'Código de abordaje inválido.');
+        }
       },
       error: (err) => {
         this.showToast(err.error?.error || 'Error al validar');

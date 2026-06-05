@@ -196,10 +196,14 @@ public class ChatSoapEndpoint {
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "resolveCaseRequest")
     @ResponsePayload
     public ResolveCaseResponse resolveCase(@RequestPayload ResolveCaseRequest request) {
+        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long adminId = Long.parseLong(userIdStr);
+
         ResolveCaseResponse response = new ResolveCaseResponse();
         try {
-            chatService.resolverCaso(request.getClienteId());
+            MensajeChat systemMsg = chatService.resolverCaso(request.getClienteId(), adminId);
             socketIOService.broadcastCaseResolve(request.getClienteId());
+            socketIOService.broadcastSystemMessage(systemMsg);
 
             response.setSuccess(true);
             response.setMessage("Conversacion marcada como resuelta");
@@ -237,6 +241,11 @@ public class ChatSoapEndpoint {
         }
         soap.setTipoReceptor(m.getTipoReceptor());
         soap.setCategoria(m.getCategoria());
+        soap.setEstado(m.getEstado());
+        if (m.getSoporteAsignado() != null) {
+            soap.setSoporteAsignadoId(m.getSoporteAsignado().getId());
+            soap.setSoporteAsignadoNombre(m.getSoporteAsignado().getNombre());
+        }
         return soap;
     }
 }

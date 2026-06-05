@@ -450,6 +450,7 @@ public class AdminSoapEndpoint {
             soap.setUnread(unread);
             soap.setFecha(latestMsg.getTimestamp().format(formatter));
             soap.setAsignadoA(soporte != null ? soporte.getNombre() : "Sin Asignar");
+            soap.setSoporteAsignadoId(soporte != null ? soporte.getId() : null);
             soap.setCategoria(categoria);
             soap.setResuelto("resuelto".equalsIgnoreCase(estado));
 

@@ -244,7 +244,7 @@ public class ViajesSoapEndpoint {
      * Valida el código de abordaje de un viaje para cambiar su estado logístico e iniciar el trayecto de viaje.
      * Mapeado al request XML {@link ValidarAbordajeRequest}.
      *
-     * @param request Payload XML con el ID del viaje y el código de validación de 4 dígitos.
+     * @param request Payload XML con el ID del viaje y el código de validación.
      * @return {@link ValidarAbordajeResponse} indicando si el código de abordaje es correcto y el nuevo estado logístico.
      * @throws ResourceNotFoundException Si el viaje con el ID especificado no es encontrado.
      */
@@ -254,17 +254,54 @@ public class ViajesSoapEndpoint {
         Viaje viaje = viajeRepository.findById(request.getViajeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Viaje no encontrado con el ID: " + request.getViajeId()));
 
+        Optional<TicketQR> ticketOpt = ticketQRRepository.findByViajeId(viaje.getId());
+        String expectedPin = "";
+        String fullHash = null;
+        if (ticketOpt.isPresent() && ticketOpt.get().getCodigoHash() != null) {
+            fullHash = ticketOpt.get().getCodigoHash();
+            if (fullHash.length() >= 4) {
+                expectedPin = fullHash.substring(fullHash.length() - 4).toUpperCase();
+            } else {
+                expectedPin = fullHash.toUpperCase();
+            }
+        } else {
+            String idStr = String.format("%04d", viaje.getId());
+            expectedPin = idStr.substring(idStr.length() - 4);
+        }
+
+        String inputCode = request.getCodigo();
+        boolean isValid = false;
+        if (inputCode != null) {
+            String upperInput = inputCode.trim().toUpperCase();
+            if (upperInput.equals("QR_SIMULADO") 
+                || upperInput.equals(expectedPin) 
+                || (fullHash != null && upperInput.equals(fullHash.toUpperCase()))) {
+                isValid = true;
+            }
+        }
+
         ValidarAbordajeResponse response = new ValidarAbordajeResponse();
-        if (request.getCodigo() != null && request.getCodigo().length() == 4) {
+        if (isValid) {
             viaje.setEstadoLogistico("en_curso");
             viajeRepository.save(viaje);
+
+            if (ticketOpt.isPresent()) {
+                TicketQR ticket = ticketOpt.get();
+                ticket.setEstado("usado");
+                ticketQRRepository.save(ticket);
+            }
+
+            Long clienteId = viaje.getCliente() != null ? viaje.getCliente().getId() : null;
+            if (clienteId != null) {
+                socketIOService.broadcastViajeActualizado(viaje.getId(), clienteId, "en_curso");
+            }
+
             response.setMensaje("Abordaje verificado correctamente");
             response.setEstado("en_curso");
+            return response;
         } else {
-            response.setMensaje("Código de abordaje inválido.");
-            response.setEstado(viaje.getEstadoLogistico());
+            throw new IllegalArgumentException("Código de abordaje inválido.");
         }
-        return response;
     }
 
     /**

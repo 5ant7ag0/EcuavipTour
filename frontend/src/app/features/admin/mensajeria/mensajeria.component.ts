@@ -206,6 +206,9 @@ export class MensajeriaComponent implements OnInit, OnDestroy {
           this.selectedChat.soporte_asignado_avatar = userObj.foto_perfil_url || '';
           this.selectedChat.categoria = this.selectedCategory;
         }
+
+        // Pasar automáticamente a chats asignados
+        this.activeTab = 'my-chats';
       },
       error: (err) => {
         alert('⚠️ ' + (err.error?.error || 'No se pudo asignar el caso.'));

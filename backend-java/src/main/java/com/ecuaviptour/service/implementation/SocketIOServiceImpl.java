@@ -391,6 +391,48 @@ public class SocketIOServiceImpl implements SocketIOService {
     }
 
     /**
+     * Difunde un mensaje de sistema en tiempo real a las salas del cliente y de los administradores.
+     *
+     * @param msg Objeto de tipo MensajeChat.
+     */
+    @Override
+    public void broadcastSystemMessage(MensajeChat msg) {
+        if (msg == null) return;
+        Map<String, Object> messageDict = new HashMap<>();
+        messageDict.put("id", msg.getId());
+        messageDict.put("viaje_id", msg.getViaje() != null ? msg.getViaje().getId() : null);
+        messageDict.put("remitente_id", msg.getRemitente() != null ? msg.getRemitente().getId() : null);
+        messageDict.put("destinatario_id", msg.getDestinatario() != null ? msg.getDestinatario().getId() : null);
+        messageDict.put("tipo_receptor", msg.getTipoReceptor());
+        messageDict.put("contenido", msg.getContenido());
+        messageDict.put("timestamp", msg.getTimestamp().toString());
+        messageDict.put("estado", msg.getEstado());
+        messageDict.put("categoria", msg.getCategoria());
+
+        if (msg.getSoporteAsignado() != null) {
+            messageDict.put("soporteAsignado", Map.of(
+                    "id", msg.getSoporteAsignado().getId(),
+                    "nombre", msg.getSoporteAsignado().getNombre(),
+                    "fotoPerfilUrl", msg.getSoporteAsignado().getFotoPerfilUrl() != null ? msg.getSoporteAsignado().getFotoPerfilUrl() : ""
+            ));
+        }
+
+        try {
+            Long clienteId = msg.getDestinatario() != null ? msg.getDestinatario().getId() : null;
+            if (clienteId == null && msg.getRemitente() != null) {
+                clienteId = msg.getRemitente().getId();
+            }
+            if (clienteId != null) {
+                server.getRoomOperations("cliente_" + clienteId).sendEvent("nuevo_mensaje", messageDict);
+            }
+            server.getRoomOperations("admins").sendEvent("nuevo_mensaje", messageDict);
+            System.out.println("[Socket.IO] Emitido 'nuevo_mensaje' de sistema (resolución) para cliente " + clienteId);
+        } catch (Exception e) {
+            System.err.println("[Socket.IO ERROR] Fallo al emitir 'nuevo_mensaje' de sistema: " + e.getMessage());
+        }
+    }
+
+    /**
      * Notifica simultáneamente al cliente, al chofer y a los administradores sobre la cancelación de un viaje.
      *
      * @param viajeId   Identificador único del viaje cancelado.
@@ -517,6 +559,33 @@ public class SocketIOServiceImpl implements SocketIOService {
             System.out.println("[Socket.IO] Emitido 'nuevo_comprobante' y 'pago_actualizado' para viaje " + viajeId);
         } catch (Exception e) {
             System.err.println("[Socket.IO ERROR] Fallo al emitir nuevo comprobante: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Difunde en tiempo real una actualización del estado logístico de un viaje a la sala del cliente y de los admins.
+     *
+     * @param viajeId         Identificador único del viaje.
+     * @param clienteId       Identificador único del cliente.
+     * @param estadoLogistico Nuevo estado logístico del viaje.
+     */
+    @Override
+    public void broadcastViajeActualizado(Long viajeId, Long clienteId, String estadoLogistico) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("viaje_id", viajeId);
+        payload.put("estado", estadoLogistico);
+
+        try {
+            if (clienteId != null) {
+                server.getRoomOperations("cliente_" + clienteId).sendEvent("viaje_actualizado_cliente", payload);
+            }
+            server.getRoomOperations("admins").sendEvent("viaje_actualizado_admin", Map.of(
+                    "viaje_id", viajeId,
+                    "estado", estadoLogistico
+            ));
+            System.out.println("[Socket.IO] Emitido 'viaje_actualizado_cliente' y 'viaje_actualizado_admin' para viaje " + viajeId);
+        } catch (Exception e) {
+            System.err.println("[Socket.IO ERROR] Fallo al emitir 'viaje_actualizado_cliente': " + e.getMessage());
         }
     }
 

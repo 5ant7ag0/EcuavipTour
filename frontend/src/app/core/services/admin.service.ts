@@ -68,6 +68,7 @@ export class AdminService {
           unread: c.unread,
           foto_perfil_url: c.cliente_foto_url,
           soporte_asignado_nombre: c.asignado_a,
+          soporte_asignado_id: c.soporte_asignado_id || c.soporteAsignadoId || null,
           categoria: c.categoria,
           estado: c.resuelto ? 'resuelto' : 'abierto'
         }));

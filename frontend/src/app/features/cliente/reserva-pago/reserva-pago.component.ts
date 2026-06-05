@@ -155,6 +155,9 @@ export class ReservaPagoComponent implements OnInit, OnDestroy {
           sessionStorage.removeItem('reserva_pago_limite');
           this.loading = false;
           this.success = true;
+          setTimeout(() => {
+            this.router.navigate(['/cliente/en-curso']);
+          }, 3000);
         },
         error: (err) => {
           this.loading = false;
@@ -172,6 +175,9 @@ export class ReservaPagoComponent implements OnInit, OnDestroy {
               sessionStorage.removeItem('reserva_pago_limite');
               this.loading = false;
               this.success = true;
+              setTimeout(() => {
+                this.router.navigate(['/cliente/en-curso']);
+              }, 3000);
             },
             error: (err) => {
               this.loading = false;

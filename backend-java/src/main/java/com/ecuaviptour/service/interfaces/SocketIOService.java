@@ -1,5 +1,6 @@
 package com.ecuaviptour.service.interfaces;
 
+import com.ecuaviptour.model.MensajeChat;
 import com.ecuaviptour.model.Viaje;
 
 public interface SocketIOService {
@@ -17,6 +18,10 @@ public interface SocketIOService {
     void broadcastPagoActualizado(Long viajeId, Long clienteId, String estadoPago, String estadoLogistico);
 
     void broadcastNuevoComprobante(Long viajeId, Long clienteId);
+
+    void broadcastViajeActualizado(Long viajeId, Long clienteId, String estadoLogistico);
+    
+    void broadcastSystemMessage(MensajeChat msg);
     
     void stopServer();
 }

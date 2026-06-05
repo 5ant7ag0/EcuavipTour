@@ -17,6 +17,9 @@
             <xs:element name="viaje_id" type="xs:long" minOccurs="0"/>
             <xs:element name="tipo_receptor" type="xs:string" minOccurs="0"/>
             <xs:element name="categoria" type="xs:string" minOccurs="0"/>
+            <xs:element name="estado" type="xs:string" minOccurs="0"/>
+            <xs:element name="soporte_asignado_id" type="xs:long" minOccurs="0"/>
+            <xs:element name="soporte_asignado_nombre" type="xs:string" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 

@@ -64,6 +64,7 @@
             <xs:element name="unread" type="xs:int"/>
             <xs:element name="fecha" type="xs:string" minOccurs="0"/>
             <xs:element name="asignado_a" type="xs:string" minOccurs="0"/>
+            <xs:element name="soporte_asignado_id" type="xs:long" minOccurs="0"/>
             <xs:element name="categoria" type="xs:string" minOccurs="0"/>
             <xs:element name="resuelto" type="xs:boolean"/>
         </xs:sequence>

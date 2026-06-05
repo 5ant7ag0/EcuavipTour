@@ -9,7 +9,7 @@ public interface ChatService {
     
     void asignarSoporte(Long clienteId, Long soporteId, String categoria);
     
-    void resolverCaso(Long clienteId);
+    MensajeChat resolverCaso(Long clienteId, Long adminId);
     
     List<MensajeChat> getHistorialPorViaje(Long viajeId);
     

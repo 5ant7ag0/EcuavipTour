@@ -11,10 +11,10 @@
             <xs:element name="correo" type="xs:string"/>
             <xs:element name="telefono" type="xs:string" minOccurs="0"/>
             <xs:element name="cedula" type="xs:string" minOccurs="0"/>
-            <xs:element name="fotoPerfilUrl" type="xs:string" minOccurs="0"/>
+            <xs:element name="foto_perfil_url" type="xs:string" minOccurs="0"/>
             <xs:element name="rol" type="xs:string"/>
             <xs:element name="activo" type="xs:boolean"/>
-            <xs:element name="fechaRegistro" type="xs:string" minOccurs="0"/>
+            <xs:element name="fecha_registro" type="xs:string" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -26,10 +26,10 @@
             <xs:element name="modelo" type="xs:string" minOccurs="0"/>
             <xs:element name="anio" type="xs:int" minOccurs="0"/>
             <xs:element name="tipo" type="xs:string" minOccurs="0"/>
-            <xs:element name="capacidadMax" type="xs:int" minOccurs="0"/>
+            <xs:element name="capacidad_max" type="xs:int" minOccurs="0"/>
             <xs:element name="color" type="xs:string" minOccurs="0"/>
             <xs:element name="estado" type="xs:string" minOccurs="0"/>
-            <xs:element name="fotoAutoUrl" type="xs:string" minOccurs="0"/>
+            <xs:element name="foto_auto_url" type="xs:string" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 

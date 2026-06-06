@@ -331,8 +331,14 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
             // Inicializar mapa después de cargar los datos
             setTimeout(() => this.initMap(), 500);
           } else {
+            this.viajeActual = null;
             this.historial = viajes;
+            this.router.navigate(['/cliente/cotizar']);
           }
+        } else {
+          this.viajeActual = null;
+          this.historial = [];
+          this.router.navigate(['/cliente/cotizar']);
         }
         this.loading = false;
       },

@@ -252,7 +252,9 @@ export class AdminService {
           foto_licencia_url: v.foto_licencia_url,
           chofer: {
             id: v.chofer_id,
-            nombre: v.chofer_nombre
+            nombre: v.chofer_nombre,
+            telefono: v.chofer_telefono,
+            correo: v.chofer_correo
           }
         }));
       })

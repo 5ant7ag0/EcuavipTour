@@ -35,6 +35,8 @@
             <xs:element name="foto_licencia_url" type="xs:string" minOccurs="0"/>
             <xs:element name="chofer_id" type="xs:long" minOccurs="0"/>
             <xs:element name="chofer_nombre" type="xs:string" minOccurs="0"/>
+            <xs:element name="chofer_telefono" type="xs:string" minOccurs="0"/>
+            <xs:element name="chofer_correo" type="xs:string" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 

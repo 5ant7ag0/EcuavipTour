@@ -116,9 +116,13 @@ public class AdminSoapEndpoint {
             if (v.getChofer() != null) {
                 soap.setChoferId(v.getChofer().getId());
                 soap.setChoferNombre(v.getChofer().getNombre());
+                soap.setChoferTelefono(v.getChofer().getTelefono() != null ? v.getChofer().getTelefono() : "");
+                soap.setChoferCorreo(v.getChofer().getCorreo() != null ? v.getChofer().getCorreo() : "");
             } else {
                 soap.setChoferId(0L);
                 soap.setChoferNombre("Sin Chofer Asignado");
+                soap.setChoferTelefono("");
+                soap.setChoferCorreo("");
             }
             response.getVehiculos().add(soap);
         }

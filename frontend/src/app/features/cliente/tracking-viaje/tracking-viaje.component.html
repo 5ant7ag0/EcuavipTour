@@ -86,7 +86,7 @@
         </div>
 
         <!-- Estado Buscando Chofer / Revisando Pago / Pago Rechazado -->
-        <div *ngIf="!viajeActual.nombre_chofer" class="space-y-6">
+        <div class="space-y-6">
           
           <!-- CASO 1: REVISANDO COMPROBANTE DE PAGO -->
           <div *ngIf="viajeActual.estado_pago === 'comprobante_subido'" class="bg-gradient-to-r from-slate-50 to-gray-50 border border-gray-200 p-8 rounded-3xl text-center space-y-6 relative overflow-hidden">
@@ -101,8 +101,8 @@
             </div>
           </div>
 
-          <!-- CASO 2: BUSCANDO CONDUCTOR (SOLO SI EL PAGO FUE APROBADO) -->
-          <div *ngIf="viajeActual.estado_pago === 'aprobado' || viajeActual.estado_pago === 'pagado'" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-8 rounded-3xl text-center space-y-6 relative overflow-hidden group">
+          <!-- CASO 2: BUSCANDO CONDUCTOR (SOLO SI EL PAGO FUE APROBADO Y NO HAY CHOFER AÚN) -->
+          <div *ngIf="!viajeActual.nombre_chofer && (viajeActual.estado_pago === 'aprobado' || viajeActual.estado_pago === 'pagado')" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-8 rounded-3xl text-center space-y-6 relative overflow-hidden group">
             <div class="absolute -right-6 -top-6 w-20 h-20 bg-blue-600/5 rounded-full blur-xl"></div>
             <div class="relative flex items-center justify-center">
               <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 z-10 animate-bounce">
@@ -125,7 +125,7 @@
           <!-- CASO 3: PAGO RECHAZADO CON TIMER REGRESIVO -->
           <div *ngIf="viajeActual.estado_pago === 'rechazado'" class="bg-red-50 border border-red-100 p-6 md:p-8 rounded-3xl text-center space-y-6">
             <div class="w-14 h-14 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center mx-auto shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div class="space-y-2">
               <h4 class="text-lg font-black text-red-800">Comprobante Rechazado</h4>

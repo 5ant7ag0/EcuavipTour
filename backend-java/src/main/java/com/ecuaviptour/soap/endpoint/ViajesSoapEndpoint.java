@@ -363,8 +363,20 @@ public class ViajesSoapEndpoint {
             reservaAsientoRepository.save(r);
         }
 
+        // Determine who canceled based on the authenticated user's role
+        String msgCancel = "El viaje ha sido cancelado por el cliente";
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+            if (userIdStr != null && !userIdStr.isEmpty()) {
+                Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr)).orElse(null);
+                if (user != null && "chofer".equalsIgnoreCase(user.getRol())) {
+                    msgCancel = "El viaje ha sido cancelado por el chofer";
+                }
+            }
+        }
+
         // Broadcast real-time Socket.IO cancellation event
-        socketIOService.broadcastViajeCancelado(viajeId, "El viaje ha sido cancelado por el cliente", clienteId, choferId);
+        socketIOService.broadcastViajeCancelado(viajeId, msgCancel, clienteId, choferId);
 
         CancelarViajeResponse response = new CancelarViajeResponse();
         response.setMensaje("Viaje cancelado correctamente");

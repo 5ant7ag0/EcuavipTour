@@ -452,6 +452,21 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
         this.showToast(data.mensaje);
       }
     });
+
+    // Escuchar si el cliente o admin cancelan el viaje
+    this.socketService.listen('viaje_cancelado').subscribe((data: any) => {
+      console.log('[DashboardChofer] Viaje cancelado por socket:', data);
+      if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id || this.viajeActual.id)) {
+        this.showToast(data.mensaje || 'El viaje ha sido cancelado.');
+        this.viajeActual = null;
+        this.showCancelModal = false;
+        this.stopGPS();
+        if (this.directionsRenderer) {
+          this.directionsRenderer.setDirections({routes: []});
+        }
+        setTimeout(() => this.initMap(), 500); // Volver al radar
+      }
+    });
   }
 
   checkActiveTrip() {
@@ -575,19 +590,27 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   confirmarCancelacion() {
     if (!this.viajeActual) return;
     
-    this.socketService.emit('cancelar_viaje', {
-      viaje_id: this.viajeActual.viaje_id,
-      motivo: 'Cancelado por el chofer desde la consola'
+    const viajeId = this.viajeActual.viaje_id || this.viajeActual.id;
+    this.viajeService.cancelarViaje(viajeId).subscribe({
+      next: (res) => {
+        this.socketService.emit('cancelar_viaje', {
+          viaje_id: viajeId,
+          motivo: 'Cancelado por el chofer desde la consola'
+        });
+        this.showToast('Viaje cancelado con éxito.');
+        this.viajeActual = null;
+        this.showCancelModal = false;
+        this.stopGPS();
+        if (this.directionsRenderer) {
+          this.directionsRenderer.setDirections({routes: []});
+        }
+        setTimeout(() => this.initMap(), 500); // Volver al radar
+      },
+      error: (err) => {
+        console.error('[DashboardChofer] Error al cancelar viaje:', err);
+        this.showToast(err.error?.error || 'Error al cancelar el viaje.');
+      }
     });
-
-    this.showToast('Viaje cancelado con éxito.');
-    this.viajeActual = null;
-    this.showCancelModal = false;
-    this.stopGPS();
-    if (this.directionsRenderer) {
-      this.directionsRenderer.setDirections({routes: []});
-    }
-    setTimeout(() => this.initMap(), 500); // Volver al radar
   }
 
   showToast(msg: string) {

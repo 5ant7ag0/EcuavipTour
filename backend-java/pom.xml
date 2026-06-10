@@ -103,6 +103,13 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- WSS4J WS Security Common for SOAP Security Callback Handling -->
+        <dependency>
+            <groupId>org.apache.wss4j</groupId>
+            <artifactId>wss4j-ws-security-common</artifactId>
+            <version>4.0.1</version>
+        </dependency>
     </dependencies>
     
     <build>

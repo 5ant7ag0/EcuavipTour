@@ -1,9 +1,7 @@
-package com.ecuaviptour.security;
+package com.ecuaviptour.security.rest;
 
 import com.ecuaviptour.modules.users.repository.UsuarioRepository;
-
 import com.ecuaviptour.modules.users.domain.Usuario;
-
 import com.ecuaviptour.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,6 +16,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
+/**
+ * Filtro de seguridad para interceptar peticiones REST y validar tokens JWT Bearer.
+ */
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 

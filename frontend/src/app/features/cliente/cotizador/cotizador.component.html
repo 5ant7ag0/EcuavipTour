@@ -1,305 +1,172 @@
-<div class="relative w-full h-screen">
-  <!-- Floating "Mis viajes" button -->
-  <a routerLink="/cliente/historial" class="fixed top-6 right-6 md:top-24 md:right-8 z-[90] flex items-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md border border-gray-100 rounded-2xl shadow-lg shadow-gray-200/50 hover:bg-white hover:scale-105 active:scale-95 transition-all text-xs font-black text-gray-800 uppercase tracking-wider no-underline">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600">
-      <path d="M12 8v4l3 3"/>
-      <circle cx="12" cy="12" r="10"/>
-    </svg>
-    Mis viajes
-  </a>
-
-  <!-- Google Map Background -->
-  <google-map 
-    height="100%" 
-    width="100%" 
-    [center]="center" 
-    [zoom]="zoom" 
-    [options]="options"
-    (mapClick)="onMapClick($event)">
-    <map-directions-renderer *ngIf="(directionsResults$ | async) as results" [directions]="results"></map-directions-renderer>
-    <map-marker *ngIf="origenLocation && !destinoLocation" [position]="origenLocation"></map-marker>
-  </google-map>
-
-  <!-- Floating UI Overlay -->
-  <div class="absolute top-0 left-0 w-full md:w-[450px] h-full p-4 pb-20 md:p-8 pointer-events-none z-10 flex flex-col justify-end md:justify-center">
+<div class="h-screen md:h-[calc(100vh-96px)] w-full flex flex-col overflow-hidden bg-gray-50/50">
+  
+  <!-- Navigation Tabs Header (Apple Style) -->
+  <div class="bg-white border-b border-gray-100 py-3.5 px-6 shrink-0 z-20 shadow-sm flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-xl font-black text-gray-900 tracking-tight">Viajes Ecuavip</h1>
+    </div>
     
-    <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-sm p-6 pointer-events-auto border border-ecuavip-light/50 max-h-full overflow-y-auto">
-      
-      <!-- Tabs de Servicio (Ahora al inicio) -->
-      <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
-        <button (click)="cambiarTipoViaje('pasajero')" [class.bg-white]="tipoViaje === 'pasajero'" [class.shadow]="tipoViaje === 'pasajero'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-gray-700">Compartido</button>
-        <button (click)="cambiarTipoViaje('encomienda')" [class.bg-white]="tipoViaje === 'encomienda'" [class.shadow]="tipoViaje === 'encomienda'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-gray-700">Encomienda</button>
-        <button (click)="cambiarTipoViaje('express')" [class.bg-white]="tipoViaje === 'express'" [class.shadow]="tipoViaje === 'express'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-gray-700">Express 24h</button>
-      </div>
-
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-xl md:text-2xl font-extrabold text-ecuavip-dark tracking-tight">{{ getTitulo() }}</h1>
-        <button *ngIf="origenAddress || destinoAddress" (click)="limpiar()" class="text-sm text-gray-400 hover:text-red-500 transition-colors font-medium flex items-center gap-1" title="Limpiar ruta">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          Limpiar
-        </button>
-      </div>
-
-      <!-- Inputs -->
-      <div class="relative flex flex-col gap-4 mb-6">
-        <div class="absolute left-4 top-6 bottom-6 w-0.5 bg-gray-200"></div>
-
-        <!-- Origen -->
-        <div class="flex items-center gap-3">
-          <div class="w-3 h-3 rounded-full bg-ecuavip-blue z-10 shadow-sm border border-white"></div>
-          <input 
-            #origenInput
-            type="text" 
-            [(ngModel)]="origenAddress"
-            placeholder="Punto de Recogida" 
-            class="flex-1 bg-gray-50/80 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ecuavip-blue/50 transition-all text-gray-700 font-medium placeholder-gray-400"
-          >
-        </div>
-
-        <!-- Destino -->
-        <div class="flex items-center gap-3">
-          <div class="w-3 h-3 rounded-sm bg-gray-900 z-10 shadow-sm border border-white"></div>
-          <input 
-            #destinoInput
-            type="text" 
-            [(ngModel)]="destinoAddress"
-            placeholder="Destino" 
-            class="flex-1 bg-gray-50/80 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ecuavip-blue/50 transition-all text-gray-700 font-medium placeholder-gray-400"
-          >
-        </div>
-      </div>
-
-      <!-- Results (If route is calculated) -->
-      <div *ngIf="distanciaKm > 0" class="animate-fade-in-up">
-        
-        <!-- Opciones Específicas por Servicio -->
-        <div class="mb-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
-          
-          <div *ngIf="tipoViaje === 'pasajero'">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-sm font-bold text-gray-700">Pasajeros</span>
-              <div class="flex items-center gap-3 bg-white rounded-lg border border-gray-200 p-1">
-                <button (click)="decrementarPasajeros()" class="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-md hover:bg-gray-200">-</button>
-                <span class="text-sm font-bold w-4 text-center">{{ numPasajeros }}</span>
-                <button (click)="incrementarPasajeros()" class="w-6 h-6 flex items-center justify-center bg-ecuavip-light text-ecuavip-blue rounded-md hover:bg-blue-100">+</button>
-              </div>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold text-gray-700">Hora de salida</span>
-              <select [(ngModel)]="horaSalida" class="bg-white border border-gray-200 rounded-lg text-sm px-3 py-1 focus:outline-none focus:ring-1 focus:ring-ecuavip-blue">
-                <option *ngFor="let hora of horariosDisponibles" [value]="hora">{{ hora }}</option>
-              </select>
-            </div>
-
-            <!-- Botón para Mostrar/Ocultar Croquis de Asientos -->
-            <div class="mt-3 pt-3 border-t border-gray-100">
-              <button 
-                type="button"
-                (click)="mostrarMapaAsientos = !mostrarMapaAsientos" 
-                class="w-full flex items-center gap-2 py-2 text-xs font-extrabold text-ecuavip-blue hover:text-ecuavip-dark transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.66 0 3-1.34 3-3V7c0-1.66-1.34-3-3-3H5C3.34 4 2 5.34 2 7v4c0 1.66 1.34 3 3 3"/><path d="M2 14v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4"/><path d="M8 4v8"/><path d="M16 4v8"/><path d="M2 9h20"/></svg>
-                Seleccionar Asientos
-              </button>
-              
-              <!-- Contenedor del Mapa de Asientos (Furgoneta de Ecuavip) -->
-              <div 
-                *ngIf="mostrarMapaAsientos" 
-                class="mt-4 p-4 bg-slate-900 text-slate-100 rounded-2xl border border-slate-800 shadow-inner animate-fade-in"
-              >
-                <div class="text-center mb-4">
-                  <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest text-center">Cabina de Pasajeros</p>
-                  <p class="text-[9px] text-slate-400 text-center">Selecciona hasta {{ numPasajeros }} asientos</p>
-                </div>
-                
-                <!-- Estructura de la Furgoneta -->
-                <div class="max-w-[200px] mx-auto bg-slate-950 rounded-3xl p-4 border border-slate-800 relative">
-                  
-                  <!-- Parabrisas y Cabina del Conductor -->
-                  <div class="w-full h-8 bg-slate-800 rounded-t-2xl border-b-4 border-slate-900 mb-4 flex items-center justify-between px-3">
-                    <span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
-                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider text-center">FRENTE</span>
-                    <span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
-                  </div>
-                  
-                  <!-- Asientos de la Cabina -->
-                  <div class="grid grid-cols-4 gap-2 mb-6">
-                    <!-- Conductor -->
-                    <div class="col-span-2 flex justify-center">
-                      <div class="w-10 h-10 bg-gray-800 text-gray-500 rounded-lg flex flex-col items-center justify-center border border-gray-700/60 select-none cursor-not-allowed" title="Conductor">
-                        <span class="text-[9px] font-black leading-none mb-1 text-center">CHOFER</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="M12 12v9"/></svg>
-                      </div>
-                    </div>
-                    <!-- Espacio vacío central -->
-                    <div class="col-span-1"></div>
-                    <!-- Asiento 1 -->
-                    <div class="col-span-1 flex justify-center">
-                      <button 
-                        type="button"
-                        (click)="toggleAsiento(1)"
-                        [class.bg-blue-600]="isAsientoSeleccionado(1)"
-                        [class.text-white]="isAsientoSeleccionado(1)"
-                        [class.border-blue-700]="isAsientoSeleccionado(1)"
-                        [class.bg-red-500]="asientosOcupados.includes(1)"
-                        [class.text-white]="asientosOcupados.includes(1)"
-                        [class.border-red-600]="asientosOcupados.includes(1)"
-                        [class.cursor-not-allowed]="asientosOcupados.includes(1)"
-                        [class.bg-slate-800]="!isAsientoSeleccionado(1) && !asientosOcupados.includes(1)"
-                        [class.text-slate-300]="!isAsientoSeleccionado(1) && !asientosOcupados.includes(1)"
-                        [class.hover:bg-slate-700]="!isAsientoSeleccionado(1) && !asientosOcupados.includes(1)"
-                        class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center"
-                      >
-                        1
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <!-- Pasillo Central y Filas de Pasajeros -->
-                  <div class="space-y-2">
-                    
-                    <!-- Fila 2: Asientos 2, 3, 4 -->
-                    <div class="grid grid-cols-4 gap-2">
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(2)" [class.bg-blue-600]="isAsientoSeleccionado(2)" [class.bg-red-500]="asientosOcupados.includes(2)" [class.bg-slate-800]="!isAsientoSeleccionado(2) && !asientosOcupados.includes(2)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">2</button>
-                      </div>
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(3)" [class.bg-blue-600]="isAsientoSeleccionado(3)" [class.bg-red-500]="asientosOcupados.includes(3)" [class.bg-slate-800]="!isAsientoSeleccionado(3) && !asientosOcupados.includes(3)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">3</button>
-                      </div>
-                      <div class="col-span-1"></div> <!-- Pasillo -->
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(4)" [class.bg-blue-600]="isAsientoSeleccionado(4)" [class.bg-red-500]="asientosOcupados.includes(4)" [class.bg-slate-800]="!isAsientoSeleccionado(4) && !asientosOcupados.includes(4)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">4</button>
-                      </div>
-                    </div>
-                    
-                    <!-- Fila 3: Asientos 5, 6, 7 -->
-                    <div class="grid grid-cols-4 gap-2">
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(5)" [class.bg-blue-600]="isAsientoSeleccionado(5)" [class.bg-red-500]="asientosOcupados.includes(5)" [class.bg-slate-800]="!isAsientoSeleccionado(5) && !asientosOcupados.includes(5)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">5</button>
-                      </div>
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(6)" [class.bg-blue-600]="isAsientoSeleccionado(6)" [class.bg-red-500]="asientosOcupados.includes(6)" [class.bg-slate-800]="!isAsientoSeleccionado(6) && !asientosOcupados.includes(6)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">6</button>
-                      </div>
-                      <div class="col-span-1"></div> <!-- Pasillo -->
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(7)" [class.bg-blue-600]="isAsientoSeleccionado(7)" [class.bg-red-500]="asientosOcupados.includes(7)" [class.bg-slate-800]="!isAsientoSeleccionado(7) && !asientosOcupados.includes(7)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">7</button>
-                      </div>
-                    </div>
-                    
-                    <!-- Fila 4: Asientos 8, 9, 10 -->
-                    <div class="grid grid-cols-4 gap-2">
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(8)" [class.bg-blue-600]="isAsientoSeleccionado(8)" [class.bg-red-500]="asientosOcupados.includes(8)" [class.bg-slate-800]="!isAsientoSeleccionado(8) && !asientosOcupados.includes(8)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">8</button>
-                      </div>
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(9)" [class.bg-blue-600]="isAsientoSeleccionado(9)" [class.bg-red-500]="asientosOcupados.includes(9)" [class.bg-slate-800]="!isAsientoSeleccionado(9) && !asientosOcupados.includes(9)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">9</button>
-                      </div>
-                      <div class="col-span-1"></div> <!-- Pasillo -->
-                      <div class="col-span-1 flex justify-center">
-                        <button type="button" (click)="toggleAsiento(10)" [class.bg-blue-600]="isAsientoSeleccionado(10)" [class.bg-red-500]="asientosOcupados.includes(10)" [class.bg-slate-800]="!isAsientoSeleccionado(10) && !asientosOcupados.includes(10)" class="w-10 h-10 rounded-lg border border-slate-700 text-xs font-bold transition-all flex items-center justify-center text-slate-300">10</button>
-                      </div>
-                    </div>
-                    
-                    <!-- Fila 5: Asientos 11, 12, 13, 14, 15 (Última fila completa) -->
-                    <div class="grid grid-cols-5 gap-1.5 pt-2 border-t border-slate-800">
-                      <div class="flex justify-center">
-                        <button type="button" (click)="toggleAsiento(11)" [class.bg-blue-600]="isAsientoSeleccionado(11)" [class.bg-red-500]="asientosOcupados.includes(11)" [class.bg-slate-800]="!isAsientoSeleccionado(11) && !asientosOcupados.includes(11)" class="w-8 h-8 rounded-lg border border-slate-700 text-[10px] font-bold transition-all flex items-center justify-center text-slate-300">11</button>
-                      </div>
-                      <div class="flex justify-center">
-                        <button type="button" (click)="toggleAsiento(12)" [class.bg-blue-600]="isAsientoSeleccionado(12)" [class.bg-red-500]="asientosOcupados.includes(12)" [class.bg-slate-800]="!isAsientoSeleccionado(12) && !asientosOcupados.includes(12)" class="w-8 h-8 rounded-lg border border-slate-700 text-[10px] font-bold transition-all flex items-center justify-center text-slate-300">12</button>
-                      </div>
-                      <div class="flex justify-center">
-                        <button type="button" (click)="toggleAsiento(13)" [class.bg-blue-600]="isAsientoSeleccionado(13)" [class.bg-red-500]="asientosOcupados.includes(13)" [class.bg-slate-800]="!isAsientoSeleccionado(13) && !asientosOcupados.includes(13)" class="w-8 h-8 rounded-lg border border-slate-700 text-[10px] font-bold transition-all flex items-center justify-center text-slate-300">13</button>
-                      </div>
-                      <div class="flex justify-center">
-                        <button type="button" (click)="toggleAsiento(14)" [class.bg-blue-600]="isAsientoSeleccionado(14)" [class.bg-red-500]="asientosOcupados.includes(14)" [class.bg-slate-800]="!isAsientoSeleccionado(14) && !asientosOcupados.includes(14)" class="w-8 h-8 rounded-lg border border-slate-700 text-[10px] font-bold transition-all flex items-center justify-center text-slate-300">14</button>
-                      </div>
-                      <div class="flex justify-center">
-                        <button type="button" (click)="toggleAsiento(15)" [class.bg-blue-600]="isAsientoSeleccionado(15)" [class.bg-red-500]="asientosOcupados.includes(15)" [class.bg-slate-800]="!isAsientoSeleccionado(15) && !asientosOcupados.includes(15)" class="w-8 h-8 rounded-lg border border-slate-700 text-[10px] font-bold transition-all flex items-center justify-center text-slate-300">15</button>
-                      </div>
-                    </div>
-                    
-                  </div>
-                </div>
-                
-                <!-- Leyenda de colores -->
-                <div class="flex items-center justify-center gap-4 mt-4 text-[10px] text-slate-400">
-                  <div class="flex items-center gap-1">
-                    <span class="w-2.5 h-2.5 rounded bg-slate-800 border border-slate-700"></span>
-                    <span>Libre</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span class="w-2.5 h-2.5 rounded bg-blue-600"></span>
-                    <span>Tu selección</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span class="w-2.5 h-2.5 rounded bg-red-500"></span>
-                    <span>Ocupado</span>
-                  </div>
-                </div>
-                
-                <!-- Mostrar selección actual -->
-                <div *ngIf="asientosSeleccionados.length > 0" class="text-center mt-3 text-xs bg-slate-950 p-2 rounded-xl border border-slate-800">
-                  <span class="text-slate-400 font-medium">Asientos elegidos:</span>
-                  <strong class="text-blue-400 ml-1.5">{{ asientosSeleccionados.join(', ') }}</strong>
-                </div>
-                
-              </div>
-            </div>
-          </div>
-
-          <div *ngIf="tipoViaje === 'encomienda'">
-             <div class="flex items-center justify-between mb-3">
-              <span class="text-sm font-bold text-gray-700">Hora de recogida</span>
-              <select [(ngModel)]="horaSalida" class="bg-white border border-gray-200 rounded-lg text-sm px-3 py-1 focus:outline-none focus:ring-1 focus:ring-ecuavip-blue">
-                <option *ngFor="let hora of horariosDisponibles" [value]="hora">{{ hora }}</option>
-              </select>
-            </div>
-            <div class="bg-blue-50 text-ecuavip-blue text-xs p-2 rounded flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-              <span>Peso máximo de la maleta: 25Kg</span>
-            </div>
-          </div>
-
-          <div *ngIf="tipoViaje === 'express'">
-             <div class="flex items-center gap-3">
-                <div class="bg-gray-900/10 p-2 rounded-xl text-gray-900">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H8.3a2 2 0 0 0-1.6.8L4 11l-5.16.86a1 1 0 0 0-.84.99V16h3m10 0a2 2 0 1 1-4 0m-6 0a2 2 0 1 1-4 0"/></svg>
-                </div>
-                <div>
-                  <p class="font-bold text-gray-800 text-sm">Viaje Privado Inmediato</p>
-                  <p class="text-xs text-gray-500 font-medium">Disponible las 24 horas.</p>
-                </div>
-             </div>
-          </div>
-
-        </div>
-
-        <!-- Total Quote -->
-        <div *ngIf="cotizacionActual" class="flex items-end justify-between px-2 mb-2">
-          <div>
-            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total a pagar</p>
-            <p class="text-3xl font-extrabold" [class.text-ecuavip-dark]="tipoViaje !== 'express'" [class.text-gray-900]="tipoViaje === 'express'">
-              ${{ cotizacionActual.precio_total | number:'1.2-2' }}
-            </p>
-          </div>
-          <div class="text-right">
-             <p class="text-xs font-bold text-gray-400">{{ distanciaKm | number:'1.1-1' }} KM • ~{{ tiempoEstimado }}</p>
-             <p *ngIf="tipoViaje === 'pasajero' && numPasajeros > 1" class="text-xs text-ecuavip-blue font-bold mt-1">${{ cotizacionActual.precio_unitario | number:'1.2-2' }} c/u</p>
-          </div>
-        </div>
-
-        <button (click)="reservar()" [disabled]="!cotizacionActual" class="w-full mt-4 bg-ecuavip-blue text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_-4px_rgba(0,82,204,0.5)] hover:bg-ecuavip-dark hover:shadow-[0_12px_24px_-6px_rgba(0,51,128,0.6)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed">
-          Confirmar Reserva
-        </button>
-      </div>
-
+    <!-- Tab Selector -->
+    <div class="flex p-1 bg-gray-100 rounded-2xl max-w-md w-full sm:w-96 shrink-0">
+      <button 
+        (click)="setActiveTab('shared')"
+        [class.bg-white]="activeTab === 'shared'"
+        [class.shadow-sm]="activeTab === 'shared'"
+        [class.text-gray-900]="activeTab === 'shared'"
+        [class.text-gray-500]="activeTab !== 'shared'"
+        class="flex-1 py-2 px-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider focus:outline-none"
+      >
+        Compartido
+      </button>
+      <button 
+        (click)="setActiveTab('express')"
+        [class.bg-white]="activeTab === 'express'"
+        [class.shadow-sm]="activeTab === 'express'"
+        [class.text-gray-900]="activeTab === 'express'"
+        [class.text-gray-500]="activeTab !== 'express'"
+        class="flex-1 py-2 px-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider focus:outline-none"
+      >
+        Expres
+      </button>
+      <button 
+        (click)="setActiveTab('my-trips')"
+        [class.bg-white]="activeTab === 'my-trips'"
+        [class.shadow-sm]="activeTab === 'my-trips'"
+        [class.text-gray-900]="activeTab === 'my-trips'"
+        [class.text-gray-500]="activeTab !== 'my-trips'"
+        class="flex-1 py-2 px-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider focus:outline-none"
+      >
+        Mis Viajes
+      </button>
     </div>
   </div>
-</div>
 
-<app-auth-modal 
-  *ngIf="showAuthModal" 
-  (onSuccess)="onAuthSuccess()" 
-  (onClose)="showAuthModal = false">
-</app-auth-modal>
+  <!-- Content Area -->
+  <div class="flex-1 min-h-0 relative overflow-hidden flex flex-col">
+    
+    <!-- TAB 1: VIAJE COMPARTIDO (SUBCOMPONENTE ENCAPSULADO) -->
+    <ng-container *ngIf="activeTab === 'shared'">
+      <div class="flex-1 overflow-y-auto block h-full bg-gray-50/50">
+        <app-viaje-compartido-cartelera></app-viaje-compartido-cartelera>
+      </div>
+    </ng-container>
+
+    <!-- TAB 2: VIAJE EXPRÉS (MAPA ORIGINAL RESTAURADO SIN TABS INTERNOS) -->
+    <ng-container *ngIf="activeTab === 'express'">
+      <div class="relative w-full h-full">
+
+        <!-- Google Map Background -->
+        <google-map 
+          height="100%" 
+          width="100%" 
+          [center]="center" 
+          [zoom]="zoom" 
+          [options]="options"
+          (mapClick)="onMapClick($event)">
+          <map-directions-renderer *ngIf="(directionsResults$ | async) as results" [directions]="results"></map-directions-renderer>
+          <map-marker *ngIf="origenLocation && !destinoLocation" [position]="origenLocation"></map-marker>
+          <map-marker *ngIf="origenLocation && destinoLocation" [position]="origenLocation"></map-marker>
+          <map-marker *ngIf="destinoLocation" [position]="destinoLocation"></map-marker>
+        </google-map>
+
+        <!-- Floating UI Overlay -->
+        <div class="absolute top-0 left-0 w-full md:w-[450px] h-full p-4 pb-20 md:p-8 pointer-events-none z-10 flex flex-col justify-end md:justify-center">
+          
+          <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-sm p-6 pointer-events-auto border border-ecuavip-light/50 max-h-full overflow-y-auto">
+            
+            <div class="flex items-center justify-between mb-6">
+              <h1 class="text-xl md:text-2xl font-extrabold text-ecuavip-dark tracking-tight">{{ getTitulo() }}</h1>
+              <button *ngIf="origenAddress || destinoAddress" (click)="limpiar()" class="text-sm text-gray-400 hover:text-red-500 transition-colors font-medium flex items-center gap-1" title="Limpiar ruta">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                Limpiar
+              </button>
+            </div>
+
+            <!-- Inputs -->
+            <div class="relative flex flex-col gap-4 mb-6">
+              <div class="absolute left-4 top-6 bottom-6 w-0.5 bg-gray-200"></div>
+
+              <!-- Origen -->
+              <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-ecuavip-blue z-10 shadow-sm border border-white"></div>
+                <input 
+                  #origenInput
+                  type="text" 
+                  [(ngModel)]="origenAddress"
+                  placeholder="Punto de Recogida" 
+                  class="flex-1 bg-gray-50/80 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ecuavip-blue/50 transition-all text-gray-700 font-medium placeholder-gray-400"
+                >
+              </div>
+
+              <!-- Destino -->
+              <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-sm bg-gray-900 z-10 shadow-sm border border-white"></div>
+                <input 
+                  #destinoInput
+                  type="text" 
+                  [(ngModel)]="destinoAddress"
+                  placeholder="Destino" 
+                  class="flex-1 bg-gray-50/80 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ecuavip-blue/50 transition-all text-gray-700 font-medium placeholder-gray-400"
+                >
+              </div>
+            </div>
+
+            <!-- Results (If route is calculated) -->
+            <div *ngIf="distanciaKm > 0" class="animate-fade-in-up">
+              
+              <!-- Opciones de Pasajeros -->
+              <div class="mb-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-sm font-bold text-gray-700">Pasajeros</span>
+                  <div class="flex items-center gap-3 bg-white rounded-lg border border-gray-200 p-1">
+                    <button (click)="decrementarPasajeros()" class="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-md hover:bg-gray-200">-</button>
+                    <span class="text-sm font-bold w-4 text-center">{{ numPasajeros }}</span>
+                    <button (click)="incrementarPasajeros()" class="w-6 h-6 flex items-center justify-center bg-ecuavip-light text-ecuavip-blue rounded-md hover:bg-blue-100">+</button>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-gray-700">Hora de salida</span>
+                  <select [(ngModel)]="horaSalida" class="bg-white border border-gray-200 rounded-lg text-sm px-3 py-1 focus:outline-none focus:ring-1 focus:ring-ecuavip-blue">
+                    <option *ngFor="let hora of horariosDisponibles" [value]="hora">{{ hora }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Total Quote -->
+              <div *ngIf="cotizacionActual" class="flex items-end justify-between px-2 mb-2">
+                <div>
+                  <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Total a pagar</p>
+                  <p class="text-3xl font-extrabold text-ecuavip-dark">
+                    ${{ cotizacionActual.precio_total | number:'1.2-2' }}
+                  </p>
+                </div>
+                <div class="text-right">
+                   <p class="text-xs font-bold text-gray-400">{{ distanciaKm | number:'1.1-1' }} KM • ~{{ tiempoEstimado }}</p>
+                   <p *ngIf="numPasajeros > 1" class="text-xs text-ecuavip-blue font-bold mt-1">${{ cotizacionActual.precio_unitario | number:'1.2-2' }} c/u</p>
+                </div>
+              </div>
+
+              <button (click)="reservar()" [disabled]="!cotizacionActual" class="w-full mt-4 bg-ecuavip-blue text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_-4px_rgba(0,82,204,0.5)] hover:bg-ecuavip-dark hover:shadow-[0_12px_24px_-6px_rgba(0,51,128,0.6)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                Confirmar Reserva
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <app-auth-modal 
+        *ngIf="showAuthModal" 
+        (onSuccess)="onAuthSuccess()" 
+        (onClose)="showAuthModal = false">
+      </app-auth-modal>
+    </ng-container>
+
+    <!-- TAB 3: HISTORIAL DE MIS VIAGES (COMPONENT INTEGRADO) -->
+    <ng-container *ngIf="activeTab === 'my-trips'">
+      <div class="flex-1 overflow-y-auto block h-full bg-slate-50">
+        <app-mis-viajes></app-mis-viajes>
+      </div>
+    </ng-container>
+  </div>
+</div>

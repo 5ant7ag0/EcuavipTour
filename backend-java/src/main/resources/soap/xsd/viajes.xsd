@@ -227,5 +227,211 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
+    <!-- Shared Trips / Viaje Programado and Reserva Types -->
+    <xs:complexType name="viajeProgramadoSoapType">
+        <xs:sequence>
+            <xs:element name="id" type="xs:long"/>
+            <xs:element name="dir_origen" type="xs:string"/>
+            <xs:element name="dir_destino" type="xs:string"/>
+            <xs:element name="fecha_hora_salida" type="xs:string"/>
+            <xs:element name="precio_asiento" type="xs:decimal"/>
+            <xs:element name="capacidad_total" type="xs:int"/>
+            <xs:element name="asientos_disponibles" type="xs:int"/>
+            <xs:element name="estado" type="xs:string"/>
+            <xs:element name="chofer" type="tns:usuarioSoapType" minOccurs="0"/>
+            <xs:element name="vehiculo" type="tns:vehiculoSoapType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="reservaSoapType">
+        <xs:sequence>
+            <xs:element name="id" type="xs:long"/>
+            <xs:element name="viaje_programado_id" type="xs:long"/>
+            <xs:element name="dir_origen" type="xs:string"/>
+            <xs:element name="dir_destino" type="xs:string"/>
+            <xs:element name="fecha_hora_salida" type="xs:string"/>
+            <xs:element name="usuario_id" type="xs:long"/>
+            <xs:element name="nombre_usuario" type="xs:string" minOccurs="0"/>
+            <xs:element name="numero_asiento" type="xs:int"/>
+            <xs:element name="punto_abordaje" type="xs:string"/>
+            <xs:element name="estado_pago" type="xs:string"/>
+            <xs:element name="pin_abordaje" type="xs:string"/>
+            <xs:element name="fecha_reserva" type="xs:string"/>
+            <xs:element name="fecha_limite_pago" type="xs:string" minOccurs="0"/>
+            <xs:element name="comprobante_url" type="xs:string" minOccurs="0"/>
+            <xs:element name="foto_usuario_url" type="xs:string" minOccurs="0"/>
+            <xs:element name="precio_asiento" type="xs:double"/>
+            <xs:element name="chofer" type="tns:usuarioSoapType" minOccurs="0"/>
+            <xs:element name="vehiculo" type="tns:vehiculoSoapType" minOccurs="0"/>
+            <xs:element name="estado_logistico" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Create Viaje Programado (Admin) -->
+    <xs:element name="createViajeProgramadoRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="chofer_id" type="xs:long"/>
+                <xs:element name="vehiculo_id" type="xs:long"/>
+                <xs:element name="dir_origen" type="xs:string"/>
+                <xs:element name="dir_destino" type="xs:string"/>
+                <xs:element name="fecha_hora_salida" type="xs:string"/>
+                <xs:element name="precio_asiento" type="xs:decimal"/>
+                <xs:element name="capacidad_total" type="xs:int" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="createViajeProgramadoResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="viaje_programado" type="tns:viajeProgramadoSoapType"/>
+                <xs:element name="mensaje" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Get Available Scheduled Trips -->
+    <xs:element name="getViajesProgramadosRequest">
+        <xs:complexType>
+            <xs:sequence/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getViajesProgramadosResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="viajes_programados" type="tns:viajeProgramadoSoapType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Reserve Seat in Shared Trip -->
+    <xs:element name="reservarViajeCompartidoRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="viaje_programado_id" type="xs:long"/>
+                <xs:element name="numero_asiento" type="xs:int"/>
+                <xs:element name="punto_abordaje" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="reservarViajeCompartidoResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="reserva" type="tns:reservaSoapType"/>
+                <xs:element name="mensaje" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Get User's Reservas -->
+    <xs:element name="getMisReservasRequest">
+        <xs:complexType>
+            <xs:sequence/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getMisReservasResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="reservas" type="tns:reservaSoapType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Validate PIN for Check-in -->
+    <xs:element name="validarPinAbordajeRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="reserva_id" type="xs:long"/>
+                <xs:element name="pin" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="validarPinAbordajeResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="exito" type="xs:boolean"/>
+                <xs:element name="mensaje" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Upload Reservation Receipt -->
+    <xs:element name="subirComprobanteReservaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="reserva_id" type="xs:long"/>
+                <xs:element name="file_base64" type="xs:string"/>
+                <xs:element name="filename" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="subirComprobanteReservaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="message" type="xs:string"/>
+                <xs:element name="comprobante_url" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Get Occupied Seats for Scheduled Trip -->
+    <xs:element name="getAsientosOcupadosFrecuenciaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="viaje_programado_id" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getAsientosOcupadosFrecuenciaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="asientos" type="xs:int" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Get Passenger Manifest for a Scheduled Trip -->
+    <xs:element name="getReservasFrecuenciaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="viaje_programado_id" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getReservasFrecuenciaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="reservas" type="tns:reservaSoapType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Update Frequency State -->
+    <xs:element name="updateEstadoFrecuenciaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="viaje_programado_id" type="xs:long"/>
+                <xs:element name="estado" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="updateEstadoFrecuenciaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="exito" type="xs:boolean"/>
+                <xs:element name="mensaje" type="xs:string"/>
+                <xs:element name="estado" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
 
 </xs:schema>

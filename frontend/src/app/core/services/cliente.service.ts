@@ -27,6 +27,19 @@ export class ClienteService {
     );
   }
 
+  getMisReservas(): Observable<any[]> {
+    return this.soapService.post(
+      this.viajesNamespace,
+      'getMisReservasRequest',
+      {},
+      this.authService.getToken() || undefined
+    ).pipe(
+      map(res => {
+        return (res && res.reservas) || [];
+      })
+    );
+  }
+
   cancelarViaje(id: number): Observable<any> {
     return this.soapService.post(
       this.viajesNamespace,

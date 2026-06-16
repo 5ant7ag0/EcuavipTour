@@ -1,6 +1,7 @@
 package com.ecuaviptour.config;
 
 import com.corundumstudio.socketio.Configuration;
+import com.corundumstudio.socketio.SocketConfig;
 import com.corundumstudio.socketio.SocketIOServer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +30,11 @@ public class SocketIOConfig {
         // Add ping settings for persistent connections
         config.setPingInterval(25000);
         config.setPingTimeout(60000);
+
+        // Configure SocketConfig to reuse address to prevent "Address already in use" on fast restarts
+        SocketConfig socketConfig = new SocketConfig();
+        socketConfig.setReuseAddress(true);
+        config.setSocketConfig(socketConfig);
         
         return new SocketIOServer(config);
     }

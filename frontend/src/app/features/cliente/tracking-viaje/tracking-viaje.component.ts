@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { QRCodeModule } from 'angularx-qrcode';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -60,6 +60,7 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
   private assignmentSub: Subscription | null = null;
 
   constructor(
+    private route: ActivatedRoute,
     private clienteService: ClienteService,
     private authService: AuthService,
     private router: Router,
@@ -300,10 +301,65 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
 
   cargarViajes() {
     this.loading = true;
+    
+    const reservaIdParam = this.route.snapshot.queryParams['reservaId'];
+    console.log('[TrackingViaje] queryParam reservaId:', reservaIdParam);
+    if (reservaIdParam) {
+      const targetReservaId = Number(reservaIdParam);
+      this.clienteService.getMisReservas().subscribe({
+        next: (reservas) => {
+          console.log('[TrackingViaje] getMisReservas returned:', reservas);
+          const res = (reservas || []).find((r: any) => Number(r.id) === targetReservaId);
+          console.log('[TrackingViaje] Found matching reservation:', res);
+          if (res) {
+            this.viajeActual = {
+              viaje_id: res.id,
+              id: res.id,
+              viaje_programado_id: res.viaje_programado_id,
+              origen: res.dir_origen,
+              destino: res.dir_destino,
+              monto: res.precio_asiento,
+              tarifa: res.precio_asiento,
+              fecha: res.fecha_hora_salida,
+              estado_pago: res.estado_pago ? res.estado_pago.toLowerCase() : 'pendiente',
+              estado_logistico: res.estado_logistico ? res.estado_logistico.toLowerCase() : 'pendiente',
+              nombre_chofer: res.chofer ? res.chofer.nombre : null,
+              chofer_id: res.chofer ? res.chofer.id : null,
+              foto_chofer_url: res.chofer ? res.chofer.foto_perfil_url : null,
+              vehiculo: res.vehiculo ? {
+                marca: res.vehiculo.marca,
+                modelo: res.vehiculo.modelo,
+                placa: res.vehiculo.placa,
+                foto_auto_url: res.vehiculo.foto_auto_url
+              } : null,
+              asientos: res.numero_asiento ? res.numero_asiento.toString() : '',
+              punto_abordaje: res.punto_abordaje,
+              pin_abordaje: res.pin_abordaje,
+              qr_hash: res.pin_abordaje,
+              isCompartido: true
+            };
+            this.historial = [];
+            setTimeout(() => this.initMap(), 500);
+          } else {
+            console.warn('[TrackingViaje] targetReservaId not found in reservas. Redirecting...');
+            this.showToast('Reserva no encontrada.');
+            this.router.navigate(['/cliente/cotizar']);
+          }
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('[TrackingViaje] Error loading reservas:', err);
+          this.showToast('Error al cargar la reserva.');
+          this.loading = false;
+          this.router.navigate(['/cliente/cotizar']);
+        }
+      });
+      return;
+    }
+
     this.clienteService.getMisViajes().subscribe({
       next: (viajes) => {
         if (viajes && viajes.length > 0) {
-          // Asumimos que el primer viaje es el actual si no está finalizado o cancelado
           const ultimoViaje = viajes[0];
           if (ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_logistico !== 'cancelado') {
             if (ultimoViaje.estado_pago === 'pendiente') {
@@ -328,7 +384,6 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
               });
             }
 
-            // Inicializar mapa después de cargar los datos
             setTimeout(() => this.initMap(), 500);
           } else {
             this.viajeActual = null;
@@ -352,11 +407,11 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
   getProgreso(): number {
     if (!this.viajeActual) return 0;
     const est = this.viajeActual.estado_logistico;
-    if (est === 'pendiente') return 10;
+    if (est === 'pendiente' || est === 'programado') return 20;
     if (est === 'buscando_chofer') return 30;
     if (est === 'aceptado' || est === 'asignado') return 50;
     if (est === 'esperando_cliente') return 70;
-    if (est === 'en_curso' || est === 'en_viaje') return 90;
+    if (est === 'en_curso' || est === 'en_viaje' || est === 'en_ruta') return 90;
     if (est === 'finalizado') return 100;
     return 0;
   }
@@ -373,6 +428,9 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
 
   getPIN(): string {
     if (!this.viajeActual) return '0000';
+    if (this.viajeActual.isCompartido) {
+      return this.viajeActual.pin_abordaje;
+    }
     if (this.viajeActual.qr_hash) {
       return this.viajeActual.qr_hash.slice(-4).toUpperCase();
     }

@@ -78,4 +78,31 @@ export class ReservaService {
       reader.onerror = (error) => observer.error(error);
     });
   }
+
+  subirComprobanteReserva(reservaId: number, file: File): Observable<any> {
+    return new Observable(observer => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64Data = reader.result as string;
+        this.soapService.post(
+          this.viajesNamespace,
+          'subirComprobanteReservaRequest',
+          {
+            reserva_id: reservaId,
+            file_base64: base64Data,
+            filename: file.name
+          },
+          this.authService.getToken() || undefined
+        ).subscribe({
+          next: (res) => {
+            observer.next(res);
+            observer.complete();
+          },
+          error: (err) => observer.error(err)
+        });
+      };
+      reader.onerror = (error) => observer.error(error);
+    });
+  }
 }

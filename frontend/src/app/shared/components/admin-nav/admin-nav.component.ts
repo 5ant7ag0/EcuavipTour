@@ -70,6 +70,13 @@ import { AuthService } from '../../../core/services/auth.service';
         <span class="font-bold text-sm whitespace-nowrap">Gastos Financieros</span>
       </a>
 
+      <!-- Ruta Programada -->
+      <a routerLink="/admin/frecuencias" routerLinkActive="bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
+         class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-600 hover:text-slate-900 hover:bg-gray-200 transition-all group relative">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span class="font-bold text-sm whitespace-nowrap">Ruta Programada</span>
+      </a>
+
       <!-- Configuración -->
       <a routerLink="/admin/config" routerLinkActive="bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
          class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-600 hover:text-slate-900 hover:bg-gray-200 transition-all group relative">
@@ -82,7 +89,7 @@ import { AuthService } from '../../../core/services/auth.service';
   <!-- ===== MOBILE TAB BAR ===== -->
   <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 flex md:hidden justify-around items-center z-[100] h-20 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-2 rounded-t-[2rem]">
     <a routerLink="/admin/monitor" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       <span class="text-[9px] font-bold uppercase tracking-tighter">Panel</span>
     </a>
     <a routerLink="/admin/reservas" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
@@ -109,6 +116,10 @@ import { AuthService } from '../../../core/services/auth.service';
     <a routerLink="/admin/gastos" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
       <span class="text-[9px] font-bold uppercase tracking-tighter">Gastos</span>
+    </a>
+    <a routerLink="/admin/frecuencias" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span class="text-[9px] font-bold uppercase tracking-tighter">Rutas</span>
     </a>
   </nav>
   `,

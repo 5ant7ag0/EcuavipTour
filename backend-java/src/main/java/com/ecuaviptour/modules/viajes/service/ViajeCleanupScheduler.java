@@ -1,17 +1,9 @@
 package com.ecuaviptour.modules.viajes.service;
 
 import com.ecuaviptour.modules.viajes.repository.ReservaAsientoRepository;
-
 import com.ecuaviptour.modules.viajes.repository.ViajeRepository;
-
-import com.ecuaviptour.modules.viajes.domain.ReservaAsiento;
-
-import com.ecuaviptour.modules.viajes.domain.Viaje;
-
 import com.ecuaviptour.modules.viajes.domain.ReservaAsiento;
 import com.ecuaviptour.modules.viajes.domain.Viaje;
-import com.ecuaviptour.modules.viajes.repository.ReservaAsientoRepository;
-import com.ecuaviptour.modules.viajes.repository.ViajeRepository;
 import com.ecuaviptour.shared.service.SocketIOService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -26,7 +18,7 @@ import java.util.List;
  * cuyo plazo para subir el comprobante de pago haya expirado sin confirmación.
  *
  * @author Santiago T.
- * @version 1.0
+ * @version 1.1
  */
 @Component
 public class ViajeCleanupScheduler {
@@ -34,20 +26,28 @@ public class ViajeCleanupScheduler {
     private final ViajeRepository viajeRepository;
     private final ReservaAsientoRepository reservaAsientoRepository;
     private final SocketIOService socketIOService;
+    private final ReservaService reservaService;
 
     /**
      * Constructor para inyección de repositorios y servicios de sockets en tiempo real.
-     *
-     * @param viajeRepository          Repositorio de viajes.
-     * @param reservaAsientoRepository Repositorio de reservas de asientos.
-     * @param socketIOService          Servicio para emitir eventos de sockets en tiempo real.
      */
     public ViajeCleanupScheduler(ViajeRepository viajeRepository,
                                  ReservaAsientoRepository reservaAsientoRepository,
-                                 SocketIOService socketIOService) {
+                                 SocketIOService socketIOService,
+                                 ReservaService reservaService) {
         this.viajeRepository = viajeRepository;
         this.reservaAsientoRepository = reservaAsientoRepository;
         this.socketIOService = socketIOService;
+        this.reservaService = reservaService;
+    }
+
+    /**
+     * Tarea programada para limpiar reservas expiradas individuales cada 10 segundos.
+     */
+    @Scheduled(fixedDelay = 10000)
+    @Transactional
+    public void cleanupExpiredReservations() {
+        reservaService.cancelarReservasExpiradas();
     }
 
     /**

@@ -1,9 +1,33 @@
 <div class="max-w-4xl mx-auto px-4 pt-8">
-  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6 mb-8">
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6 mb-6">
     <div>
       <h1 class="text-3xl font-black text-ecuavip-dark tracking-tight">Historial de Viajes</h1>
-      <p class="text-gray-500 font-medium mt-1">Consulta tus viajes realizados y cancelados.</p>
+      <p class="text-gray-500 font-medium mt-1">Consulta tus viajes activos y pasados.</p>
     </div>
+  </div>
+
+  <!-- Filtro de Viajes (Estilo Apple) -->
+  <div class="flex p-1 bg-gray-150 rounded-2xl max-w-sm w-full mb-8 shadow-inner">
+    <button 
+      (click)="filtro = 'activos'"
+      [class.bg-white]="filtro === 'activos'"
+      [class.shadow-sm]="filtro === 'activos'"
+      [class.text-gray-900]="filtro === 'activos'"
+      [class.text-gray-500]="filtro !== 'activos'"
+      class="flex-1 py-2 px-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider focus:outline-none"
+    >
+      Activos
+    </button>
+    <button 
+      (click)="filtro = 'finalizados'"
+      [class.bg-white]="filtro === 'finalizados'"
+      [class.shadow-sm]="filtro === 'finalizados'"
+      [class.text-gray-900]="filtro === 'finalizados'"
+      [class.text-gray-500]="filtro !== 'finalizados'"
+      class="flex-1 py-2 px-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-wider focus:outline-none"
+    >
+      Finalizados
+    </button>
   </div>
 
   <div *ngIf="loading" class="flex flex-col items-center justify-center py-20">
@@ -33,9 +57,17 @@
 
       <!-- Status Badge -->
       <div class="flex justify-between items-start mb-6">
-        <span [class]="getStatusColor(v.estado_pago) + ' px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider'">
-          {{ v.estado_pago === 'comprobante_subido' ? 'En Verificación' : v.estado_pago }}
-        </span>
+        <div class="flex items-center gap-2">
+          <span [class]="getStatusColor(v.estado_pago) + ' px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider'">
+            {{ v.estado_pago === 'comprobante_subido' ? 'Revisando comprobante de pago' : (v.estado_pago === 'abordo' ? 'A bordo' : v.estado_pago) }}
+          </span>
+          <span *ngIf="v.isCompartido" class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider">
+            Compartido
+          </span>
+          <span *ngIf="!v.isCompartido" class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider">
+            Exprés
+          </span>
+        </div>
         <span class="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-lg">{{ v.fecha | date:'dd MMM, YYYY' }}</span>
       </div>
 
@@ -78,33 +110,47 @@
           </div>
 
           <p class="text-[11px] text-gray-500 font-medium px-1">
-            Tu reserva asegura el asiento por 15 minutos. Sube tu comprobante para confirmar.
+             Tu reserva asegura el asiento por 15 minutos. Sube tu comprobante para confirmar.
           </p>
           
           <div class="grid grid-cols-2 gap-3">
             <button (click)="cancelarViaje(v.viaje_id)" class="bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 py-4 rounded-2xl font-bold text-xs transition-colors">
               Cancelar
             </button>
-            <button [routerLink]="['/cliente/reserva']" [queryParams]="{viajeId: v.viaje_id}" class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/10">
+            <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/reserva']" [queryParams]="{viajeId: v.viaje_id}" class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/10">
+              Pagar Ahora
+            </button>
+            <button *ngIf="v.isCompartido" [routerLink]="['/cliente/reserva']" 
+                    [queryParams]="{
+                      reservaId: v.viaje_id,
+                      origen: v.origen,
+                      destino: v.destino,
+                      tarifa: v.monto,
+                      asiento: v.asientos,
+                      abordaje: v.punto_abordaje,
+                      hora: v.fecha,
+                      pin: v.pin_abordaje
+                    }" 
+                    class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/10">
               Pagar Ahora
             </button>
           </div>
         </div>
 
         <!-- PAGADO / ASIGNADO / EN VERIFICACIÓN -->
-        <div *ngIf="(v.estado_pago === 'aprobado' || v.estado_pago === 'comprobante_subido') && v.estado_logistico !== 'finalizado'" class="flex flex-col gap-4">
+        <div *ngIf="(v.estado_pago === 'aprobado' || v.estado_pago === 'comprobante_subido' || v.estado_pago === 'confirmado') && v.estado_logistico !== 'finalizado'" class="flex flex-col gap-4">
           
           <div *ngIf="v.estado_pago === 'comprobante_subido'" class="flex items-center gap-4 bg-blue-50 p-4 rounded-[1.5rem]">
             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
             <div>
-              <p class="text-xs font-black text-blue-800">En Verificación</p>
+              <p class="text-xs font-black text-blue-800">Revisando comprobante de pago</p>
               <p class="text-[10px] text-blue-700 font-medium">Estamos validando tu pago. Pronto se asignará un chofer.</p>
             </div>
           </div>
 
-          <div *ngIf="v.estado_pago === 'aprobado' && v.qr_hash" class="flex items-center gap-4 bg-green-50 p-4 rounded-[1.5rem]">
+          <div *ngIf="!v.isCompartido && v.estado_pago === 'aprobado' && v.qr_hash" class="flex items-center gap-4 bg-green-50 p-4 rounded-[1.5rem]">
             <div class="bg-white p-2 rounded-xl shadow-sm">
               <qrcode [qrdata]="v.qr_hash" [width]="60" [errorCorrectionLevel]="'M'"></qrcode>
             </div>
@@ -113,8 +159,46 @@
               <p class="text-[10px] text-green-700 font-medium">Muestra este QR al chofer al abordar.</p>
             </div>
           </div>
+
+          <div *ngIf="v.isCompartido && (v.estado_pago === 'aprobado' || v.estado_pago === 'confirmado')" class="flex items-center gap-4 bg-green-50 p-4 rounded-[1.5rem]">
+            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div>
+              <p class="text-xs font-black text-green-800">¡Reserva Confirmada!</p>
+              <p class="text-[10px] text-green-700 font-medium">Usa el botón de Check-in para ver tus detalles de abordaje.</p>
+            </div>
+          </div>
+
+          <div *ngIf="v.isCompartido && v.estado_pago === 'abordo'" class="flex items-center gap-4 bg-emerald-50 p-4 rounded-[1.5rem]">
+            <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-black text-emerald-800">¡Ya estás a bordo!</p>
+              <p class="text-[10px] text-emerald-700 font-medium">Tu check-in fue validado correctamente por el chofer. Disfruta tu viaje.</p>
+            </div>
+          </div>
           
-          <button [routerLink]="['/cliente/en-curso']" [queryParams]="{id: v.viaje_id}" class="w-full bg-ecuavip-dark text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2">
+          <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/en-curso']" [queryParams]="{id: v.viaje_id}" class="w-full bg-ecuavip-dark text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Ver Rastreo en Vivo
+          </button>
+
+          <button *ngIf="v.isCompartido && (v.estado_pago === 'aprobado' || v.estado_pago === 'confirmado')" 
+                  [routerLink]="['/cliente/en-curso']" 
+                  [queryParams]="{reservaId: v.viaje_id}" 
+                  class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Check-in / Pase de Abordaje
+          </button>
+
+          <button *ngIf="v.isCompartido && v.estado_pago === 'abordo'" 
+                  [routerLink]="['/cliente/en-curso']" 
+                  [queryParams]="{reservaId: v.viaje_id}" 
+                  class="w-full bg-ecuavip-dark text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 active:scale-95">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             Ver Rastreo en Vivo
           </button>
@@ -150,13 +234,28 @@
             <button (click)="cancelarViaje(v.viaje_id)" class="bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 py-4 rounded-2xl font-bold text-xs transition-colors">
               Cancelar
             </button>
-            <button [routerLink]="['/cliente/reserva']" 
+            <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/reserva']" 
                     [queryParams]="{
                       viajeId: v.viaje_id, 
                       origen: v.origen, 
                       destino: v.destino, 
                       tarifa: v.monto, 
                       tipo: v.tipo_servicio,
+                      reintentar: true
+                    }" 
+                    class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg">
+              Reintentar
+            </button>
+            <button *ngIf="v.isCompartido" [routerLink]="['/cliente/reserva']" 
+                    [queryParams]="{
+                      reservaId: v.viaje_id, 
+                      origen: v.origen, 
+                      destino: v.destino, 
+                      tarifa: v.monto, 
+                      asiento: v.asientos,
+                      abordaje: v.punto_abordaje,
+                      hora: v.fecha,
+                      pin: v.pin_abordaje,
                       reintentar: true
                     }" 
                     class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg">
@@ -218,6 +317,49 @@
     </div>
   </div>
   
+  <!-- Modal de Check-in (viajes compartidos) -->
+  <div *ngIf="showCheckInModal && selectedCheckInReserva" class="fixed inset-0 z-[10000] flex items-center justify-center p-6 animate-fade-in">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-xl" (click)="cerrarCheckIn()"></div>
+    
+    <!-- Modal Content -->
+    <div class="bg-white w-full max-w-sm rounded-3xl p-10 relative z-10 shadow-sm border border-white/20">
+      <div class="text-center mb-10">
+        <span class="inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest mb-4">Boarding Pass</span>
+        <h3 class="text-3xl font-black text-gray-900">Tu Ticket VIP</h3>
+        <p class="text-xs font-bold text-indigo-600 uppercase tracking-widest mt-2">Servicio Compartido</p>
+      </div>
+      
+      <!-- QR Card -->
+      <div class="bg-gray-50 aspect-square rounded-3xl mb-10 flex items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden group">
+         <div class="p-6 bg-white rounded-3xl shadow-sm border border-gray-100 group-hover:scale-105 transition-transform duration-500">
+           <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + selectedCheckInReserva.pin_abordaje" 
+                class="w-48 h-48" alt="QR Ticket">
+         </div>
+      </div>
+      
+      <!-- PIN & Details card -->
+      <div class="text-center bg-blue-600 rounded-3xl p-8 text-white shadow-sm mb-8 space-y-4">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-2">PIN de Abordaje</p>
+          <p class="text-5xl font-black tracking-[0.2em] font-mono">{{ selectedCheckInReserva.pin_abordaje }}</p>
+        </div>
+        <div class="pt-4 border-t border-white/20 text-left space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="opacity-70">Asiento:</span>
+            <span class="font-black">#{{ selectedCheckInReserva.asientos }}</span>
+          </div>
+          <div class="flex flex-col text-xs">
+            <span class="opacity-70 font-semibold mb-0.5">Punto de Abordaje:</span>
+            <span class="font-black leading-tight">{{ selectedCheckInReserva.punto_abordaje }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <button (click)="cerrarCheckIn()" class="w-full text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-gray-900 transition-all">Cerrar</button>
+    </div>
+  </div>
+  
   <!-- Modal de Factura -->
   <div *ngIf="showInvoiceModal && selectedViaje" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
     <!-- Backdrop -->
@@ -231,61 +373,64 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
 
-      <!-- Receipt Header -->
-      <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-blue-50 text-ecuavip-blue rounded-3xl flex items-center justify-center mx-auto mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        </div>
-        <h3 class="text-2xl font-black text-ecuavip-dark">Factura Digital</h3>
-        <p class="text-xs font-bold text-gray-400 mt-1">Comprobante de Servicio Ecuavip Tour</p>
-      </div>
-
-      <!-- Receipt Body -->
-      <div class="border-t border-b border-dashed border-gray-200 py-6 my-6 space-y-4 font-medium text-sm">
-        <div class="flex justify-between items-center text-gray-500">
-          <span>Servicio ID:</span>
-          <span class="font-bold text-ecuavip-dark font-mono">#{{ selectedViaje.viaje_id.toString().padStart(6, '0') }}</span>
-        </div>
-        <div class="flex justify-between items-center text-gray-500">
-          <span>Fecha y Hora:</span>
-          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.fecha }}</span>
-        </div>
-        <div class="flex justify-between items-center text-gray-500">
-          <span>Tipo de Servicio:</span>
-          <span class="font-bold text-ecuavip-dark capitalize">{{ selectedViaje.tipo_servicio }}</span>
-        </div>
-        <div class="flex justify-between items-center text-gray-500">
-          <span>Conductor:</span>
-          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.nombre_chofer || 'No asignado' }}</span>
-        </div>
-        <div *ngIf="selectedViaje.vehiculo" class="flex justify-between items-center text-gray-500">
-          <span>Vehículo:</span>
-          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.vehiculo.modelo }} ({{ selectedViaje.vehiculo.placa }})</span>
-        </div>
-        <div class="flex justify-between items-center text-gray-500">
-          <span>Distancia Aprox:</span>
-          <span class="font-bold text-ecuavip-dark">{{ selectedViaje.distancia_km | number:'1.1-2' }} km</span>
-        </div>
-        
-        <div class="pt-4 border-t border-gray-100 space-y-3">
-          <div>
-            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Punto de Origen</span>
-            <span class="text-xs font-bold text-ecuavip-dark block leading-normal">{{ selectedViaje.origen }}</span>
+      <!-- Receipt Wrapper to capture as PDF -->
+      <div id="invoice-print-container" class="bg-white p-2">
+        <!-- Receipt Header -->
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-blue-50 text-ecuavip-blue rounded-3xl flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </div>
-          <div>
-            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Punto de Destino</span>
-            <span class="text-xs font-bold text-ecuavip-dark block leading-normal">{{ selectedViaje.destino }}</span>
+          <h3 class="text-2xl font-black text-ecuavip-dark">Factura Digital</h3>
+          <p class="text-xs font-bold text-gray-400 mt-1">Comprobante de Servicio Ecuavip Tour</p>
+        </div>
+
+        <!-- Receipt Body -->
+        <div class="border-t border-b border-dashed border-gray-200 py-6 my-6 space-y-4 font-medium text-sm">
+          <div class="flex justify-between items-center text-gray-500">
+            <span>Servicio ID:</span>
+            <span class="font-bold text-ecuavip-dark font-mono">#{{ selectedViaje.viaje_id.toString().padStart(6, '0') }}</span>
+          </div>
+          <div class="flex justify-between items-center text-gray-500">
+            <span>Fecha y Hora:</span>
+            <span class="font-bold text-ecuavip-dark">{{ selectedViaje.fecha }}</span>
+          </div>
+          <div class="flex justify-between items-center text-gray-500">
+            <span>Tipo de Servicio:</span>
+            <span class="font-bold text-ecuavip-dark capitalize">{{ selectedViaje.tipo_servicio }}</span>
+          </div>
+          <div class="flex justify-between items-center text-gray-500">
+            <span>Conductor:</span>
+            <span class="font-bold text-ecuavip-dark">{{ selectedViaje.nombre_chofer || 'No asignado' }}</span>
+          </div>
+          <div *ngIf="selectedViaje.vehiculo" class="flex justify-between items-center text-gray-500">
+            <span>Vehículo:</span>
+            <span class="font-bold text-ecuavip-dark">{{ selectedViaje.vehiculo.modelo }} ({{ selectedViaje.vehiculo.placa }})</span>
+          </div>
+          <div class="flex justify-between items-center text-gray-500">
+            <span>Distancia Aprox:</span>
+            <span class="font-bold text-ecuavip-dark">{{ selectedViaje.distancia_km | number:'1.1-2' }} km</span>
+          </div>
+          
+          <div class="pt-4 border-t border-gray-100 space-y-3">
+            <div>
+              <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Punto de Origen</span>
+              <span class="text-xs font-bold text-ecuavip-dark block leading-normal">{{ selectedViaje.origen }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Punto de Destino</span>
+              <span class="text-xs font-bold text-ecuavip-dark block leading-normal">{{ selectedViaje.destino }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Price Breakdown -->
-      <div class="bg-slate-50 p-5 rounded-2xl flex justify-between items-center mb-8">
-        <div>
-          <span class="text-xs text-gray-500 font-bold uppercase block tracking-wider leading-none mb-1">Monto Pagado</span>
-          <span class="text-[10px] text-emerald-600 font-black uppercase tracking-wider">Aprobado via Transferencia</span>
+        <!-- Price Breakdown -->
+        <div class="bg-slate-50 p-5 rounded-2xl flex justify-between items-center mb-8">
+          <div>
+            <span class="text-xs text-gray-500 font-bold uppercase block tracking-wider leading-none mb-1">Monto Pagado</span>
+            <span class="text-[10px] text-emerald-600 font-black uppercase tracking-wider">Aprobado via Transferencia</span>
+          </div>
+          <span class="text-3xl font-black text-ecuavip-dark font-mono">${{ selectedViaje.monto | number:'1.2-2' }}</span>
         </div>
-        <span class="text-3xl font-black text-ecuavip-dark font-mono">${{ selectedViaje.monto | number:'1.2-2' }}</span>
       </div>
 
       <!-- Action Buttons -->
@@ -293,7 +438,7 @@
         <div class="grid grid-cols-2 gap-3">
           <button (click)="descargarPDF()" class="bg-gray-50 text-gray-600 hover:bg-gray-100 py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-colors border border-gray-100">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Imprimir / PDF
+            Descargar PDF
           </button>
           
           <button (click)="compartirWhatsApp(selectedViaje)" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-colors border border-emerald-100">

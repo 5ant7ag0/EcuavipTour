@@ -18,7 +18,7 @@ public class JwtUtil {
     @Value("${jwt.secret:ecuavip-super-secret-key-123-extremely-secure-and-safe-32-chars}")
     private String secret;
 
-    @Value("${jwt.expiration:36000000}") // Default 10 hours in milliseconds
+    @Value("${jwt.expiration:36000000}") // Default 10 hours
     private long jwtExpirationMs;
 
     private Key getSigningKey() {

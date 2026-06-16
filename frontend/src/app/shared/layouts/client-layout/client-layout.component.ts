@@ -16,8 +16,8 @@ import { Subscription } from 'rxjs';
       <!-- Navbar global para cliente -->
       <app-client-navbar (onLoginRequest)="showAuthModal = true"></app-client-navbar>
 
-      <!-- Espaciador para el navbar desktop (header fijo de 80px) -->
-      <div class="hidden md:block h-20 w-full"></div>
+      <!-- Espaciador para el navbar desktop (header fijo de 96px) -->
+      <div class="hidden md:block h-24 w-full"></div>
 
       <!-- TOAST NOTIFICATION GLOBAL -->
       <div *ngIf="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-[10002] w-[92%] max-w-lg transition-all duration-500 ease-out transform">
@@ -69,7 +69,7 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
   }
 
   isCotizarPage(): boolean {
-    return this.router.url.includes('/cliente/cotizar');
+    return this.router.url.includes('/cliente/cotizar') || this.router.url.includes('/cliente/paquetes');
   }
 
   setupSocketListeners() {

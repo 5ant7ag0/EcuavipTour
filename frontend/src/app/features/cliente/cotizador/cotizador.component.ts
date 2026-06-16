@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, NgZone, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GoogleMapsModule, MapDirectionsService } from '@angular/google-maps';
@@ -7,20 +7,33 @@ import { ViajeService, CotizacionResponse } from '../../../core/services/viaje.s
 import { AuthService } from '../../../core/services/auth.service';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { AuthModalComponent } from '../../auth/auth-modal/auth-modal.component';
+import { ViajeCompartidoCarteleraComponent } from './viaje-compartido-cartelera/viaje-compartido-cartelera.component';
+import { MisViajesComponent } from '../mis-viajes/mis-viajes.component';
 import { Observable, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-cotizador',
   standalone: true,
-  imports: [CommonModule, FormsModule, GoogleMapsModule, AuthModalComponent, RouterModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    GoogleMapsModule,
+    AuthModalComponent,
+    RouterModule,
+    ViajeCompartidoCarteleraComponent,
+    MisViajesComponent
+  ],
   templateUrl: './cotizador.component.html',
   styleUrls: ['./cotizador.component.css']
 })
-export class CotizadorComponent implements OnInit, OnDestroy {
+export class CotizadorComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('origenInput') origenInput!: ElementRef<HTMLInputElement>;
   @ViewChild('destinoInput') destinoInput!: ElementRef<HTMLInputElement>;
+
+  // Tab navigation: Compartido ('shared'), Expres ('express'), Mis Viajes ('my-trips')
+  activeTab: 'shared' | 'express' | 'my-trips' = 'shared';
 
   center: google.maps.LatLngLiteral = { lat: -1.2416, lng: -78.6195 }; // Ambato
   zoom = 13;
@@ -43,7 +56,7 @@ export class CotizadorComponent implements OnInit, OnDestroy {
   distanciaKm = 0;
   tiempoEstimado = '';
   
-  tipoViaje: 'pasajero' | 'encomienda' | 'express' = 'pasajero';
+  tipoViaje: 'pasajero' | 'encomienda' | 'express' = 'express';
   numPasajeros = 1;
   maxPasajeros = 15;
   horaSalida = '04:00 AM';
@@ -74,10 +87,20 @@ export class CotizadorComponent implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private directionsService: MapDirectionsService,
     private ngZone: NgZone,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const tab = params['tab'];
+      if (tab === 'shared' || tab === 'express' || tab === 'my-trips') {
+        this.activeTab = tab;
+        if (tab === 'express') {
+          setTimeout(() => this.initAutocomplete(), 200);
+        }
+      }
+    });
     this.checkActiveTrip();
   }
 
@@ -106,20 +129,33 @@ export class CotizadorComponent implements OnInit, OnDestroy {
       });
     }
   }
+
   ngOnDestroy() {
     if (this.cotizacionSub) this.cotizacionSub.unsubscribe();
   }
 
   getTitulo(): string {
-    return this.tipoViaje === 'encomienda' ? '¿A dónde envías/recibes?' : '¿A dónde vas?';
+    return '¿A dónde vas?';
   }
 
   ngAfterViewInit() {
-    this.initAutocomplete();
+    if (this.activeTab === 'express') {
+      this.initAutocomplete();
+    }
+  }
+
+  setActiveTab(tab: 'shared' | 'express' | 'my-trips') {
+    this.activeTab = tab;
+    if (tab === 'express') {
+      setTimeout(() => {
+        this.initAutocomplete();
+      }, 100);
+    }
   }
 
   initAutocomplete() {
     if (!google || !google.maps || !google.maps.places) return;
+    if (!this.origenInput || !this.destinoInput) return;
     
     const autocompleteOrigen = new google.maps.places.Autocomplete(this.origenInput.nativeElement, { componentRestrictions: { country: 'ec' } });
     const autocompleteDestino = new google.maps.places.Autocomplete(this.destinoInput.nativeElement, { componentRestrictions: { country: 'ec' } });

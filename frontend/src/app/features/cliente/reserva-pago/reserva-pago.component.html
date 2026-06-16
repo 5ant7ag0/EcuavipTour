@@ -1,134 +1,169 @@
-<div class="min-h-screen bg-slate-50 pt-20 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
+<div class="min-h-screen bg-gray-50/50 pt-20 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
   <div class="max-w-3xl mx-auto">
     
-    <div *ngIf="success" class="bg-white rounded-3xl shadow-sm p-10 text-center animate-fade-in-up">
-      <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><path d="M20 6 9 17l-5-5"/></svg>
+    <!-- Success screen -->
+    <div *ngIf="success" class="bg-white rounded-3xl shadow-xl shadow-gray-200/20 border border-gray-100 p-10 text-center animate-fade-in-up">
+      <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-green-600"><path d="M20 6 9 17l-5-5"/></svg>
       </div>
-      <h2 class="text-3xl font-extrabold text-gray-900 mb-2">¡Comprobante Recibido!</h2>
-      <p class="text-gray-600 mb-8 max-w-md mx-auto">Tu viaje ha sido reservado y el pago está en validación. Recibirás una notificación cuando un administrador apruebe tu ticket.</p>
-      <button routerLink="/cliente/en-curso" class="bg-ecuavip-blue text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-ecuavip-dark transition-colors">
-        Ver mi viaje
+      <h2 class="text-3xl font-black text-gray-900 mb-2">¡Comprobante Recibido!</h2>
+      <p class="text-gray-500 mb-8 max-w-md mx-auto text-sm font-semibold">Tu comprobante de pago ha sido cargado con éxito. Un administrador revisará la transacción para autorizar tu abordaje.</p>
+      <button [routerLink]="['/cliente/cotizar']" [queryParams]="{tab: 'my-trips'}" class="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors">
+        Ver mis pasajes
       </button>
     </div>
 
+    <!-- Payment Flow -->
     <div *ngIf="!success" class="space-y-6">
-      <h1 class="text-3xl font-extrabold text-ecuavip-dark">Resumen de tu Viaje</h1>
+      <h1 class="text-3xl font-black text-gray-900 tracking-tight">Completar Pago</h1>
 
-      <!-- Contador Regresivo -->
-      <div *ngIf="countdown$ | async as timer" class="bg-yellow-50 border border-yellow-100 rounded-3xl p-6 flex items-center justify-between animate-fade-in">
+      <!-- Countdown Timer (Yellow/Red Alert) -->
+      <div *ngIf="countdown$ | async as timer" class="bg-amber-50 border border-amber-100 rounded-3xl p-6 flex items-center justify-between shadow-sm animate-fade-in">
         <div class="flex items-center gap-3">
-          <div [class]="timer.isCritical ? 'bg-red-500' : 'bg-yellow-500'" class="w-3 h-3 rounded-full animate-pulse"></div>
+          <div [class]="timer.isCritical ? 'bg-red-500' : 'bg-amber-500'" class="w-3 h-3 rounded-full animate-pulse"></div>
           <div>
-            <h4 [class]="timer.isCritical ? 'text-red-700' : 'text-yellow-800'" class="text-sm font-black uppercase tracking-wider">Tiempo Límite para Completar el Pago</h4>
-            <p class="text-xs text-gray-500 font-medium">Realiza la transferencia antes de que expire el tiempo.</p>
+            <h4 [class]="timer.isCritical ? 'text-red-700' : 'text-amber-800'" class="text-xs font-black uppercase tracking-wider">Tiempo límite para pagar</h4>
+            <p class="text-xs text-gray-500 font-medium">Sube tu comprobante antes de que expire esta ventana.</p>
           </div>
         </div>
-        <div [class]="timer.isCritical ? 'text-red-600' : 'text-yellow-700'" class="text-3xl font-black font-mono shrink-0 ml-4">
+        <div [class]="timer.isCritical ? 'text-red-600' : 'text-amber-700'" class="text-3xl font-black font-mono shrink-0 ml-4">
           {{ timer.time }}
         </div>
       </div>
+
+      <!-- General Error / Expiration Block -->
+      <div *ngIf="error" class="p-5 bg-red-50 border border-red-100 rounded-3xl flex items-start gap-3 text-red-700 text-sm font-semibold shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="mt-0.5 flex-shrink-0">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
       
-      <!-- Detalle de Ruta -->
-      <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between gap-6">
+      <!-- Route & Reservation Detail Card -->
+      <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/10 border border-gray-100 p-6 flex flex-col md:flex-row justify-between gap-6">
         <div class="flex-1 space-y-4">
           <div class="flex items-start gap-3">
-            <div class="w-3 h-3 rounded-full bg-ecuavip-blue mt-1"></div>
+            <div class="w-3 h-3 rounded-full bg-blue-600 mt-1"></div>
             <div>
-              <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Recogida</p>
-              <p class="text-gray-800 font-medium">{{ reservaParams.origen }}</p>
+              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Origen</p>
+              <p class="text-sm font-black text-gray-800">{{ origen }}</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <div class="w-3 h-3 rounded-sm bg-gray-900 mt-1"></div>
             <div>
-               <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Destino</p>
-              <p class="text-gray-800 font-medium">{{ reservaParams.destino }}</p>
+               <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Destino</p>
+              <p class="text-sm font-black text-gray-800">{{ destino }}</p>
             </div>
           </div>
         </div>
 
-        <div class="bg-gray-50 rounded-2xl p-5 md:w-64 flex flex-col justify-center">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total a Pagar</p>
-          <p class="text-4xl font-extrabold text-ecuavip-dark">${{ reservaParams.tarifa }}</p>
-          <div class="mt-2 text-sm text-gray-600 space-y-1">
-             <p><strong>Servicio:</strong> <span class="capitalize">{{ reservaParams.tipo }}</span></p>
-             <p *ngIf="reservaParams.tipo === 'pasajero'"><strong>Pasajeros:</strong> {{ reservaParams.pasajeros }}</p>
-             <p *ngIf="reservaParams.tipo === 'pasajero' && obtenerAsientosString()"><strong>Asiento(s):</strong> <span class="text-ecuavip-blue font-bold">{{ obtenerAsientosString() }}</span></p>
-             <p *ngIf="reservaParams.hora"><strong>Hora salida:</strong> {{ reservaParams.hora }}</p>
+        <div class="bg-gray-50 rounded-2xl p-5 md:w-64 flex flex-col justify-center border border-gray-100">
+          <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total a Pagar</p>
+          <p class="text-4xl font-black text-gray-900">${{ tarifa | number:'1.2-2' }}</p>
+          <div class="mt-4 pt-3 border-t border-gray-200/60 text-xs text-gray-600 space-y-1.5 font-semibold">
+             <p><strong>Servicio:</strong> Viaje Compartido</p>
+             <p *ngIf="asiento"><strong>Asiento reservado:</strong> <span class="text-blue-600 font-black">#{{ asiento }}</span></p>
+             <p *ngIf="abordaje"><strong>Abordaje:</strong> {{ abordaje }}</p>
+             <p *ngIf="hora"><strong>Frecuencia:</strong> {{ hora }}</p>
+             <p *ngIf="pin"><strong>PIN Abordaje:</strong> <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800 font-mono font-bold">{{ pin }}</span></p>
           </div>
         </div>
       </div>
 
-      <!-- Datos Bancarios -->
-      <div class="bg-ecuavip-blue/5 border border-ecuavip-blue/20 rounded-3xl p-6 md:p-8">
-        <h3 class="text-lg font-bold text-ecuavip-dark mb-4">Datos para Transferencia</h3>
+      <!-- Bank Details -->
+      <div class="bg-blue-50/30 border border-blue-100/50 rounded-3xl p-6 md:p-8 shadow-sm">
+        <h3 class="text-base font-black text-gray-900 mb-4 uppercase tracking-wider">Datos de Transferencia Bancaria</h3>
         <div class="grid md:grid-cols-2 gap-4">
-          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-             <p class="text-xs font-bold text-gray-400 uppercase mb-1">Banco</p>
-             <p class="font-bold text-gray-800">Banco Pichincha</p>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+             <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Banco</p>
+             <p class="font-black text-gray-800 text-sm">Banco Pichincha</p>
           </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-             <p class="text-xs font-bold text-gray-400 uppercase mb-1">Titular</p>
-             <p class="font-bold text-gray-800">Ecuavip Tour</p>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+             <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Beneficiario</p>
+             <p class="font-black text-gray-800 text-sm">Ecuavip Tour Compañía Limitada</p>
           </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 flex items-center justify-between">
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 md:col-span-2 flex items-center justify-between">
              <div>
-               <p class="text-xs font-bold text-gray-400 uppercase mb-1">Número de Cuenta</p>
-               <p class="font-bold text-ecuavip-blue text-2xl tracking-widest">2209090900</p>
+               <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Número de Cuenta</p>
+               <p class="font-black text-blue-600 text-2xl tracking-widest">2209090900</p>
              </div>
              <div class="text-right">
-               <p class="text-xs font-bold text-gray-400 uppercase mb-1">Tipo</p>
-               <p class="font-bold text-gray-800">Ahorros</p>
+               <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Tipo de Cuenta</p>
+               <p class="font-black text-gray-800 text-sm">Ahorros</p>
              </div>
           </div>
         </div>
       </div>
 
-      <!-- Subir Comprobante -->
-      <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
-        <h3 class="text-lg font-bold text-gray-900 mb-4">Sube tu Comprobante</h3>
-        <p class="text-sm text-gray-500 mb-6">Realiza la transferencia por el valor exacto y sube una captura de pantalla.</p>
+      <!-- Upload Receipt Screen -->
+      <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/10 border border-gray-100 p-6 md:p-8">
+        <h3 class="text-lg font-black text-gray-900 mb-2">Cargar Comprobante de Pago</h3>
+        <p class="text-xs text-gray-500 font-medium mb-6">Completa la transferencia bancaria y sube el capture del comprobante digital.</p>
 
-        <div *ngIf="error" class="bg-red-50 text-red-500 text-sm p-4 rounded-xl mb-6 border border-red-100">
-          {{ error }}
-        </div>
-
-        <div class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center transition-all" [class.border-ecuavip-blue]="filePreview" [class.bg-ecuavip-light]="filePreview">
+        <!-- Drop area -->
+        <div 
+          [class.opacity-50]="isExpired" 
+          [class.cursor-not-allowed]="isExpired"
+          class="border-2 border-dashed border-gray-300 rounded-3xl p-8 text-center transition-all bg-gray-50/50" 
+          [class.border-blue-500]="filePreview" 
+          [class.bg-blue-50]="filePreview"
+        >
+          <input 
+            type="file" 
+            id="fileInput" 
+            class="hidden" 
+            (change)="onFileSelected($event)" 
+            accept="image/*"
+            [disabled]="isExpired"
+          >
           
-          <input type="file" id="fileInput" class="hidden" (change)="onFileSelected($event)" accept="image/*">
-          
-          <div *ngIf="!filePreview" class="cursor-pointer" onclick="document.getElementById('fileInput').click()">
-            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          <div *ngIf="!filePreview" class="cursor-pointer" (click)="isExpired ? null : fileInput.click()">
+            <div class="w-16 h-16 bg-white border border-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400 shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>
+              </svg>
             </div>
-            <p class="font-bold text-gray-700">Haz clic para subir foto</p>
-            <p class="text-xs text-gray-400 mt-1">PNG, JPG, hasta 5MB</p>
+            <p class="font-black text-gray-800 text-sm">Haz clic para subir foto</p>
+            <p class="text-[10px] text-gray-400 font-semibold mt-1">Imágenes JPG, PNG de hasta 5MB</p>
           </div>
 
           <div *ngIf="filePreview" class="relative">
-             <img [src]="filePreview" class="max-h-64 mx-auto rounded-lg shadow-md object-contain">
-             <button onclick="document.getElementById('fileInput').click()" class="absolute top-2 right-2 bg-white/90 text-gray-700 p-2 rounded-full shadow hover:bg-white transition-colors">
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+             <img [src]="filePreview" class="max-h-64 mx-auto rounded-2xl shadow-md object-contain">
+             <button 
+               [disabled]="isExpired"
+               (click)="fileInput.click()" 
+               class="absolute top-2 right-2 bg-white/95 text-gray-700 p-2.5 rounded-full shadow-lg hover:bg-white transition-colors"
+             >
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
              </button>
           </div>
-
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-          <button type="button" (click)="cancelarReserva()" [disabled]="loading" class="w-full bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 font-bold py-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            Cancelar Reserva
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+          <button 
+            type="button" 
+            (click)="cancelarReserva()" 
+            [disabled]="loading" 
+            class="w-full py-4 bg-white text-red-500 border border-gray-200 hover:bg-red-50 font-black text-xs uppercase tracking-wider rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+            Volver a Cartelera
           </button>
           
-          <button (click)="confirmarPago()" [disabled]="!selectedFile || loading" class="w-full bg-ecuavip-blue text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_-4px_rgba(0,82,204,0.5)] hover:bg-ecuavip-dark hover:shadow-[0_12px_24px_-6px_rgba(0,51,128,0.6)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-            <span *ngIf="loading" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
-            {{ loading ? 'Procesando...' : 'Confirmar y Enviar' }}
+          <button 
+            (click)="confirmarPago()" 
+            [disabled]="!selectedFile || loading || isExpired" 
+            class="w-full bg-blue-600 text-white font-black text-xs uppercase tracking-wider py-4 rounded-2xl shadow-lg disabled:opacity-50 disabled:shadow-none shadow-blue-500/20 hover:bg-blue-700 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <span *ngIf="loading" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+            {{ loading ? 'Enviando...' : 'Confirmar Comprobante' }}
           </button>
         </div>
-
       </div>
     </div>
 
   </div>
 </div>
+<!-- Template Reference -->
+<input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept="image/*">

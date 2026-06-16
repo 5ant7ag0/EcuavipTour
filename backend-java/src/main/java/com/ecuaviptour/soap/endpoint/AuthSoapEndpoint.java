@@ -113,6 +113,9 @@ public class AuthSoapEndpoint {
     @ResponsePayload
     public UpdateProfileResponse updateProfile(@RequestPayload UpdateProfileRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
@@ -144,6 +147,9 @@ public class AuthSoapEndpoint {
     @ResponsePayload
     public UploadAvatarResponse uploadAvatar(@RequestPayload UploadAvatarRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 

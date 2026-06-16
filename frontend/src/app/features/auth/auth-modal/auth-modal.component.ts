@@ -29,7 +29,7 @@ export class AuthModalComponent implements OnInit {
     this.formData.rol = this.initialRol;
   }
   
-  error = '';
+  @Input() error = '';
   loading = false;
 
   constructor(private authService: AuthService) {}

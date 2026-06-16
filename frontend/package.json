@@ -22,6 +22,8 @@
     "@types/google.maps": "^3.64.0",
     "angularx-qrcode": "^17.0.1",
     "apexcharts": "^5.11.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lucide-angular": "^1.0.0",
     "ng-apexcharts": "^1.10.0",
     "rxjs": "~7.8.0",

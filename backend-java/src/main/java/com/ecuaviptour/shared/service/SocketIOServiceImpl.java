@@ -17,6 +17,8 @@ import com.ecuaviptour.modules.vehiculos.domain.Vehiculo;
 import com.ecuaviptour.modules.users.repository.UsuarioRepository;
 import com.ecuaviptour.modules.viajes.repository.ViajeRepository;
 import com.ecuaviptour.modules.vehiculos.repository.VehiculoRepository;
+import com.ecuaviptour.modules.viajes.repository.ReservaRepository;
+import com.ecuaviptour.modules.viajes.domain.Reserva;
 
 import com.ecuaviptour.modules.chat.service.ChatService;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class SocketIOServiceImpl implements SocketIOService {
     private final ViajeRepository viajeRepository;
     private final UsuarioRepository usuarioRepository;
     private final VehiculoRepository vehiculoRepository;
+    private final ReservaRepository reservaRepository;
 
     /**
      * Constructor para la inyección de dependencias de infraestructura en tiempo real y persistencia.
@@ -50,17 +53,20 @@ public class SocketIOServiceImpl implements SocketIOService {
      * @param viajeRepository    Repositorio de viajes.
      * @param usuarioRepository  Repositorio de usuarios.
      * @param vehiculoRepository Repositorio de vehículos.
+     * @param reservaRepository  Repositorio de reservas.
      */
     public SocketIOServiceImpl(SocketIOServer server, 
                                ChatService chatService, 
                                ViajeRepository viajeRepository, 
                                UsuarioRepository usuarioRepository,
-                               VehiculoRepository vehiculoRepository) {
+                               VehiculoRepository vehiculoRepository,
+                               ReservaRepository reservaRepository) {
         this.server = server;
         this.chatService = chatService;
         this.viajeRepository = viajeRepository;
         this.usuarioRepository = usuarioRepository;
         this.vehiculoRepository = vehiculoRepository;
+        this.reservaRepository = reservaRepository;
     }
 
     /**
@@ -298,6 +304,12 @@ public class SocketIOServiceImpl implements SocketIOService {
             if (viajeOpt.isPresent()) {
                 server.getRoomOperations("cliente_" + viajeOpt.get().getCliente().getId())
                         .sendEvent("ubicacion_chofer_actualizada", Map.of("lat", lat, "lng", lng));
+            } else {
+                List<Reserva> reservas = reservaRepository.findByViajeProgramadoId(viajeId);
+                for (Reserva r : reservas) {
+                    server.getRoomOperations("cliente_" + r.getUsuario().getId())
+                            .sendEvent("ubicacion_chofer_actualizada", Map.of("lat", lat, "lng", lng));
+                }
             }
         });
 
@@ -578,6 +590,11 @@ public class SocketIOServiceImpl implements SocketIOService {
      */
     @Override
     public void broadcastPagoActualizado(Long viajeId, Long clienteId, String estadoPago, String estadoLogistico) {
+        broadcastPagoActualizado(viajeId, clienteId, estadoPago, estadoLogistico, null);
+    }
+
+    @Override
+    public void broadcastPagoActualizado(Long viajeId, Long clienteId, String estadoPago, String estadoLogistico, Long choferId) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("viaje_id", viajeId);
         payload.put("estado_pago", estadoPago);
@@ -587,8 +604,11 @@ public class SocketIOServiceImpl implements SocketIOService {
             if (clienteId != null) {
                 server.getRoomOperations("cliente_" + clienteId).sendEvent("pago_actualizado", payload);
             }
+            if (choferId != null) {
+                server.getRoomOperations("chofer_" + choferId).sendEvent("pago_actualizado", payload);
+            }
             server.getRoomOperations("admins").sendEvent("pago_actualizado", payload);
-            System.out.println("[Socket.IO] Emitido 'pago_actualizado' para cliente " + clienteId);
+            System.out.println("[Socket.IO] Emitido 'pago_actualizado' para cliente " + clienteId + " y chofer " + choferId);
         } catch (Exception e) {
             System.err.println("[Socket.IO ERROR] Fallo al emitir 'pago_actualizado': " + e.getMessage());
         }
@@ -650,6 +670,20 @@ public class SocketIOServiceImpl implements SocketIOService {
             System.out.println("[Socket.IO] Emitido 'viaje_actualizado_cliente' y 'viaje_actualizado_admin' para viaje " + viajeId);
         } catch (Exception e) {
             System.err.println("[Socket.IO ERROR] Fallo al emitir 'viaje_actualizado_cliente': " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void broadcastViajeFinalizado(Long viajeId, Long clienteId) {
+        try {
+            if (clienteId != null) {
+                server.getRoomOperations("cliente_" + clienteId).sendEvent("viaje_finalizado", Map.of(
+                        "viaje_id", viajeId
+                ));
+                System.out.println("[Socket.IO] Emitido 'viaje_finalizado' para cliente " + clienteId + " y viaje " + viajeId);
+            }
+        } catch (Exception e) {
+            System.err.println("[Socket.IO ERROR] Fallo al emitir 'viaje_finalizado': " + e.getMessage());
         }
     }
 

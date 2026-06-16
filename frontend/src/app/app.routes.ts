@@ -16,11 +16,6 @@ export const routes: Routes = [
         pathMatch: 'full',
         loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent)
       },
-      // Rastreo público
-      {
-        path: 'rastreo',
-        loadComponent: () => import('./features/rastreo/rastreo.component').then(m => m.RastreoComponent)
-      },
       // Servicios
       {
         path: 'servicios',
@@ -40,6 +35,7 @@ export const routes: Routes = [
     loadComponent: () => import('./shared/layouts/client-layout/client-layout.component').then(m => m.ClientLayoutComponent),
     children: [
       { path: 'cotizar', loadComponent: () => import('./features/cliente/cotizador/cotizador.component').then(m => m.CotizadorComponent) },
+      { path: 'paquetes', loadComponent: () => import('./features/rastreo/rastreo.component').then(m => m.RastreoComponent) },
       { path: 'mis-viajes', loadComponent: () => import('./features/cliente/mis-viajes/mis-viajes.component').then(m => m.MisViajesComponent), canActivate: [authGuard, misViajesGuard] },
       { path: 'historial', loadComponent: () => import('./features/cliente/mis-viajes/mis-viajes.component').then(m => m.MisViajesComponent), canActivate: [authGuard] },
       { path: 'en-curso', loadComponent: () => import('./features/cliente/tracking-viaje/tracking-viaje.component').then(m => m.TrackingViajeComponent), canActivate: [authGuard] },
@@ -81,6 +77,7 @@ export const routes: Routes = [
       { path: 'usuarios', loadComponent: () => import('./features/admin/usuarios/usuarios.component').then(m => m.UsuariosComponent) },
       { path: 'reservas', loadComponent: () => import('./features/admin/reservas/reservas.component').then(m => m.ReservasComponent) },
       { path: 'gastos', loadComponent: () => import('./features/admin/gastos/gastos.component').then(m => m.GastosComponent) },
+      { path: 'frecuencias', loadComponent: () => import('./features/admin/frecuencias/frecuencias.component').then(m => m.FrecuenciasComponent) },
       { path: 'perfil', loadComponent: () => import('./features/cliente/perfil/perfil.component').then(m => m.PerfilComponent) },
       { path: '', redirectTo: 'monitor', pathMatch: 'full' }
     ]

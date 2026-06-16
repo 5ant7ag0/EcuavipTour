@@ -71,6 +71,9 @@ public class ChoferSoapEndpoint {
     @ResponsePayload
     public GetVehiculoResponse getVehiculo(@RequestPayload GetVehiculoRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario driver = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Chofer no autenticado."));
 
@@ -112,6 +115,9 @@ public class ChoferSoapEndpoint {
     @ResponsePayload
     public UpdateVehiculoResponse updateVehiculo(@RequestPayload UpdateVehiculoRequest request) throws IOException {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario driver = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Chofer no autenticado."));
 
@@ -212,6 +218,9 @@ public class ChoferSoapEndpoint {
     @ResponsePayload
     public GetMisViajesChoferResponse getMisViajesChofer(@RequestPayload GetMisViajesChoferRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario driver = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Chofer no autenticado."));
 

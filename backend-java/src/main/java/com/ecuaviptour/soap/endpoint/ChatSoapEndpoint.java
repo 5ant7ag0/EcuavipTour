@@ -74,6 +74,9 @@ public class ChatSoapEndpoint {
     @ResponsePayload
     public GetHistoryResponse getHistory(@RequestPayload GetHistoryRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
@@ -112,6 +115,9 @@ public class ChatSoapEndpoint {
     @ResponsePayload
     public MarkReadResponse markRead(@RequestPayload MarkReadRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
@@ -167,6 +173,9 @@ public class ChatSoapEndpoint {
     @ResponsePayload
     public AssignSupportResponse assignSupport(@RequestPayload AssignSupportRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Long adminId = Long.parseLong(userIdStr);
 
         AssignSupportResponse response = new AssignSupportResponse();
@@ -203,6 +212,9 @@ public class ChatSoapEndpoint {
     @ResponsePayload
     public ResolveCaseResponse resolveCase(@RequestPayload ResolveCaseRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Long adminId = Long.parseLong(userIdStr);
 
         ResolveCaseResponse response = new ResolveCaseResponse();

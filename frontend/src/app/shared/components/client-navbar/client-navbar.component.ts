@@ -19,17 +19,17 @@ import { filter } from 'rxjs/operators';
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>Inicio</span>
       </a>
-      <a *ngIf="isLoggedIn" routerLink="/cliente/mis-viajes" [class.active-mobile]="isMisViajesActive()" class="nav-mobile-item">
+      <a *ngIf="isLoggedIn" routerLink="/cliente/cotizar" [class.active-mobile]="isMisViajesActive()" class="nav-mobile-item">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.617a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0l4.212 2.106Z"/><path d="M9 3.5v13"/><path d="M15 7.5v13"/></svg>
-        <span>Mis Viajes</span>
+        <span>Viajes</span>
       </a>
       <a *ngIf="!isLoggedIn" routerLink="/servicios" routerLinkActive="active-mobile" class="nav-mobile-item">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
         <span>Servicios</span>
       </a>
-      <a routerLink="/rastreo" routerLinkActive="active-mobile" class="nav-mobile-item">
+      <a routerLink="/cliente/paquetes" routerLinkActive="active-mobile" class="nav-mobile-item">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span>Rastreo</span>
+        <span>Paquetes</span>
       </a>
       <a routerLink="/contacto" routerLinkActive="active-mobile" class="nav-mobile-item">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.92 9.22a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.82 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17l.92-.08Z"/></svg>
@@ -49,15 +49,14 @@ import { filter } from 'rxjs/operators';
     <header class="hidden md:block fixed top-0 left-0 right-0 z-[100] transition-all duration-300" [class.scrolled]="isScrolled">
       <div class="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
         <a routerLink="/" class="flex items-center group flex-shrink-0 no-underline">
-          <img src="assets/logo.png" alt="EcuavipTour Logo" class="h-[96px] w-auto object-contain transition-transform group-hover:scale-110">
+          <img src="assets/logo.png" alt="EcuavipTour Logo" class="h-14 w-auto object-contain transition-transform group-hover:scale-110">
         </a>
 
         <nav class="flex items-center gap-1">
           <a routerLink="/" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="nav-active" class="nav-link">Inicio</a>
           <a routerLink="/servicios" routerLinkActive="nav-active" class="nav-link">Servicios</a>
-          <a routerLink="/cliente/cotizar" routerLinkActive="nav-active" class="nav-link">Cotizar</a>
-          <a *ngIf="isLoggedIn" routerLink="/cliente/mis-viajes" [class.nav-active]="isMisViajesActive()" class="nav-link">Mis Viajes</a>
-          <a routerLink="/rastreo" routerLinkActive="nav-active" class="nav-link">Rastreo</a>
+          <a routerLink="/cliente/cotizar" [class.nav-active]="isMisViajesActive()" class="nav-link">Viajes</a>
+          <a routerLink="/cliente/paquetes" routerLinkActive="nav-active" class="nav-link">Paquetes</a>
           <a routerLink="/contacto" routerLinkActive="nav-active" class="nav-link">Contacto</a>
         </nav>
 

@@ -19,6 +19,8 @@ import com.ecuaviptour.modules.chat.domain.MensajeChat;
 import com.ecuaviptour.modules.viajes.repository.ViajeRepository;
 
 import com.ecuaviptour.modules.viajes.domain.Viaje;
+import com.ecuaviptour.modules.viajes.domain.Reserva;
+import com.ecuaviptour.modules.viajes.repository.ReservaRepository;
 
 import com.ecuaviptour.modules.users.repository.UsuarioRepository;
 
@@ -78,6 +80,7 @@ public class AdminSoapEndpoint {
     private final TicketQRRepository ticketQRRepository;
     private final ReservaAsientoRepository reservaAsientoRepository;
     private final SocketIOService socketIOService;
+    private final ReservaRepository reservaRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -92,6 +95,7 @@ public class AdminSoapEndpoint {
      * @param ticketQRRepository       Repositorio de tickets de abordaje QR.
      * @param reservaAsientoRepository Repositorio de reservas de asientos.
      * @param socketIOService          Servicio para notificaciones en tiempo real por sockets.
+     * @param reservaRepository        Repositorio de reservas individuales.
      */
     public AdminSoapEndpoint(AdminService adminService,
                              PagoService pagoService,
@@ -101,7 +105,8 @@ public class AdminSoapEndpoint {
                              MensajeRepository mensajeRepository,
                              TicketQRRepository ticketQRRepository,
                              ReservaAsientoRepository reservaAsientoRepository,
-                             SocketIOService socketIOService) {
+                             SocketIOService socketIOService,
+                             ReservaRepository reservaRepository) {
         this.adminService = adminService;
         this.pagoService = pagoService;
         this.viajeRepository = viajeRepository;
@@ -111,6 +116,7 @@ public class AdminSoapEndpoint {
         this.ticketQRRepository = ticketQRRepository;
         this.reservaAsientoRepository = reservaAsientoRepository;
         this.socketIOService = socketIOService;
+        this.reservaRepository = reservaRepository;
     }
 
     /**
@@ -283,10 +289,13 @@ public class AdminSoapEndpoint {
     public GetPagosResponse getPagos(@RequestPayload GetPagosRequest request) {
         String estadoFiltro = request.getEstado() != null ? request.getEstado() : "pendientes";
         String estadoDb = "comprobante_subido";
+        String reservaFilterState = "COMPROBANTE_SUBIDO";
         if ("aprobados".equalsIgnoreCase(estadoFiltro)) {
             estadoDb = "aprobado";
+            reservaFilterState = "CONFIRMADO";
         } else if ("rechazados".equalsIgnoreCase(estadoFiltro)) {
             estadoDb = "rechazado";
+            reservaFilterState = "RECHAZADO";
         }
 
         final String searchState = estadoDb;
@@ -316,6 +325,59 @@ public class AdminSoapEndpoint {
             }
         }
 
+        // Add shared trip reservations (grouped by Usuario and ViajeProgramado)
+        List<Reserva> reservas = reservaRepository.findAll();
+        Map<String, List<Reserva>> groupedReservas = new LinkedHashMap<>();
+
+        for (Reserva r : reservas) {
+            boolean matches = false;
+            if ("COMPROBANTE_SUBIDO".equalsIgnoreCase(reservaFilterState)) {
+                matches = "COMPROBANTE_SUBIDO".equalsIgnoreCase(r.getEstadoPago());
+            } else if ("CONFIRMADO".equalsIgnoreCase(reservaFilterState)) {
+                matches = "CONFIRMADO".equalsIgnoreCase(r.getEstadoPago()) || "ABORDO".equalsIgnoreCase(r.getEstadoPago());
+            } else if ("RECHAZADO".equalsIgnoreCase(reservaFilterState)) {
+                matches = "RECHAZADO".equalsIgnoreCase(r.getEstadoPago());
+            }
+
+            if (matches && r.getComprobanteUrl() != null && r.getUsuario() != null && r.getViajeProgramado() != null) {
+                String key = r.getUsuario().getId() + "_" + r.getViajeProgramado().getId();
+                groupedReservas.computeIfAbsent(key, k -> new ArrayList<>()).add(r);
+            }
+        }
+
+        for (Map.Entry<String, List<Reserva>> entry : groupedReservas.entrySet()) {
+            List<Reserva> group = entry.getValue();
+            // Sort group by reservation ID so the first one is consistent
+            group.sort(Comparator.comparing(Reserva::getId));
+            Reserva first = group.get(0);
+
+            // Get all seat numbers and format: e.g. "Juan Perez (Asientos: #1, #2)"
+            String asientos = group.stream()
+                    .map(r -> "#" + r.getNumeroAsiento())
+                    .collect(Collectors.joining(", "));
+
+            String clienteNombre = (first.getUsuario() != null ? first.getUsuario().getNombre() : "Desconocido")
+                    + " (Asientos: " + asientos + ")";
+
+            double totalMonto = group.stream()
+                    .mapToDouble(r -> r.getViajeProgramado().getPrecioAsiento() != null ? r.getViajeProgramado().getPrecioAsiento().doubleValue() : 0.0)
+                    .sum();
+
+            PagoSoapType soap = new PagoSoapType();
+            soap.setId(first.getId() + 100000000L); // Offset using the first reservation ID
+            soap.setComprobanteUrl(first.getComprobanteUrl());
+            soap.setFechaSubida(first.getFechaReserva() != null ? first.getFechaReserva().format(formatter) : "");
+            soap.setEstado(first.getEstadoPago().toLowerCase());
+            soap.setViajeId(first.getViajeProgramado().getId());
+            soap.setMontoTotal(totalMonto);
+            soap.setClienteNombre(clienteNombre);
+            soap.setClienteCedula(first.getUsuario() != null ? first.getUsuario().getCedula() : "N/A");
+            soap.setOrigen(first.getViajeProgramado().getDirOrigen());
+            soap.setDestino(first.getViajeProgramado().getDirDestino());
+
+            list.add(soap);
+        }
+
         // Sort descending by ID (newest first)
         list.sort((a, b) -> Long.compare(b.getId(), a.getId()));
 
@@ -336,6 +398,37 @@ public class AdminSoapEndpoint {
     @ResponsePayload
     public AprobarPagoResponse aprobarPago(@RequestPayload AprobarPagoRequest request) {
         Long pagoId = request.getPagoId();
+
+        if (pagoId >= 100000000L) {
+            Long reservaId = pagoId - 100000000L;
+            Reserva r = reservaRepository.findById(reservaId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con el ID: " + reservaId));
+
+            Long viajeProgramadoId = r.getViajeProgramado().getId();
+            Long usuarioId = r.getUsuario().getId();
+            List<Reserva> siblings = reservaRepository.findByViajeProgramadoId(viajeProgramadoId).stream()
+                    .filter(sib -> sib.getUsuario() != null && Objects.equals(sib.getUsuario().getId(), usuarioId) && "COMPROBANTE_SUBIDO".equalsIgnoreCase(sib.getEstadoPago()))
+                    .collect(Collectors.toList());
+
+            for (Reserva sib : siblings) {
+                sib.setEstadoPago("CONFIRMADO");
+                reservaRepository.saveAndFlush(sib);
+            }
+
+            r.setEstadoPago("CONFIRMADO");
+            reservaRepository.saveAndFlush(r);
+
+            Long choferId = (r.getViajeProgramado() != null && r.getViajeProgramado().getChofer() != null)
+                    ? r.getViajeProgramado().getChofer().getId() : null;
+            // Notify client and driver in real time
+            socketIOService.broadcastPagoActualizado(r.getViajeProgramado().getId(), r.getUsuario().getId(), "aprobado", "pendiente", choferId);
+
+            AprobarPagoResponse response = new AprobarPagoResponse();
+            response.setSuccess(true);
+            response.setMessage("Pago de reserva aprobado exitosamente");
+            return response;
+        }
+
         Pago pago = pagoRepository.findById(pagoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pago no encontrado con el ID: " + pagoId));
 
@@ -395,10 +488,41 @@ public class AdminSoapEndpoint {
     @ResponsePayload
     public RechazarPagoResponse rechazarPago(@RequestPayload RechazarPagoRequest request) {
         Long pagoId = request.getPagoId();
+        String motivo = request.getMotivo();
+
+        if (pagoId >= 100000000L) {
+            Long reservaId = pagoId - 100000000L;
+            Reserva r = reservaRepository.findById(reservaId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con el ID: " + reservaId));
+
+            Long viajeProgramadoId = r.getViajeProgramado().getId();
+            Long usuarioId = r.getUsuario().getId();
+            List<Reserva> siblings = reservaRepository.findByViajeProgramadoId(viajeProgramadoId).stream()
+                    .filter(sib -> sib.getUsuario() != null && Objects.equals(sib.getUsuario().getId(), usuarioId) && "COMPROBANTE_SUBIDO".equalsIgnoreCase(sib.getEstadoPago()))
+                    .collect(Collectors.toList());
+
+            for (Reserva sib : siblings) {
+                sib.setEstadoPago("RECHAZADO");
+                reservaRepository.saveAndFlush(sib);
+            }
+
+            r.setEstadoPago("RECHAZADO");
+            reservaRepository.saveAndFlush(r);
+
+            Long choferId = (r.getViajeProgramado() != null && r.getViajeProgramado().getChofer() != null)
+                    ? r.getViajeProgramado().getChofer().getId() : null;
+            // Notify in real-time
+            socketIOService.broadcastPagoActualizado(r.getViajeProgramado().getId(), r.getUsuario().getId(), "rechazado", "pendiente", choferId);
+
+            RechazarPagoResponse response = new RechazarPagoResponse();
+            response.setSuccess(true);
+            response.setMessage("Pago de reserva rechazado correctamente");
+            return response;
+        }
+
         Pago pago = pagoRepository.findById(pagoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pago no encontrado con el ID: " + pagoId));
 
-        String motivo = request.getMotivo();
         Viaje v = pago.getViaje();
         v.setEstadoPago("rechazado");
         v.setEstadoLogistico("pendiente");

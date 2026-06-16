@@ -112,4 +112,16 @@ export class ChoferService {
       reader.onerror = (error) => reject(error);
     });
   }
+
+  updateEstadoFrecuencia(viajeProgramadoId: number, estado: string): Observable<any> {
+    return this.soapService.post(
+      'http://ecuaviptour.com/soap/viajes',
+      'updateEstadoFrecuenciaRequest',
+      {
+        viaje_programado_id: viajeProgramadoId,
+        estado: estado
+      },
+      this.authService.getToken() || undefined
+    );
+  }
 }

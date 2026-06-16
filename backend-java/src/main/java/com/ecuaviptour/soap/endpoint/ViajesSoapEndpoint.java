@@ -140,6 +140,9 @@ public class ViajesSoapEndpoint {
     @ResponsePayload
     public ReservarResponse reservar(@RequestPayload ReservarRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario activeUser = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
@@ -223,6 +226,9 @@ public class ViajesSoapEndpoint {
     @ResponsePayload
     public GetMisViajesResponse getMisViajes(@RequestPayload GetMisViajesRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
@@ -246,6 +252,9 @@ public class ViajesSoapEndpoint {
     @ResponsePayload
     public GetViajeActivoResponse getViajeActivo(@RequestPayload GetViajeActivoRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
@@ -283,6 +292,9 @@ public class ViajesSoapEndpoint {
     @ResponsePayload
     public CalificarResponse calificar(@RequestPayload CalificarRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (userIdStr == null || userIdStr.isBlank() || "anonymousUser".equalsIgnoreCase(userIdStr)) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
@@ -395,7 +407,7 @@ public class ViajesSoapEndpoint {
         String msgCancel = "El viaje ha sido cancelado por el cliente";
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
-            if (userIdStr != null && !userIdStr.isEmpty()) {
+            if (userIdStr != null && !userIdStr.isEmpty() && !"anonymousUser".equalsIgnoreCase(userIdStr)) {
                 Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr)).orElse(null);
                 if (user != null && "chofer".equalsIgnoreCase(user.getRol())) {
                     msgCancel = "El viaje ha sido cancelado por el chofer";

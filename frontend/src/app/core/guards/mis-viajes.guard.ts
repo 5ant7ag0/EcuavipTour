@@ -12,9 +12,10 @@ export const misViajesGuard: CanActivateFn = (route, state) => {
     map(viajes => {
       if (viajes && viajes.length > 0) {
         const ultimoViaje = viajes[0];
+        const isEncomienda = (ultimoViaje.tipo_servicio || '').toLowerCase() === 'encomienda';
         if (ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_logistico !== 'cancelado') {
-          // Check if it's pending payment to let en-curso redirect, or let's go straight to en-curso
-          router.navigate(['/cliente/en-curso']);
+          const dest = isEncomienda ? '/cliente/paquetes' : '/cliente/en-curso';
+          router.navigate([dest]);
           return false;
         }
       }

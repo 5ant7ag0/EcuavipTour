@@ -62,11 +62,12 @@
           <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total a Pagar</p>
           <p class="text-4xl font-black text-gray-900">${{ tarifa | number:'1.2-2' }}</p>
           <div class="mt-4 pt-3 border-t border-gray-200/60 text-xs text-gray-600 space-y-1.5 font-semibold">
-             <p><strong>Servicio:</strong> Viaje Compartido</p>
-             <p *ngIf="asiento"><strong>Asiento reservado:</strong> <span class="text-blue-600 font-black">#{{ asiento }}</span></p>
+             <p><strong>Servicio:</strong> {{ (reservaParams?.tipo === 'encomienda' || reservaParams?.tipoServicio === 'encomienda') ? 'Encomienda / Paquete' : (reservaId ? 'Viaje Compartido' : 'Viaje Exprés') }}</p>
+             <p *ngIf="reservaParams?.referencia"><strong>Detalles del Envío:</strong> {{ reservaParams.referencia }}</p>
+             <p *ngIf="asiento && (reservaParams?.tipo !== 'encomienda' && reservaParams?.tipoServicio !== 'encomienda')"><strong>Asiento reservado:</strong> <span class="text-blue-600 font-black">#{{ asiento }}</span></p>
              <p *ngIf="abordaje"><strong>Abordaje:</strong> {{ abordaje }}</p>
-             <p *ngIf="hora"><strong>Frecuencia:</strong> {{ hora }}</p>
-             <p *ngIf="pin"><strong>PIN Abordaje:</strong> <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800 font-mono font-bold">{{ pin }}</span></p>
+             <p *ngIf="hora"><strong>{{ (reservaParams?.tipo === 'encomienda' || reservaParams?.tipoServicio === 'encomienda') ? 'Hora de recogida:' : (reservaId ? 'Frecuencia:' : 'Hora de salida:') }}</strong> {{ hora }}</p>
+             <p *ngIf="pin && (reservaParams?.tipo !== 'encomienda' && reservaParams?.tipoServicio !== 'encomienda')"><strong>PIN Abordaje:</strong> <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-800 font-mono font-bold">{{ pin }}</span></p>
           </div>
         </div>
       </div>

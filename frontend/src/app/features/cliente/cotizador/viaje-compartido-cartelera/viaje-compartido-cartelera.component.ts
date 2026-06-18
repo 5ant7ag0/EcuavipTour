@@ -26,6 +26,7 @@ export class ViajeCompartidoCarteleraComponent implements OnInit {
     'Gasolinera San Andrés (Entrada Norte)',
     'Oficina Ecuavip (Av. Indoamérica)'
   ];
+  puntosAbordajeDinamicos: string[] = [];
 
   numPasajeros = 1;
   mostrarMapaAsientos = false;
@@ -65,6 +66,65 @@ export class ViajeCompartidoCarteleraComponent implements OnInit {
     });
   }
 
+  getParadasAproximadas(origen: string, destino: string): string[] {
+    const orig = (origen || '').toLowerCase();
+    const dest = (destino || '').toLowerCase();
+
+    // Ruta: Quito <-> Ambato
+    if ((orig.includes('quito') && dest.includes('ambato')) || (orig.includes('ambato') && dest.includes('quito'))) {
+      return [
+        'Machachi - Gasolinera Primax',
+        'Lasso - Entrada a Cotopaxi',
+        'Latacunga - El Salto / Terminal',
+        'Salcedo - Parada del Helado'
+      ];
+    }
+    // Ruta: Quito <-> Riobamba
+    if ((orig.includes('quito') && dest.includes('riobamba')) || (orig.includes('riobamba') && dest.includes('quito'))) {
+      return [
+        'Machachi - Gasolinera Primax',
+        'Latacunga - El Salto / Terminal',
+        'Salcedo - Parada del Helado',
+        'Ambato - El Fico / Mall de los Andes',
+        'Mocha - Parada del Cuy',
+        'Urbina - Límite Provincial'
+      ];
+    }
+    // Ruta: Ambato <-> Riobamba
+    if ((orig.includes('ambato') && dest.includes('riobamba')) || (orig.includes('riobamba') && dest.includes('ambato'))) {
+      return [
+        'Mocha - Parada del Cuy',
+        'Urbina - Límite Provincial',
+        'Guano - Entrada Principal'
+      ];
+    }
+    // Ruta: Ambato/Quito <-> Baños
+    if (orig.includes('baños') || dest.includes('baños') || orig.includes('banos') || dest.includes('banos')) {
+      return [
+        'Pelileo - Mercado Central',
+        'Totoras - Parada Principal',
+        'Río Verde - Entrada a Cascada'
+      ];
+    }
+    // Ruta: Guayaquil
+    if (orig.includes('guayaquil') || dest.includes('guayaquil')) {
+      return [
+        'Durán - Gasolinera Terpel',
+        'El Triunfo - Redondel',
+        'Cumandá - Parada Central',
+        'Pallatanga - Gasolinera Primax'
+      ];
+    }
+
+    // Fallback general
+    return [
+      'Terminal Terrestre Central',
+      'Parque Central (Frente al Municipio)',
+      'Gasolinera San Andrés (Entrada Norte)',
+      'Oficina Ecuavip (Av. Indoamérica)'
+    ];
+  }
+
   seleccionarViaje(viaje: any) {
     this.viajeSeleccionado = viaje;
     this.asientosSeleccionados = [];
@@ -74,6 +134,15 @@ export class ViajeCompartidoCarteleraComponent implements OnInit {
     this.asientosOcupados = [];
     this.error = '';
     this.authModalError = '';
+
+    const stops = this.getParadasAproximadas(viaje.dir_origen, viaje.dir_destino);
+    const cleanedStops = stops.filter(stop => 
+      stop.toLowerCase().trim() !== viaje.dir_origen.toLowerCase().trim() && 
+      stop.toLowerCase().trim() !== viaje.dir_destino.toLowerCase().trim()
+    );
+    this.puntosAbordajeDinamicos = [viaje.dir_origen, ...cleanedStops];
+    this.puntoAbordaje = viaje.dir_origen;
+
     this.cargarAsientosOcupados(viaje.id);
   }
 

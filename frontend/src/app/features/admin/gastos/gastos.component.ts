@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GastoService } from '../../../core/services/gasto.service';
+import { AdminService } from '../../../core/services/admin.service';
 import { 
   NgApexchartsModule,
   ChartComponent,
@@ -44,9 +45,14 @@ export type ChartOptions = {
       
       <!-- Cabecera / Toolbar Principal -->
       <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
-        <div>
-          <h1 class="text-xl font-black text-slate-900 tracking-tight uppercase">Gastos Financieros (ERP)</h1>
-          <p class="text-xs text-slate-400">Control de flujo de caja y egresos corporativos</p>
+        <div class="flex items-center gap-3">
+          <div>
+            <h1 class="text-xl font-black text-slate-900 tracking-tight uppercase">Gastos Financieros (ERP)</h1>
+            <p class="text-xs text-slate-400">Control de flujo de caja y egresos corporativos</p>
+          </div>
+          <button (click)="descargarReporteGastos()" class="p-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl border border-slate-200/60 shadow-sm transition-all flex items-center justify-center shrink-0" title="Descargar Reporte de Gastos (CSV)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><polyline points="6 9 6 2 18 2 18 9"/><rect width="12" height="8" x="6" y="14"/></svg>
+          </button>
         </div>
 
         <!-- Pestañas Principales (Tabs) -->
@@ -435,11 +441,27 @@ export class GastosComponent implements OnInit {
   public evolutionChartOptions: Partial<ChartOptions> | any;
   public distributionChartOptions: Partial<ChartOptions> | any;
 
-  constructor(private gastoService: GastoService) {}
+  constructor(private gastoService: GastoService, private adminService: AdminService) {}
 
   ngOnInit(): void {
     this.loadStats();
     this.loadGastos();
+  }
+
+  descargarReporteGastos() {
+    this.adminService.descargarReporteGastos(this.selectedPeriod, this.customStartDate, this.customEndDate).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte_gastos_${this.selectedPeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => console.error('Error al descargar reporte de gastos:', err)
+    });
   }
 
   setPeriod(period: string) {

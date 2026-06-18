@@ -45,4 +45,14 @@ public interface ViajeProgramadoService {
      * @return La frecuencia actualizada.
      */
     ViajeProgramado actualizarEstado(Long id, String nuevoEstado);
+
+    /**
+     * Actualiza una frecuencia de viaje programada existente (chofer, vehículo, tarifas, itinerario).
+     */
+    ViajeProgramado actualizarFrecuencia(Long id, ViajeProgramado data, Long choferId, Long vehiculoId);
+
+    /**
+     * Elimina una frecuencia de viaje programada existente y sus reservas asociadas.
+     */
+    void eliminarFrecuencia(Long id);
 }

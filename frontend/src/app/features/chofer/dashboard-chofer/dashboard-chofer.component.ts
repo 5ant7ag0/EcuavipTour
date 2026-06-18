@@ -9,11 +9,12 @@ import { Subscription } from 'rxjs';
 import { ChoferService } from '../../../core/services/chofer.service';
 
 import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/chat-sidebar.component';
+import { ChatPanelComponent } from '../../../shared/components/chat-panel/chat-panel.component';
 
 @Component({
   selector: 'app-dashboard-chofer',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChatSidebarComponent],
+  imports: [CommonModule, FormsModule, ChatSidebarComponent, ChatPanelComponent],
   template: `
     <!-- VISTA CONSOLA FIJA (SIN SCROLL) -->
     <div class="h-screen w-full flex flex-col overflow-hidden bg-slate-50 lg:flex-row lg:p-8 lg:gap-8 font-sans">
@@ -43,28 +44,21 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
         
         <div class="w-full bg-white lg:bg-transparent rounded-3xl lg:rounded-none p-4 pb-2 lg:p-0 shadow-sm lg:shadow-none border border-gray-100 lg:border-none flex flex-col gap-3 justify-between lg:h-full overflow-hidden">
           
-          <!-- NAVIGATION TABS -->
-          <div class="flex p-1 bg-gray-100 rounded-2xl shrink-0">
-            <button 
-              (click)="onTabChange('express')" 
-              [class.bg-white]="activeTab === 'express'" 
-              [class.shadow-sm]="activeTab === 'express'" 
-              [class.text-gray-900]="activeTab === 'express'"
-              [class.text-gray-500]="activeTab !== 'express'"
-              class="flex-1 py-2 px-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider focus:outline-none"
-            >
-              Viajes Exprés
-            </button>
-            <button 
-              (click)="onTabChange('shared')" 
-              [class.bg-white]="activeTab === 'shared'" 
-              [class.shadow-sm]="activeTab === 'shared'" 
-              [class.text-gray-900]="activeTab === 'shared'"
-              [class.text-gray-500]="activeTab !== 'shared'"
-              class="flex-1 py-2 px-3 text-xs font-black rounded-xl transition-all uppercase tracking-wider focus:outline-none"
-            >
-              Rutas Compartidas
-            </button>
+          <!-- Subtle type header -->
+          <div class="flex items-center justify-between px-2 py-1 shrink-0 border-b border-gray-100/50 pb-2">
+            <span class="text-[10px] font-black uppercase tracking-widest"
+                  [ngClass]="{
+                    'text-blue-600': activeTab === 'express',
+                    'text-indigo-600': activeTab === 'shared'
+                  }">
+              {{ activeTab === 'express' ? (viajeActual?.tipo_servicio === 'encomienda' ? 'Envío de Paquete' : 'Servicio Exprés') : 'Ruta Compartida' }}
+            </span>
+            <div *ngIf="activeTab === 'shared' && frecuenciaAsignada" class="flex items-center gap-1.5">
+              <span class="inline-flex items-center px-2 py-0.5 bg-blue-50 text-blue-700 text-[8px] font-black rounded-full uppercase tracking-wider border border-blue-100">
+                {{ (frecuenciaAsignada.estado || 'PROGRAMADO').toUpperCase() }}
+              </span>
+              <span *ngIf="(frecuenciaAsignada.estado || '').toUpperCase() === 'EN_RUTA'" class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+            </div>
           </div>
 
           <!-- CONTENIDO DINÁMICO SEGÚN LA PESTAÑA -->
@@ -78,7 +72,7 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
                   <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto animate-pulse">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/></svg>
                   </div>
-                  <h3 class="text-base font-black text-gray-900 uppercase tracking-wider font-sans">Buscando Exprés</h3>
+                  <h3 class="text-base font-black text-gray-900 uppercase tracking-wider font-sans">Buscando Exprés y Paquetes</h3>
                 </div>
      
                 <!-- ESTADO: EN VIAJE -->
@@ -92,8 +86,19 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
                       </div>
                       <div>
                         <h4 class="text-base font-black text-gray-900 leading-tight">{{ viajeActual.nombre_cliente || 'Pasajero VIP' }}</h4>
-                        <p class="text-[8px] font-bold text-blue-600 uppercase tracking-widest">En Curso • $ {{ viajeActual.tarifa || viajeActual.monto }}</p>
+                        <p class="text-[8px] font-bold text-blue-600 uppercase tracking-widest">
+                          {{ viajeActual.tipo_servicio === 'encomienda' ? 'Paquete en Curso' : 'En Curso' }} • $ {{ viajeActual.tarifa || viajeActual.monto }}
+                        </p>
                       </div>
+                    </div>
+                  </div>
+
+                  <!-- Detalle de Paquete (Encomienda) -->
+                  <div *ngIf="viajeActual.tipo_servicio === 'encomienda' && viajeActual.referencia" class="p-3 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start gap-2">
+                    <span class="text-lg leading-none mt-0.5">📦</span>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Detalles del Envío</p>
+                      <p class="text-[10px] font-bold text-indigo-950 leading-snug break-words">{{ viajeActual.referencia }}</p>
                     </div>
                   </div>
 
@@ -132,15 +137,15 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
                 <div class="flex-1 h-12">
                   <button *ngIf="viajeActual.estado_logistico === 'aceptado'" (click)="marcarLlegada()" 
                           class="w-full h-full bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">
-                     Llegué al Origen
+                     {{ viajeActual.tipo_servicio === 'encomienda' ? 'Llegué a Recogida' : 'Llegué al Origen' }}
                   </button>
                   <button *ngIf="viajeActual.estado_logistico === 'esperando_cliente'" (click)="isScannerOpen = true" 
                           class="w-full h-full bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">
-                     Validar Abordaje
+                     {{ viajeActual.tipo_servicio === 'encomienda' ? 'Validar Retiro (PIN)' : 'Validar Abordaje' }}
                   </button>
                   <button *ngIf="viajeActual.estado_logistico === 'en_curso'" (click)="finalizarViaje()" 
                           class="w-full h-full bg-gray-900 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg shadow-black/20 hover:bg-green-600 active:scale-95">
-                     Finalizar Viaje
+                     {{ viajeActual.tipo_servicio === 'encomienda' ? 'Entregar Paquete' : 'Finalizar Viaje' }}
                   </button>
                 </div>
               </div>
@@ -172,58 +177,90 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
               <!-- FRECUENCIA ASIGNADA -->
               <div *ngIf="!loadingFrecuencias && frecuenciaAsignada" class="flex-1 flex flex-col min-h-0 overflow-hidden">
                 
-                <!-- Tarjeta de Frecuencia -->
-                <div class="bg-slate-900 text-white rounded-3xl p-5 border border-slate-800 shadow-xl relative overflow-hidden mb-4 shrink-0 animate-slide-up">
-                  <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl"></div>
+                <!-- Tarjeta de Frecuencia (Rediseñada a blanco / estilo premium) -->
+                <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm relative overflow-hidden mb-4 shrink-0 animate-slide-up">
+                  <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl"></div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-500/20 text-blue-400 text-[8px] font-black rounded-full uppercase tracking-wider">
-                      {{ frecuenciaAsignada.estado || 'PROGRAMADO' }}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-50 text-blue-700 text-[8px] font-black rounded-full uppercase tracking-wider border border-blue-100">
+                      {{ (frecuenciaAsignada.estado || 'PROGRAMADO').toUpperCase() }}
                     </span>
-                    <span class="text-xs font-black text-blue-400"><span>$</span>{{ frecuenciaAsignada.precio_asiento | number:'1.2-2' }} <span class="text-[8px] font-medium text-slate-400">/ as.</span></span>
+                    <span class="text-xs font-black text-gray-950">
+                      <span class="text-blue-600 font-extrabold">$</span>{{ frecuenciaAsignada.precio_asiento | number:'1.2-2' }} <span class="text-[8px] font-medium text-gray-400">/ as.</span>
+                    </span>
                   </div>
                   
                   <div class="space-y-1.5 mb-3">
-                    <p class="text-[10px] text-slate-400 font-semibold truncate"><span class="font-black text-blue-400">Desde:</span> {{ frecuenciaAsignada.dir_origen }}</p>
-                    <p class="text-[10px] text-slate-400 font-semibold truncate"><span class="font-black text-white">Hasta:</span> {{ frecuenciaAsignada.dir_destino }}</p>
+                    <p class="text-[10px] text-gray-600 font-semibold truncate"><span class="font-black text-blue-600">Desde:</span> {{ frecuenciaAsignada.dir_origen }}</p>
+                    <p class="text-[10px] text-gray-600 font-semibold truncate"><span class="font-black text-gray-900">Hasta:</span> {{ frecuenciaAsignada.dir_destino }}</p>
                   </div>
 
-                  <div class="border-t border-slate-800/80 pt-3 flex justify-between items-center text-[9px] text-slate-400 font-black uppercase tracking-wider">
+                  <div class="border-t border-gray-100 pt-3 flex justify-between items-center text-[9px] text-gray-400 font-black uppercase tracking-wider">
                     <div>
-                      Salida: <span class="text-white">{{ frecuenciaAsignada.fecha_hora_salida }}</span>
+                      Salida: <span class="text-gray-700 font-bold">{{ frecuenciaAsignada.fecha_hora_salida }}</span>
                     </div>
                     <div>
-                      Asientos: <span class="text-white">{{ capacidadOcupada }} / {{ frecuenciaAsignada.capacidad_total }}</span>
+                      Asientos: <span class="text-gray-700 font-bold">{{ capacidadOcupada }} / {{ frecuenciaAsignada.capacidad_total }}</span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Botón de Operación de Frecuencia -->
-                <div class="mb-4 shrink-0 px-1">
+                <!-- Botón de Operación de Frecuencia con Toggle de Manifiesto -->
+                <div class="mb-4 shrink-0 px-1 flex gap-2 items-center">
+                  <!-- Chat -->
+                  <button 
+                    (click)="abrirMensajeriaCompartido()"
+                    class="w-12 h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition-all active:scale-95 flex items-center justify-center relative shrink-0"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7c1.1 0 2.2.3 3.2.8l4.4-1.1-1.1 4.4z"/></svg>
+                    <div *ngIf="totalUnreadSharedMessages > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white animate-bounce shadow-md">
+                      {{ totalUnreadSharedMessages }}
+                    </div>
+                  </button>
+
+                  <!-- Iniciar Viaje -->
                   <button 
                     *ngIf="(frecuenciaAsignada.estado || '').toUpperCase() === 'PROGRAMADO'"
                     (click)="iniciarFrecuenciaViaje()"
                     [disabled]="updatingFrecuenciaStatus"
-                    class="w-full py-4 bg-blue-600 disabled:bg-gray-150 text-white disabled:text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2"
+                    class="flex-1 h-12 bg-blue-600 disabled:bg-gray-150 text-white disabled:text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2"
                   >
                     <span *ngIf="updatingFrecuenciaStatus" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>
                     Iniciar Viaje
                   </button>
                   
+                  <!-- Terminar Viaje -->
                   <button 
                     *ngIf="(frecuenciaAsignada.estado || '').toUpperCase() === 'EN_RUTA'"
                     (click)="terminarFrecuenciaViaje()"
                     [disabled]="updatingFrecuenciaStatus"
-                    class="w-full py-4 bg-gray-900 disabled:bg-gray-150 text-white disabled:text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-600 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+                    class="flex-1 h-12 bg-gray-900 disabled:bg-gray-150 text-white disabled:text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-600 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
                   >
                     <span *ngIf="updatingFrecuenciaStatus" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
                     Terminar Viaje
                   </button>
+
+                  <!-- Toggle Manifiesto Pasajeros (Gente elegante) -->
+                  <button 
+                    (click)="togglePassengerManifest()"
+                    [class.bg-blue-50]="showPassengerManifest"
+                    [class.text-blue-600]="showPassengerManifest"
+                    [class.bg-slate-100]="!showPassengerManifest"
+                    [class.text-slate-700]="!showPassengerManifest"
+                    class="w-12 h-12 rounded-2xl transition-all active:scale-95 flex items-center justify-center shrink-0 border border-transparent"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </button>
                 </div>
 
                 <!-- MANIFIESTO DE PASAJEROS -->
-                <div class="flex-1 flex flex-col min-h-0 bg-white rounded-3xl border border-gray-100 p-4 shadow-sm overflow-hidden">
+                <div *ngIf="showPassengerManifest" class="flex-1 flex flex-col min-h-0 bg-white rounded-3xl border border-gray-100 p-4 shadow-sm overflow-hidden animate-slide-up">
                   <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-2 shrink-0">
                     <h4 class="text-xs font-black text-gray-900 uppercase tracking-wider">Manifiesto de Pasajeros</h4>
                     <button (click)="cargarManifiesto(frecuenciaAsignada.id)" class="text-[9px] font-black text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-wider">
@@ -276,11 +313,9 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
                           <!-- Acciones Rápidas (Solo si está CONFIRMADO) -->
                           <div *ngIf="pasaje.estado_pago === 'CONFIRMADO'" class="flex items-center gap-1.5">
                             <button 
-                              [disabled]="validatingPin[pasaje.id]"
-                              (click)="validarPinPasajeroDirecto(pasaje)"
+                              (click)="abrirModalPin(pasaje)"
                               class="px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white text-[9px] font-black rounded-xl uppercase tracking-wider flex items-center gap-1 shadow-sm active:scale-95 transition-all"
                             >
-                              <span *ngIf="validatingPin[pasaje.id]" class="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                               Asistió
                             </button>
                             <button 
@@ -291,26 +326,6 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
                             </button>
                           </div>
                         </div>
-                      </div>
-
-                      <!-- Input PIN de validación alternativo por si Asistió directo falla o quieren ingresar PIN manual -->
-                      <div *ngIf="pasaje.estado_pago === 'CONFIRMADO'" class="flex items-center gap-2 mt-1 px-1">
-                        <div class="relative flex-1">
-                          <input 
-                            type="text" 
-                            [(ngModel)]="pinInputs[pasaje.id]" 
-                            placeholder="Validar con PIN manual" 
-                            maxlength="4" 
-                            class="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-3 py-1.5 text-[9px] font-bold text-center tracking-[0.2em] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          >
-                        </div>
-                        <button 
-                          [disabled]="validatingPin[pasaje.id] || (pinInputs[pasaje.id] || '').length !== 4"
-                          (click)="validarPinPasajero(pasaje)"
-                          class="px-3.5 py-1.5 bg-blue-600 disabled:bg-gray-100 text-white disabled:text-gray-400 text-[9px] font-black rounded-xl hover:bg-blue-700 transition-all uppercase tracking-wider shrink-0 flex items-center justify-center gap-1 active:scale-95"
-                        >
-                          Validar
-                        </button>
                       </div>
 
                       <!-- Confirmado / A Bordo Visual Indicator -->
@@ -346,11 +361,12 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
          
          <div class="flex items-start gap-4">
             <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+               <svg *ngIf="viaje.tipo_servicio === 'encomienda'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"/><polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"/><polygon points="12 12 21 6.92 12 1.84 3 6.92 12 12"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+               <svg *ngIf="viaje.tipo_servicio !== 'encomienda'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
             </div>
             <div class="flex-1 min-w-0">
                <div class="flex justify-between items-start">
-                  <h4 class="text-sm font-black text-gray-900">¡Nuevo Viaje!</h4>
+                  <h4 class="text-sm font-black text-gray-900">{{ viaje.tipo_servicio === 'encomienda' ? '¡Nuevo Paquete!' : '¡Nuevo Viaje!' }}</h4>
                   <span class="text-lg font-black text-green-600 leading-none">$ {{ viaje.tarifa }}</span>
                </div>
                <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-0.5">A {{ viaje.distancia || '2.4' }} km</p>
@@ -361,7 +377,7 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
                </div>
                
                <div class="mt-4 flex gap-3">
-                  <button (click)="aceptarViaje(viaje)" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-wider shadow-md hover:bg-blue-700 transition-all active:scale-95">Aceptar</button>
+                  <button (click)="aceptarViaje(viaje)" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-wider shadow-md hover:bg-blue-700 transition-all active:scale-95">{{ viaje.tipo_servicio === 'encomienda' ? 'Aceptar Envío' : 'Aceptar' }}</button>
                   <button (click)="rechazarViaje(viaje)" class="py-2.5 px-4 bg-gray-50 text-gray-400 rounded-xl font-black text-[10px] uppercase tracking-wider border border-gray-100 hover:bg-gray-100 transition-all active:scale-95">Ignorar</button>
                </div>
             </div>
@@ -374,7 +390,7 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
     <div *ngIf="isScannerOpen" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
       <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-xl" (click)="isScannerOpen = false"></div>
       <div class="bg-white w-full max-w-sm rounded-3xl p-12 relative z-10 shadow-sm text-center">
-        <h3 class="text-3xl font-black text-gray-900 mb-8">Validar Abordaje</h3>
+        <h3 class="text-3xl font-black text-gray-900 mb-8">{{ viajeActual?.tipo_servicio === 'encomienda' ? 'Validar Retiro' : 'Validar Abordaje' }}</h3>
         <div class="bg-gray-50 aspect-square rounded-3xl mb-10 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden">
            <div class="w-40 h-40 border-4 border-blue-500/30 rounded-3xl relative">
               <div class="absolute top-0 left-0 w-full h-1 bg-blue-500 animate-scanner-line shadow-[0_0_15px_rgba(59,130,246,0.8)]"></div>
@@ -394,10 +410,10 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
         <div class="w-20 h-20 bg-green-50 text-green-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
         </div>
-        <h3 class="text-2xl font-black text-gray-900 mb-4 font-black">¿Viaje Terminado?</h3>
-        <p class="text-gray-500 text-sm font-medium mb-10 px-4">Asegúrate de que el pasajero haya desembarcado con seguridad en el destino.</p>
+        <h3 class="text-2xl font-black text-gray-900 mb-4 font-black">{{ viajeActual?.tipo_servicio === 'encomienda' ? '¿Entrega Completada?' : '¿Viaje Terminado?' }}</h3>
+        <p class="text-gray-500 text-sm font-medium mb-10 px-4">{{ viajeActual?.tipo_servicio === 'encomienda' ? 'Asegúrate de haber entregado el paquete al destinatario correspondiente.' : 'Asegúrate de que el pasajero haya desembarcado con seguridad en el destino.' }}</p>
         <div class="grid grid-cols-1 gap-4">
-          <button (click)="confirmarFinalizacion()" class="w-full h-16 bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-green-600/20 font-black">Sí, Finalizar</button>
+          <button (click)="confirmarFinalizacion()" class="w-full h-16 bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-green-600/20 font-black">{{ viajeActual?.tipo_servicio === 'encomienda' ? 'Sí, Entregar' : 'Sí, Finalizar' }}</button>
           <button (click)="showFinishModal = false" class="w-full py-4 text-gray-400 font-black text-[10px] uppercase tracking-widest">Volver</button>
         </div>
       </div>
@@ -453,6 +469,48 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
       </div>
     </div>
 
+    <!-- Modal para Validar PIN del Pasajero -->
+    <div *ngIf="showPinModal && selectedReservaParaPin" class="fixed inset-0 z-[10001] flex items-center justify-center p-6 animate-fade-in">
+      <div class="absolute inset-0 bg-blue-900/40 backdrop-blur-xl" (click)="cerrarModalPin()"></div>
+      <div class="bg-white w-full max-w-sm rounded-3xl p-10 relative z-10 shadow-sm text-center">
+        <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3 class="text-xl font-black text-gray-900 mb-1">Confirmar Asistencia</h3>
+        <p class="text-[11px] font-bold text-blue-600 mb-4">{{ selectedReservaParaPin.nombre_usuario }} (Asiento #{{ selectedReservaParaPin.numero_asiento }})</p>
+        <p class="text-gray-500 text-xs font-semibold mb-6 px-4">Por favor ingresa el PIN de 4 dígitos proporcionado por el pasajero:</p>
+        
+        <div class="space-y-4">
+          <input 
+            type="text" 
+            [(ngModel)]="pinModalInput" 
+            maxlength="4" 
+            placeholder="PIN" 
+            class="w-full py-4 bg-gray-50 rounded-2xl text-center font-black text-3xl tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all uppercase"
+            (keyup.enter)="confirmarPinModal()"
+          >
+          <p *ngIf="pinModalError" class="text-red-500 text-[10px] font-bold mt-1">{{ pinModalError }}</p>
+          
+          <div class="flex flex-col gap-2 pt-2">
+            <button 
+              [disabled]="validatingPin[selectedReservaParaPin.id] || pinModalInput.length !== 4"
+              (click)="confirmarPinModal()" 
+              class="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+            >
+              <span *ngIf="validatingPin[selectedReservaParaPin.id]" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              Validar e Ingresar
+            </button>
+            <button 
+              (click)="cerrarModalPin()" 
+              class="w-full py-3 text-gray-400 font-bold hover:text-gray-600 transition-colors text-[10px] uppercase tracking-widest"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TOAST -->
     <div *ngIf="toast" (click)="openChat()" class="cursor-pointer fixed top-24 left-1/2 -translate-x-1/2 z-[20000] w-[92%] max-w-lg transition-all duration-500 ease-out transform active:scale-95">
       <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-blue-500/20 flex items-center gap-4 border border-blue-400/25 relative overflow-hidden backdrop-blur-md animate-slide-up">
@@ -478,6 +536,148 @@ import { ChatSidebarComponent } from '../../../shared/components/chat-sidebar/ch
       [fotoPerfilUrl]="viajeActual?.foto_cliente_url"
       (closed)="isChatOpen = false">
     </app-chat-sidebar>
+
+    <!-- Modal Mensajes del Viaje Compartido -->
+    <div *ngIf="showSharedMessagesModal && frecuenciaAsignada" class="fixed inset-0 z-[10001] flex items-center justify-center p-4 md:p-10 animate-fade-in">
+      <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" (click)="cerrarMensajeriaCompartido()"></div>
+      
+      <div class="bg-white w-full max-w-4xl h-[80vh] rounded-3xl relative z-10 shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xs font-black text-gray-900 uppercase tracking-wider">Mensajes del Viaje Compartido</h3>
+              <p class="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">Frecuencia #{{ frecuenciaAsignada.id }} - Pasajeros a bordo</p>
+            </div>
+          </div>
+          <button (click)="cerrarMensajeriaCompartido()" class="w-8 h-8 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50 flex items-center justify-center transition-colors">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        
+        <!-- Main Panel Body -->
+        <div class="flex-1 flex overflow-hidden min-h-0">
+          
+          <!-- Left Panel: Passenger List -->
+          <div 
+            [class.hidden]="selectedPassengerForChat" 
+            class="w-full md:w-[320px] md:flex border-r border-gray-100 flex flex-col bg-slate-50/30 shrink-0"
+          >
+            <!-- Search bar -->
+            <div class="p-4 bg-white border-b border-gray-100 shrink-0">
+              <div class="relative">
+                <input 
+                  type="text" 
+                  [(ngModel)]="searchPassengerQuery"
+                  placeholder="Buscar pasajero..." 
+                  class="w-full bg-slate-50 border border-gray-200 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+                >
+                <div class="absolute left-3.5 top-3.5 text-gray-400">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+              </div>
+            </div>
+            
+            <!-- List scroll area -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-1">
+              <!-- Empty state -->
+              <div *ngIf="filteredPasajeros.length === 0" class="py-10 text-center text-gray-400">
+                <p class="text-[10px] font-semibold">No se encontraron pasajeros.</p>
+              </div>
+              
+              <!-- Passenger Items -->
+              <button 
+                *ngFor="let pasaje of filteredPasajeros"
+                (click)="selectPassenger(pasaje)"
+                [ngClass]="{ 
+                  'bg-blue-50/60 border-blue-100': selectedPassengerForChat?.usuario_id === pasaje.usuario_id,
+                  'bg-red-50/30 border-red-100/40 hover:bg-red-50/50': selectedPassengerForChat?.usuario_id !== pasaje.usuario_id && pasaje.unreadCount > 0
+                }"
+                class="w-full text-left p-3 rounded-2xl border border-transparent hover:bg-slate-50 transition-all flex items-center gap-3 active:scale-[0.99] relative"
+              >
+                <!-- Avatar with Badge -->
+                <div class="relative w-8 h-8 shrink-0">
+                  <div class="w-full h-full bg-gray-200 text-gray-500 rounded-full flex items-center justify-center overflow-hidden border border-gray-200 shadow-sm">
+                    <img *ngIf="pasaje.foto_usuario_url" [src]="'http://localhost:5001/' + pasaje.foto_usuario_url" class="w-full h-full object-cover">
+                    <svg *ngIf="!pasaje.foto_usuario_url" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  
+                  <!-- Contador de mensajes no leídos en rojo -->
+                  <div *ngIf="pasaje.unreadCount > 0" class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center border border-white animate-bounce shadow-md z-10">
+                    {{ pasaje.unreadCount }}
+                  </div>
+                </div>
+                
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex justify-between items-start gap-1">
+                    <p class="text-[11px] font-black text-gray-800 truncate leading-tight">{{ pasaje.nombre_usuario }}</p>
+                    <span class="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black rounded-md shrink-0 border border-blue-100">As. {{ pasaje.numero_asiento }}</span>
+                  </div>
+                  
+                  <!-- Mensaje con previsualización en color distintivo si no está leído -->
+                  <p *ngIf="pasaje.lastMessage" 
+                     [ngClass]="{ 
+                       'text-red-500 font-extrabold': pasaje.unreadCount > 0, 
+                       'text-gray-500 font-medium': !pasaje.unreadCount || pasaje.unreadCount === 0 
+                     }" 
+                     class="text-[9px] truncate mt-1">
+                    {{ pasaje.lastMessage }}
+                  </p>
+                  
+                  <p *ngIf="!pasaje.lastMessage" class="text-[9px] text-gray-400 font-semibold truncate mt-0.5">
+                    Aborda en: <span class="text-gray-600 font-bold">{{ pasaje.punto_abordaje }}</span>
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Right Panel: Chat Box -->
+          <div 
+            [class.hidden]="!selectedPassengerForChat"
+            class="w-full md:flex flex-1 h-full bg-slate-50/10 flex flex-col relative overflow-hidden"
+          >
+            <div *ngIf="selectedPassengerForChat" class="flex-1 h-full flex flex-col min-h-0">
+              <!-- Chat panel integration -->
+              <div class="flex-1 min-h-0 relative">
+                <app-chat-panel 
+                  [otroId]="selectedPassengerForChat.usuario_id" 
+                  [viajeId]="frecuenciaAsignada.id"
+                  [showHeader]="true"
+                  [showBackButton]="true"
+                  (back)="selectedPassengerForChat = null"
+                  [otroNombre]="selectedPassengerForChat.nombre_usuario"
+                  [otroFotoUrl]="selectedPassengerForChat.foto_usuario_url"
+                  [tipoReceptor]="'chofer'"
+                  class="h-full block w-full absolute inset-0"
+                ></app-chat-panel>
+              </div>
+            </div>
+            
+            <!-- Chat Box Empty State -->
+            <div *ngIf="!selectedPassengerForChat" class="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
+              <div class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mb-4 border border-slate-100 shadow-sm">
+                <svg xmlns="http://www.w3.org/2050/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                  <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+                </svg>
+              </div>
+              <h4 class="text-xs font-black text-gray-800 uppercase tracking-widest mb-1">Selecciona un pasajero</h4>
+              <p class="text-[10px] text-gray-400 font-semibold max-w-xs text-center leading-relaxed">Haz clic en cualquier pasajero de la lista izquierda para iniciar una conversación en tiempo real.</p>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
   `,
   styles: [`
     @keyframes radar-spin {
@@ -544,11 +744,99 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   activeTab: 'express' | 'shared' = 'express';
   frecuenciaAsignada: any = null;
   manifiestoPasajeros: any[] = [];
-  pinInputs: { [reservaId: number]: string } = {};
+  showPinModal = false;
+  selectedReservaParaPin: any = null;
+  pinModalInput = '';
+  pinModalError = '';
   loadingFrecuencias = false;
   loadingManifiesto = false;
   validatingPin: { [reservaId: number]: boolean } = {};
   updatingFrecuenciaStatus = false;
+
+  showPassengerManifest = false;
+  showSharedMessagesModal = false;
+  selectedPassengerForChat: any = null;
+  searchPassengerQuery = '';
+
+  get filteredPasajeros(): any[] {
+    let list = [...this.manifiestoPasajeros];
+    if (this.searchPassengerQuery.trim()) {
+      const query = this.searchPassengerQuery.toLowerCase().trim();
+      list = list.filter(p => 
+        (p.nombre_usuario || '').toLowerCase().includes(query)
+      );
+    }
+    
+    // Sort: passengers with more recent lastMessageTime come first
+    return list.sort((a, b) => {
+      const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+      const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+      
+      if (timeA !== timeB) {
+        return timeB - timeA; // Descending order: newest first
+      }
+      
+      // Fallback: sort by seat number
+      const seatA = parseInt(a.numero_asiento) || 999;
+      const seatB = parseInt(b.numero_asiento) || 999;
+      return seatA - seatB;
+    });
+  }
+
+  abrirMensajeriaCompartido() {
+    this.showSharedMessagesModal = true;
+    this.socketService.isChatActive = true; // Silenciar notificaciones push globales
+    this.searchPassengerQuery = '';
+    
+    if (this.frecuenciaAsignada && this.manifiestoPasajeros.length === 0) {
+      this.cargarManifiesto(this.frecuenciaAsignada.id);
+    }
+    
+    // Auto-select first passenger on desktop, but keep it null on mobile to see the list first
+    if (window.innerWidth >= 768 && this.manifiestoPasajeros.length > 0) {
+      this.selectPassenger(this.manifiestoPasajeros[0]);
+    } else {
+      this.selectedPassengerForChat = null;
+    }
+  }
+
+  cerrarMensajeriaCompartido() {
+    this.showSharedMessagesModal = false;
+    this.selectedPassengerForChat = null;
+    this.socketService.isChatActive = false; // Reactivar notificaciones push globales
+  }
+
+  selectPassenger(pasaje: any) {
+    this.selectedPassengerForChat = pasaje;
+    if (pasaje) {
+      pasaje.unreadCount = 0;
+      this.saveChatStateToStorage(); // Persistir cambio a leído
+    }
+  }
+
+  togglePassengerManifest() {
+    this.showPassengerManifest = !this.showPassengerManifest;
+  }
+
+  saveChatStateToStorage() {
+    if (!this.frecuenciaAsignada || !this.usuario) return;
+    const storageKey = `Ecuavip_SharedChatState_${this.usuario.id}_${this.frecuenciaAsignada.id}`;
+    
+    const state: { [key: number]: { unreadCount: number, lastMessage: string, lastMessageTime: any } } = {};
+    for (const p of this.manifiestoPasajeros) {
+      state[p.usuario_id] = {
+        unreadCount: p.unreadCount || 0,
+        lastMessage: p.lastMessage || '',
+        lastMessageTime: p.lastMessageTime || null
+      };
+    }
+    
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch (e) {
+      console.error('[DashboardChofer] Error saving chat state to localStorage:', e);
+    }
+  }
 
   get unreadMessages(): number {
     return this.socketService.unreadMessages;
@@ -559,6 +847,10 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
       const count = (p.asientos && Array.isArray(p.asientos)) ? p.asientos.length : 1;
       return sum + (p.estado_pago !== 'CANCELADO' ? count : 0);
     }, 0);
+  }
+
+  get totalUnreadSharedMessages(): number {
+    return this.manifiestoPasajeros.reduce((sum, p) => sum + (p.unreadCount || 0), 0);
   }
   
   // Map State
@@ -600,6 +892,7 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.socketService.isChatActive = false; // Asegurar que no quede silenciado si se destruye el dashboard
     if (this.socketSub) this.socketSub.unsubscribe();
     this.componentSubs.forEach(s => s.unsubscribe());
     this.stopGPS();
@@ -633,6 +926,11 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
             this.startGPS();
           } else {
             this.stopGPS();
+          }
+
+          // Seleccionar pestaña de compartido automáticamente si no hay viaje express
+          if (!this.viajeActual) {
+            this.activeTab = 'shared';
           }
         }
       },
@@ -695,10 +993,37 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
         this.loadingManifiesto = false;
         const rawReservas = res.reservas || [];
         
+        // Conservar valores previos en memoria, o leer de localStorage si es una recarga completa de página
+        const storageKey = `Ecuavip_SharedChatState_${this.usuario?.id}_${frecuenciaId}`;
+        let persistedState: { [key: number]: { unreadCount: number, lastMessage: string, lastMessageTime: any } } = {};
+        try {
+          const val = localStorage.getItem(storageKey);
+          if (val) {
+            persistedState = JSON.parse(val);
+          }
+        } catch (e) {
+          console.error('[DashboardChofer] Error parsing persisted chat state:', e);
+        }
+
+        const existingMap = new Map<number, { unreadCount: number, lastMessage: string, lastMessageTime: any }>();
+        if (this.manifiestoPasajeros && this.manifiestoPasajeros.length > 0) {
+          for (const p of this.manifiestoPasajeros) {
+            existingMap.set(p.usuario_id, { 
+              unreadCount: p.unreadCount || 0, 
+              lastMessage: p.lastMessage || '',
+              lastMessageTime: p.lastMessageTime || null
+            });
+          }
+        }
+
         // Group by usuario_id to prevent duplicates of the same passenger
         const groups: { [key: number]: any } = {};
         for (const r of rawReservas) {
           const uId = Number(r.usuario_id);
+          const pLocal = existingMap.get(uId);
+          const pStored = persistedState[uId];
+          const preserved = pLocal || pStored || { unreadCount: 0, lastMessage: '', lastMessageTime: null };
+          
           if (!groups[uId]) {
             groups[uId] = {
               id: r.id, // Keep the first ID for pin validation actions
@@ -709,7 +1034,10 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
               pin_abordaje: r.pin_abordaje,
               estado_pago: r.estado_pago,
               asientos: [Number(r.numero_asiento)],
-              reservas: [r]
+              reservas: [r],
+              unreadCount: preserved.unreadCount,
+              lastMessage: preserved.lastMessage,
+              lastMessageTime: preserved.lastMessageTime
             };
           } else {
             // Append seat
@@ -730,6 +1058,9 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
           group.numero_asiento = group.asientos.join(', '); // Format seats as "2, 3"
           return group;
         });
+
+        // Guardar estado en localStorage
+        this.saveChatStateToStorage();
       },
       error: (err) => {
         this.loadingManifiesto = false;
@@ -738,62 +1069,48 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
     });
   }
 
-  validarPinPasajero(reserva: any) {
-    const pin = this.pinInputs[reserva.id];
-    if (!pin || pin.trim().length !== 4) {
-      this.showToast('Por favor, ingresa un PIN de 4 dígitos.');
-      return;
-    }
+  abrirModalPin(reserva: any) {
+    this.selectedReservaParaPin = reserva;
+    this.pinModalInput = '';
+    this.pinModalError = '';
+    this.showPinModal = true;
+  }
 
-    this.validatingPin[reserva.id] = true;
+  cerrarModalPin() {
+    this.showPinModal = false;
+    this.selectedReservaParaPin = null;
+  }
+
+  confirmarPinModal() {
+    if (!this.selectedReservaParaPin || this.pinModalInput.trim().length !== 4) return;
+    
+    const id = this.selectedReservaParaPin.id;
+    const pin = this.pinModalInput.trim();
+    
+    this.validatingPin[id] = true;
+    this.pinModalError = '';
+    
     this.soapService.post(
       'http://ecuaviptour.com/soap/viajes',
       'validarPinAbordajeRequest',
       {
-        reserva_id: reserva.id,
+        reserva_id: id,
         pin: pin
       }
     ).subscribe({
       next: (res) => {
-        this.validatingPin[reserva.id] = false;
+        this.validatingPin[id] = false;
         if (res && res.exito === true) {
-          this.showToast(res.mensaje || 'PIN validado con éxito.');
-          this.pinInputs[reserva.id] = '';
+          this.showToast(res.mensaje || 'PIN validado con éxito. Pasajero a bordo.');
+          this.cerrarModalPin();
           this.cargarManifiesto(this.frecuenciaAsignada.id);
         } else {
-          this.showToast(res.mensaje || 'PIN de abordaje incorrecto.');
+          this.pinModalError = res.mensaje || 'PIN de abordaje incorrecto.';
         }
       },
       error: (err) => {
-        this.validatingPin[reserva.id] = false;
-        this.showToast(err.error?.error || 'Error al validar PIN.');
-      }
-    });
-  }
-
-  validarPinPasajeroDirecto(reserva: any) {
-    if (!reserva.pin_abordaje) return;
-    this.validatingPin[reserva.id] = true;
-    this.soapService.post(
-      'http://ecuaviptour.com/soap/viajes',
-      'validarPinAbordajeRequest',
-      {
-        reserva_id: reserva.id,
-        pin: reserva.pin_abordaje
-      }
-    ).subscribe({
-      next: (res) => {
-        this.validatingPin[reserva.id] = false;
-        if (res && res.exito === true) {
-          this.showToast(res.mensaje || 'Abordaje validado con éxito.');
-          this.cargarManifiesto(this.frecuenciaAsignada.id);
-        } else {
-          this.showToast(res.mensaje || 'Error al verificar abordaje.');
-        }
-      },
-      error: (err) => {
-        this.validatingPin[reserva.id] = false;
-        this.showToast(err.error?.error || 'Error al validar.');
+        this.validatingPin[id] = false;
+        this.pinModalError = err.error?.error || 'Error al validar PIN.';
       }
     });
   }
@@ -896,6 +1213,39 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
   }
 
   setupListeners() {
+    // Escuchar nuevos mensajes para actualizar previsualización y contadores
+    this.componentSubs.push(
+      this.socketService.listen('nuevo_mensaje').subscribe((data: any) => {
+        console.log('[DashboardChofer] nuevo_mensaje recibido:', data);
+        if (!data || !this.usuario) return;
+
+        // Si el remitente es el usuario actual, ignorar
+        const isFromPassenger = Number(data.remitente_id) !== Number(this.usuario.id);
+        if (!isFromPassenger) return;
+
+        // Buscar al pasajero en nuestro manifiesto
+        const passenger = this.manifiestoPasajeros.find(p => Number(p.usuario_id) === Number(data.remitente_id));
+        if (passenger) {
+          passenger.lastMessage = data.contenido;
+          passenger.lastMessageTime = new Date(); // Guardar el timestamp para ordenar al inicio de la lista
+          
+          // Si el chat con este pasajero está abierto y el modal de mensajes también, no contar como no leído
+          const isCurrentChatOpen = this.showSharedMessagesModal && 
+                                    this.selectedPassengerForChat && 
+                                    Number(this.selectedPassengerForChat.usuario_id) === Number(passenger.usuario_id);
+          
+          if (!isCurrentChatOpen) {
+            passenger.unreadCount = (passenger.unreadCount || 0) + 1;
+          } else {
+            passenger.unreadCount = 0;
+          }
+
+          // Persistir estado en localStorage
+          this.saveChatStateToStorage();
+        }
+      })
+    );
+
     // Escuchar nuevos viajes disponibles
     this.componentSubs.push(
       this.socketService.listen('nuevo_viaje_disponible').subscribe((data: any) => {
@@ -913,17 +1263,7 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
       this.socketService.listen('viaje_confirmado_chofer').subscribe((data: any) => {
         if (data && data.viaje_id) {
           this.nuevosViajes = this.nuevosViajes.filter(v => v.viaje_id !== data.viaje_id);
-          if (this.viajeActual && Number(this.viajeActual.viaje_id || this.viajeActual.id) === Number(data.viaje_id)) {
-            if (Number(data.chofer_id) !== Number(this.usuario.id)) {
-              this.viajeActual = null;
-              this.showToast('El viaje fue aceptado por otro conductor.');
-              this.stopGPS();
-              if (this.directionsRenderer) {
-                this.directionsRenderer.setDirections({routes: []});
-              }
-              setTimeout(() => this.initMap(), 500);
-            }
-          }
+          this.checkActiveTrip(); // Recargar el viaje activo y cambiar pestaña
         }
       })
     );
@@ -979,6 +1319,10 @@ export class DashboardChoferComponent implements OnInit, OnDestroy {
           }
         } else {
           this.viajeActual = null;
+          // Si no hay viaje express, pero hay frecuencia, mostrar compartido
+          if (this.frecuenciaAsignada) {
+            this.activeTab = 'shared';
+          }
         }
       },
       error: (err) => console.error('[DashboardChofer] Error al buscar viaje activo:', err)

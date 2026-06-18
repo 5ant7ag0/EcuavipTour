@@ -16,6 +16,8 @@
             <xs:element name="activo" type="xs:boolean"/>
             <xs:element name="fecha_registro" type="xs:string" minOccurs="0"/>
             <xs:element name="foto_perfil_url" type="xs:string" minOccurs="0"/>
+            <xs:element name="viajes_completados" type="xs:long" minOccurs="0"/>
+            <xs:element name="promedio_calificacion" type="xs:double" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -52,6 +54,7 @@
             <xs:element name="cliente_cedula" type="xs:string" minOccurs="0"/>
             <xs:element name="origen" type="xs:string" minOccurs="0"/>
             <xs:element name="destino" type="xs:string" minOccurs="0"/>
+            <xs:element name="tipo_servicio" type="xs:string" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 

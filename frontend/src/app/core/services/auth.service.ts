@@ -2,7 +2,7 @@ import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, Subject } from 'rxjs';
+import { Observable, tap, Subject, BehaviorSubject } from 'rxjs';
 import { SoapService } from './soap.service';
 
 @Injectable({
@@ -15,6 +15,9 @@ export class AuthService {
   private authModalSubject = new Subject<{ isLogin?: boolean, rol?: string } | void>();
   authModal$ = this.authModalSubject.asObservable();
 
+  private currentUserSubject = new BehaviorSubject<any>(null);
+  currentUser$ = this.currentUserSubject.asObservable();
+
   constructor(
     @Inject(PLATFORM_ID) platformId: Object,
     private http: HttpClient,
@@ -22,6 +25,9 @@ export class AuthService {
     private soapService: SoapService
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+    if (this.isBrowser) {
+      this.currentUserSubject.next(this.getUsuario());
+    }
   }
 
   login(credentials: any): Observable<any> {
@@ -32,9 +38,7 @@ export class AuthService {
       tap((res: any) => {
         if (res.token) {
           this.setToken(res.token);
-          if (this.isBrowser) {
-            localStorage.setItem('ecuavip_user', JSON.stringify(res.usuario));
-          }
+          this.updateCurrentUserLocal(res.usuario);
           this.redirectByRole(res.usuario?.rol);
         }
       })
@@ -53,9 +57,7 @@ export class AuthService {
       tap((res: any) => {
         if (res.token) {
           this.setToken(res.token);
-          if (this.isBrowser) {
-            localStorage.setItem('ecuavip_user', JSON.stringify(res.usuario));
-          }
+          this.updateCurrentUserLocal(res.usuario);
           this.redirectByRole(res.usuario?.rol);
         }
       })
@@ -77,8 +79,8 @@ export class AuthService {
       this.getToken() || undefined
     ).pipe(
       tap((res: any) => {
-        if (res.usuario && this.isBrowser) {
-          localStorage.setItem('ecuavip_user', JSON.stringify(res.usuario));
+        if (res.usuario) {
+          this.updateCurrentUserLocal(res.usuario);
         }
       })
     );
@@ -97,8 +99,8 @@ export class AuthService {
           this.getToken() || undefined
         ).subscribe({
           next: (res) => {
-            if (res.usuario && this.isBrowser) {
-              localStorage.setItem('ecuavip_user', JSON.stringify(res.usuario));
+            if (res.usuario) {
+              this.updateCurrentUserLocal(res.usuario);
             }
             observer.next(res);
             observer.complete();
@@ -149,10 +151,18 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  updateCurrentUserLocal(user: any) {
+    if (this.isBrowser) {
+      localStorage.setItem('ecuavip_user', JSON.stringify(user));
+      this.currentUserSubject.next(user);
+    }
+  }
+
   logout(): void {
     if (this.isBrowser) {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('ecuavip_user');
+      this.currentUserSubject.next(null);
     }
   }
 

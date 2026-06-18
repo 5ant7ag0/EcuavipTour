@@ -16,11 +16,11 @@ import { Subscription } from 'rxjs';
       <!-- Navbar global para cliente -->
       <app-client-navbar (onLoginRequest)="showAuthModal = true"></app-client-navbar>
 
-      <!-- Espaciador para el navbar desktop (header fijo de 96px) -->
-      <div class="hidden md:block h-24 w-full"></div>
+      <!-- Espaciador para el navbar desktop (header fijo de 72px) -->
+      <div class="hidden md:block h-[72px] w-full"></div>
 
       <!-- TOAST NOTIFICATION GLOBAL -->
-      <div *ngIf="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-[10002] w-[92%] max-w-lg transition-all duration-500 ease-out transform">
+      <div *ngIf="toast" class="fixed top-[80px] left-1/2 -translate-x-1/2 z-[10002] w-[92%] max-w-lg transition-all duration-500 ease-out transform">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-blue-500/20 flex items-center gap-4 border border-blue-400/25 relative overflow-hidden backdrop-blur-md animate-in slide-in-from-top-12 duration-500">
           <!-- Glow effect -->
           <div class="absolute -right-10 -top-10 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
@@ -63,6 +63,13 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.usuario = this.authService.getUsuario();
     if (this.usuario) {
+      if (this.usuario.rol === 'admin') {
+        this.router.navigate(['/admin/monitor']);
+        return;
+      } else if (this.usuario.rol === 'chofer') {
+        this.router.navigate(['/chofer/dashboard']);
+        return;
+      }
       this.socketService.connectAndJoin();
       this.setupSocketListeners();
     }
@@ -77,7 +84,11 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.socketService.listen('viaje_despachado_cliente').subscribe((data: any) => {
         if (!this.router.url.includes('/en-curso')) {
-          this.showToast(`¡Tu viaje ha sido despachado! Conductor: ${data.chofer_nombre}. Vehículo: ${data.vehiculo_marca} ${data.vehiculo_modelo} (${data.vehiculo_placa})`);
+          const isEncomienda = data.tipo_servicio === 'encomienda';
+          const msg = isEncomienda
+            ? `¡Tu envío de paquete ha sido despachado! Conductor: ${data.chofer_nombre}. Vehículo: ${data.vehiculo_marca} ${data.vehiculo_modelo} (${data.vehiculo_placa})`
+            : `¡Tu viaje ha sido despachado! Conductor: ${data.chofer_nombre}. Vehículo: ${data.vehiculo_marca} ${data.vehiculo_modelo} (${data.vehiculo_placa})`;
+          this.showToast(msg);
         }
       })
     );
@@ -86,7 +97,11 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.socketService.listen('chofer_asignado').subscribe((data: any) => {
         if (!this.router.url.includes('/en-curso')) {
-          this.showToast(`¡Un chofer ha aceptado tu viaje! ${data.nombre_chofer} está en camino.`);
+          const isEncomienda = data.tipo_servicio === 'encomienda';
+          const msg = isEncomienda
+            ? `¡Un chofer ha aceptado tu envío! ${data.nombre_chofer} está en camino a recoger el paquete.`
+            : `¡Un chofer ha aceptado tu viaje! ${data.nombre_chofer} está en camino.`;
+          this.showToast(msg);
         }
       })
     );
@@ -95,7 +110,11 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.socketService.listen('chofer_en_punto').subscribe((data: any) => {
         if (!this.router.url.includes('/en-curso')) {
-          this.showToast('¡Tu chofer ha llegado al punto de inicio!');
+          const isEncomienda = data.tipo_servicio === 'encomienda';
+          const msg = isEncomienda
+            ? '¡El chofer ha llegado para retirar el paquete!'
+            : '¡Tu chofer ha llegado al punto de inicio!';
+          this.showToast(msg);
         }
       })
     );
@@ -104,7 +123,11 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.socketService.listen('viaje_finalizado').subscribe((data: any) => {
         if (!this.router.url.includes('/en-curso')) {
-          this.showToast('Tu viaje ha finalizado. ¡Gracias por usar Ecuavip Tour!');
+          const isEncomienda = data.tipo_servicio === 'encomienda';
+          const msg = isEncomienda
+            ? '¡Tu paquete ha sido entregado con éxito! Gracias por confiar en Ecuavip Tour.'
+            : 'Tu viaje ha finalizado. ¡Gracias por usar Ecuavip Tour!';
+          this.showToast(msg);
         }
       })
     );
@@ -113,7 +136,9 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.socketService.listen('viaje_cancelado').subscribe((data: any) => {
         if (!this.router.url.includes('/en-curso')) {
-          this.showToast(data.mensaje || 'Tu viaje ha sido cancelado.');
+          const isEncomienda = data.tipo_servicio === 'encomienda';
+          const defaultMsg = isEncomienda ? 'Tu envío de paquete ha sido cancelado.' : 'Tu viaje ha sido cancelado.';
+          this.showToast(data.mensaje || defaultMsg);
         }
       })
     );
@@ -122,7 +147,11 @@ export class ClientLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.socketService.listen('buscando_nuevo_chofer').subscribe((data: any) => {
         if (!this.router.url.includes('/en-curso')) {
-          this.showToast(data.mensaje || 'El chofer asignado canceló el viaje. Buscando otro conductor...');
+          const isEncomienda = data.tipo_servicio === 'encomienda';
+          const defaultMsg = isEncomienda
+            ? 'El chofer asignado canceló el envío. Buscando otro conductor...'
+            : 'El chofer asignado canceló el viaje. Buscando otro conductor...';
+          this.showToast(data.mensaje || defaultMsg);
         }
       })
     );

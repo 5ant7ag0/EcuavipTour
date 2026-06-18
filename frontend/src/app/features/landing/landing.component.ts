@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ChatSidebarComponent } from '../../shared/components/chat-sidebar/chat-sidebar.component';
 
 interface RutaPopular {
   origen: string;
@@ -15,45 +16,40 @@ interface RutaPopular {
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ChatSidebarComponent],
   template: `
     <div class="min-h-screen bg-[#0a1628] font-sans relative overflow-x-hidden pt-[72px]">
       
       <!-- ================= HERO SECTION ================= -->
-      <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-[#0a1628] py-16 px-6">
+      <section class="relative h-[60vh] flex items-center justify-start overflow-hidden bg-[#0a1628] py-20 px-6 sm:px-12 md:px-20">
         <!-- Background and Patterns -->
         <div class="absolute inset-0 z-0">
-          <div class="absolute inset-0 bg-gradient-to-b from-[#0a1628]/95 via-[#0d2240]/90 to-[#0a1628] z-10"></div>
-          <div class="absolute inset-0 opacity-15 bg-[url('https://images.unsplash.com/photo-1506015391300-4802dc74de2e?auto=format&fit=crop&q=80&w=1600')] bg-cover bg-center mix-blend-overlay"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-[#0a1628] via-[#0a1628]/90 to-transparent z-10"></div>
+          <div class="absolute inset-0 opacity-30 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80')"></div>
           <!-- Moving road illusion / subtle grid -->
           <div class="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem]"></div>
           <div class="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
           <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl"></div>
         </div>
 
-        <div class="container mx-auto max-w-5xl relative z-20 flex flex-col items-center text-center">
-          <div class="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full text-blue-400 text-xs font-black uppercase tracking-widest mb-8 animate-fade-in">
-            <span class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></span>
-            EcuavipTour · Tu Transporte Ejecutivo de Confianza
-          </div>
-
-          <h1 class="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-[1.1] tracking-tight mb-8 max-w-4xl text-balance">
-            Tu viaje puerta a puerta,<br>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#0ea5e9] via-blue-400 to-[#10b981]">seguro y sin complicaciones</span>
+        <div class="container mx-auto max-w-5xl relative z-20 flex flex-col items-start text-left">
+          <h1 class="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-tight tracking-tight mb-6 max-w-3xl">
+            Tu viaje puerta a puerta <br>
+            <span class="text-sky-400">seguro y sin complicaciones</span>
           </h1>
 
-          <p class="text-gray-300 text-base sm:text-lg md:text-xl max-w-2xl mb-12 leading-relaxed text-balance">
+          <p class="text-gray-300 text-base sm:text-lg md:text-xl max-w-2xl mb-8 leading-relaxed">
             Disfruta del servicio premium de traslados interprovinciales en Ecuador. Conectamos las principales ciudades del país con salidas diarias, cómodas vans, conductores profesionales certificados y monitoreo satelital en tiempo real.
           </p>
 
           <!-- Main CTA -->
-          <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center">
+          <div class="flex flex-wrap gap-4 justify-start">
             <a routerLink="/cliente/cotizar" 
-               class="w-full sm:w-auto px-8 py-4.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-2xl shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all text-center text-base uppercase tracking-wider">
+               class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-600/30 hover:scale-105 active:scale-95 transition-all text-center text-sm uppercase tracking-wider">
               Cotizar Viaje Ahora
             </a>
             <a routerLink="/servicios" 
-               class="w-full sm:w-auto px-8 py-4.5 bg-white/5 border border-white/10 text-white font-bold rounded-2xl hover:bg-white/10 transition-all text-center text-base">
+               class="px-8 py-4 bg-white/10 border border-white/20 text-white font-bold rounded-2xl backdrop-blur-md hover:bg-white/20 transition-all text-center text-sm">
               Nuestros Servicios
             </a>
           </div>
@@ -273,18 +269,129 @@ interface RutaPopular {
       </section>
 
       <!-- ================= FOOTER ================= -->
-      <footer class="bg-[#08101e] py-12 border-t border-white/5">
-        <div class="container mx-auto px-6 text-center">
-          <div class="flex justify-center mb-6">
-            <img src="assets/logo.png" alt="EcuavipTour Logo" class="h-20 w-auto object-contain">
+      <footer class="bg-[#060c18] border-t border-white/5 pt-16 pb-8 relative overflow-hidden">
+        <!-- Subtle background glowing effect -->
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/5 rounded-full blur-3xl"></div>
+
+        <div class="container mx-auto px-6 relative z-10">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+            
+            <!-- Column 1: Brand & Bio -->
+            <div class="flex flex-col items-start">
+              <div class="mb-6">
+                <img src="assets/logo.png" alt="EcuavipTour Logo" class="h-16 w-auto object-contain">
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                Servicio de transporte interprovincial y fletes premium en todo el Ecuador. Viaja con total confort, seguridad y monitoreo satelital en tiempo real.
+              </p>
+              
+              <!-- Redes Sociales -->
+              <h4 class="text-white text-xs font-black uppercase tracking-widest mb-4">Síguenos</h4>
+              <div class="flex gap-3">
+                <a href="https://www.instagram.com/ecuavip.tour?igsh=ODY1aWczNnkzbzlq" target="_blank" 
+                   class="w-10 h-10 bg-white/5 hover:bg-[#fd1d1d] text-gray-300 hover:text-white rounded-xl flex items-center justify-center transition-all duration-300">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.981 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                </a>
+                <a href="https://www.facebook.com/share/1EN4w5BaNY/" target="_blank" 
+                   class="w-10 h-10 bg-white/5 hover:bg-[#1877F2] text-gray-300 hover:text-white rounded-xl flex items-center justify-center transition-all duration-300">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <a href="https://wa.me/593999216037" target="_blank" 
+                   class="w-10 h-10 bg-white/5 hover:bg-[#25D366] text-gray-300 hover:text-white rounded-xl flex items-center justify-center transition-all duration-300">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.92 9.22a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.82 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17l.92-.08Z"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Column 2: Quick Links -->
+            <div class="flex flex-col items-start">
+              <h4 class="text-white text-xs font-black uppercase tracking-widest mb-6 border-b border-sky-500/20 pb-2 w-full">Enlaces Rápidos</h4>
+              <ul class="space-y-3">
+                <li><a routerLink="/" class="text-gray-400 hover:text-sky-400 text-sm font-semibold transition-colors duration-200">Inicio</a></li>
+                <li><a routerLink="/servicios" class="text-gray-400 hover:text-sky-400 text-sm font-semibold transition-colors duration-200">Servicios</a></li>
+                <li><a routerLink="/contacto" class="text-gray-400 hover:text-sky-400 text-sm font-semibold transition-colors duration-200">Contactos</a></li>
+                <li><a routerLink="/cliente/cotizar" class="text-gray-400 hover:text-sky-400 text-sm font-semibold transition-colors duration-200">Cotizar Viaje</a></li>
+                <li>
+                  <button (click)="handleChatAction()" class="text-left text-gray-400 hover:text-sky-400 text-sm font-semibold transition-colors duration-200 flex items-center gap-1.5">
+                    <span>Chat en Vivo</span>
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Column 3: Contact Info -->
+            <div class="flex flex-col items-start">
+              <h4 class="text-white text-xs font-black uppercase tracking-widest mb-6 border-b border-sky-500/20 pb-2 w-full">Datos de Contacto</h4>
+              <ul class="space-y-4">
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-sky-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.92 9.22a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.82 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17l.92-.08Z"/></svg>
+                  <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Llámanos / WhatsApp</p>
+                    <a href="https://wa.me/593999216037" class="text-gray-300 hover:text-sky-400 text-sm font-bold transition-colors">099 921 6037</a>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-sky-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</p>
+                    <a href="mailto:ecuaviptour@gmail.com" class="text-gray-300 hover:text-sky-400 text-sm font-bold transition-colors">ecuaviptour&#64;gmail.com</a>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-sky-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Dirección Matriz</p>
+                    <p class="text-gray-300 text-sm font-bold">Ambato, Tungurahua, Ecuador</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Column 4: Coverage / Schedule -->
+            <div class="flex flex-col items-start">
+              <h4 class="text-white text-xs font-black uppercase tracking-widest mb-6 border-b border-sky-500/20 pb-2 w-full">Horarios y Cobertura</h4>
+              <ul class="space-y-4">
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Disponibilidad</p>
+                    <p class="text-gray-300 text-sm font-bold">Lunes a Domingo · 24 Horas</p>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-sky-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+                  <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Destinos Principales</p>
+                    <p class="text-gray-400 text-xs font-medium mt-1 leading-relaxed">
+                      Quito · Guayaquil · Cuenca · Loja · Santo Domingo · Riobamba · Ambato · Latacunga · Ibarra
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
           </div>
-          <p class="text-gray-500 text-sm font-semibold mb-2">EcuavipTour · Servicio de transporte interprovincial y fletes premium</p>
-          <p class="text-gray-400 text-xs font-bold mb-4">Quito · Guayaquil · Cuenca · Loja · Santo Domingo · Riobamba · Ambato</p>
-          <p class="text-gray-600 text-[11px] font-medium">
-            © {{ currentYear }} EcuavipTour. Todos los derechos reservados. Diseñado para ofrecer confort y seguridad en las vías ecuatorianas.
-          </p>
+
+          <!-- Bottom bar -->
+          <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-gray-500 text-xs font-semibold text-center md:text-left">
+              © {{ currentYear }} EcuavipTour. Todos los derechos reservados.
+            </p>
+            <p class="text-gray-600 text-[11px] font-medium text-center md:text-right">
+              Diseñado para ofrecer el máximo confort, puntualidad y seguridad en las vías ecuatorianas.
+            </p>
+          </div>
         </div>
       </footer>
+
+      <!-- INTEGRACIÓN CHAT SIDEBAR (SOPORTE) -->
+      <app-chat-sidebar 
+        [isOpen]="isChatOpen" 
+        tipoReceptor="admin" 
+        tituloCabecera="Soporte EcuavipTour" 
+        (closed)="isChatOpen = false">
+      </app-chat-sidebar>
 
     </div>
   `
@@ -292,6 +399,8 @@ interface RutaPopular {
 export class LandingComponent implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
   activeRouteIndex = 0;
+  isLoggedIn = false;
+  isChatOpen = false;
   private timerId: any;
 
   rutas: RutaPopular[] = [
@@ -329,7 +438,17 @@ export class LandingComponent implements OnInit, OnDestroy {
     }
   ];
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {
+    this.isLoggedIn = this.authService.isLoggedIn();
+  }
+
+  handleChatAction() {
+    if (this.isLoggedIn) {
+      this.isChatOpen = true;
+    } else {
+      this.authService.openAuthModal();
+    }
+  }
 
   ngOnInit() {
     this.startCarouselTimer();

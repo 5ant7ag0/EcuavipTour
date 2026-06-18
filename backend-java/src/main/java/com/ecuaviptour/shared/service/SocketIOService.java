@@ -27,6 +27,8 @@ public interface SocketIOService {
 
     void broadcastNuevoComprobante(Long viajeId, Long clienteId);
 
+    void broadcastNuevoVehiculo(Long vehiculoId, String choferNombre);
+
     void broadcastViajeActualizado(Long viajeId, Long clienteId, String estadoLogistico);
     
     void broadcastViajeFinalizado(Long viajeId, Long clienteId);

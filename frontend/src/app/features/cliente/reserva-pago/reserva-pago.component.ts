@@ -165,11 +165,18 @@ export class ReservaPagoComponent implements OnInit, OnDestroy {
           this.destino = v.destino || this.destino;
           this.tarifa = v.monto || this.tarifa;
           this.hora = v.fecha || this.hora;
+          if (v.referencia) {
+            this.reservaParams.referencia = v.referencia;
+          }
+          if (v.tipo_servicio) {
+            this.reservaParams.tipo = v.tipo_servicio;
+          }
           if (v.asientos) {
             this.asiento = Array.isArray(v.asientos) ? v.asientos.join(', ') : v.asientos;
           }
           if (v.estado_pago === 'comprobante_subido') {
-            this.router.navigate(['/cliente/en-curso']);
+            const isEncomienda = (v.tipo_servicio || '').toLowerCase() === 'encomienda';
+            this.router.navigate([isEncomienda ? '/cliente/paquetes' : '/cliente/en-curso']);
           } else if (v.estado_pago === 'rechazado') {
             this.error = 'Tu comprobante de pago fue rechazado. Por favor, sube un nuevo comprobante.';
           }
@@ -249,7 +256,8 @@ export class ReservaPagoComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.success = true;
           setTimeout(() => {
-            this.router.navigate(['/cliente/en-curso']);
+            const isEncomienda = (this.reservaParams.tipo || '').toLowerCase() === 'encomienda';
+            this.router.navigate([isEncomienda ? '/cliente/paquetes' : '/cliente/en-curso']);
           }, 2500);
         },
         error: (err) => {
@@ -267,7 +275,8 @@ export class ReservaPagoComponent implements OnInit, OnDestroy {
               this.loading = false;
               this.success = true;
               setTimeout(() => {
-                this.router.navigate(['/cliente/en-curso']);
+                const isEncomienda = (this.reservaParams.tipo || '').toLowerCase() === 'encomienda';
+                this.router.navigate([isEncomienda ? '/cliente/paquetes' : '/cliente/en-curso']);
               }, 2500);
             },
             error: (err) => {

@@ -77,11 +77,11 @@
 
       <div class="space-y-5 flex-1 bg-gray-50/50 p-5 rounded-[1.5rem] border border-gray-100">
         <div>
-          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pasajero Principal</p>
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{{ pago.tipo_servicio === 'encomienda' ? 'Remitente / Cliente' : 'Pasajero Principal' }}</p>
           <p class="text-base font-extrabold text-gray-900">{{ pago.cliente_nombre }}</p>
         </div>
         <div>
-          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Itinerario del Viaje</p>
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{{ pago.tipo_servicio === 'encomienda' ? 'Ruta de Entrega' : 'Itinerario del Viaje' }}</p>
           <div class="flex items-start gap-2">
             <div class="mt-1 w-2 h-2 rounded-full bg-ecuavip-blue shrink-0"></div>
             <p class="text-xs font-bold text-gray-700 truncate">{{ pago.origen }}</p>
@@ -124,7 +124,7 @@
         <div class="p-10 flex flex-col justify-center">
           <div class="mb-8 text-center md:text-left">
             <h2 class="text-3xl font-black text-gray-900 tracking-tighter">Validación</h2>
-            <p class="text-sm text-gray-400 mt-1 font-bold tracking-widest uppercase">Viaje #{{selectedPago.viaje_id}}</p>
+            <p class="text-sm text-gray-400 mt-1 font-bold tracking-widest uppercase">{{ selectedPago.tipo_servicio === 'encomienda' ? 'Encomienda' : 'Viaje' }} #{{selectedPago.viaje_id}}</p>
           </div>
           <div class="space-y-6 flex-1">
              <div class="bg-ecuavip-blue/5 p-6 rounded-[2rem] border border-ecuavip-blue/10">
@@ -132,7 +132,7 @@
                 <p class="text-4xl font-black text-ecuavip-dark mt-1">${{ selectedPago.monto }}</p>
              </div>
              <div class="px-2">
-                <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Pasajero</p>
+                <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">{{ selectedPago.tipo_servicio === 'encomienda' ? 'Remitente / Cliente' : 'Pasajero' }}</p>
                 <p class="text-lg font-extrabold text-gray-800">{{ selectedPago.cliente_nombre }}</p>
              </div>
           </div>

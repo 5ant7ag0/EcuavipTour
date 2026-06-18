@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, tap, map } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { ChatService } from './chat.service';
 import { SoapService } from './soap.service';
@@ -15,10 +16,26 @@ export class AdminService {
   private unreadCountSource = new BehaviorSubject<number>(0);
   unreadCount$ = this.unreadCountSource.asObservable();
 
+  private pendingVehiclesCountSource = new BehaviorSubject<number>(0);
+  pendingVehiclesCount$ = this.pendingVehiclesCountSource.asObservable();
+
+  get pendingCountValue(): number {
+    return this.pendingCountSource.value;
+  }
+
+  get unreadCountValue(): number {
+    return this.unreadCountSource.value;
+  }
+
+  get pendingVehiclesCountValue(): number {
+    return this.pendingVehiclesCountSource.value;
+  }
+
   constructor(
     private soapService: SoapService, 
     private authService: AuthService,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private http: HttpClient
   ) { }
 
   getPagos(estado: string = 'pendientes'): Observable<any[]> {
@@ -40,7 +57,8 @@ export class AdminService {
           fecha: p.fecha_subida,
           estado_pago: p.estado,
           origen: p.origen,
-          destino: p.destino
+          destino: p.destino,
+          tipo_servicio: p.tipo_servicio || p.tipoServicio || ''
         }));
       }),
       tap(pagos => {
@@ -94,6 +112,10 @@ export class AdminService {
     this.unreadCountSource.next(count);
   }
 
+  updatePendingVehiclesCount(count: number) {
+    this.pendingVehiclesCountSource.next(count);
+  }
+
   markAsRead(viajeId: number): Observable<any> {
     return this.chatService.markAsRead(viajeId);
   }
@@ -143,7 +165,9 @@ export class AdminService {
           rol: u.rol,
           activo: u.activo,
           fecha_registro: u.fecha_registro,
-          foto_perfil_url: u.foto_perfil_url
+          foto_perfil_url: u.foto_perfil_url,
+          viajes_completados: u.viajes_completados !== undefined ? u.viajes_completados : (u.viajesCompletados !== undefined ? u.viajesCompletados : 0),
+          promedio_calificacion: u.promedio_calificacion !== undefined ? u.promedio_calificacion : (u.promedioCalificacion !== undefined ? u.promedioCalificacion : 0)
         }));
       })
     );
@@ -172,6 +196,15 @@ export class AdminService {
         password: data.password
       },
       this.authService.getToken() || undefined
+    ).pipe(
+      tap((res: any) => {
+        const currentUser = this.authService.getUsuario();
+        if (currentUser && currentUser.id === usuarioId && res.usuario) {
+          res.usuario.fotoPerfilUrl = currentUser.fotoPerfilUrl || currentUser.foto_perfil_url;
+          res.usuario.foto_perfil_url = currentUser.fotoPerfilUrl || currentUser.foto_perfil_url;
+          this.authService.updateCurrentUserLocal(res.usuario);
+        }
+      })
     );
   }
 
@@ -191,7 +224,16 @@ export class AdminService {
           },
           this.authService.getToken() || undefined
         ).subscribe({
-          next: (res) => {
+          next: (res: any) => {
+            const currentUser = this.authService.getUsuario();
+            if (currentUser && currentUser.id === usuarioId) {
+              const newPhoto = res.fotoPerfilUrl || res.foto_perfil_url;
+              if (newPhoto) {
+                currentUser.fotoPerfilUrl = newPhoto;
+                currentUser.foto_perfil_url = newPhoto;
+                this.authService.updateCurrentUserLocal(currentUser);
+              }
+            }
             observer.next(res);
             observer.complete();
           },
@@ -218,6 +260,28 @@ export class AdminService {
         return JSON.parse(jsonStr || '{}');
       })
     );
+  }
+
+  descargarReporteIngresos(period: string, startDate?: string, endDate?: string): Observable<Blob> {
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    let url = `http://localhost:5001/api/admin/reportes/ingresos?periodo=${period}`;
+    if (startDate) url += `&fecha_inicio=${startDate}`;
+    if (endDate) url += `&fecha_fin=${endDate}`;
+    return this.http.get(url, { headers, responseType: 'blob' });
+  }
+
+  descargarReporteGastos(period: string, startDate?: string, endDate?: string): Observable<Blob> {
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    let url = `http://localhost:5001/api/admin/reportes/gastos?periodo=${period}`;
+    if (startDate) url += `&fecha_inicio=${startDate}`;
+    if (endDate) url += `&fecha_fin=${endDate}`;
+    return this.http.get(url, { headers, responseType: 'blob' });
   }
 
   getVehiculos(estado?: string, search?: string, marca?: string, modelo?: string, anio?: string, tipo?: string, asientos?: string): Observable<any[]> {
@@ -257,6 +321,11 @@ export class AdminService {
             correo: v.chofer_correo
           }
         }));
+      }),
+      tap(vehiculos => {
+        if (estado === 'pendiente') {
+          this.pendingVehiclesCountSource.next(vehiculos.length);
+        }
       })
     );
   }

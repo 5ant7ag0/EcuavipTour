@@ -21,15 +21,15 @@ public class SoapJaasCallbackHandler implements CallbackHandler {
             throws IOException, UnsupportedCallbackException {
 
         for (Callback callback : callbacks) {
-
+            // Evalúa el callback de contraseña usando WSS4J
             if (callback instanceof WSPasswordCallback pc) {
 
                 String username = pc.getIdentifier();
 
-                // Credenciales B2B simuladas para integraciones corporativas
-                if ("erp_supermaxi".equals(username)) {
+                // Credenciales B2B para integraciones internas de Ecuavip
+                if ("ecuavip_facturacion".equals(username)) {
                     pc.setPassword("B2B_Secreto_2026");
-                } else if ("sistema_bodega".equals(username)) {
+                } else if ("ecuavip_bodega".equals(username)) {
                     pc.setPassword("Bodega_Stock_001");
                 } else {
                     throw new SecurityException(

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../core/services/chat.service';
@@ -15,11 +15,18 @@ import { Subscription } from 'rxjs';
 export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @Input() otroId!: number;
   @Input() viajeId?: number;
+  @Input() showHeader: boolean = false;
+  @Input() showBackButton: boolean = false;
+  @Input() otroNombre?: string;
+  @Input() otroFotoUrl?: string;
+  @Input() tipoReceptor: 'admin' | 'chofer' = 'admin';
+  @Output() back = new EventEmitter<void>();
 
   mensajes: any[] = [];
   nuevoMensaje = '';
   usuario: any;
   loading = true;
+  respuestasRapidas: string[] = [];
 
   @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
   private socketSub: Subscription | null = null;
@@ -45,6 +52,7 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
     if (this.usuario && this.usuario.id) {
       this.usuario.id = Number(this.usuario.id);
     }
+    this.configurarRespuestasRapidas();
     this.lastMessagesLength = 0; // Reset length on init
     this.cargarHistorial();
     this.reSubscribeSocket();
@@ -142,9 +150,31 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
     }
   }
 
+  configurarRespuestasRapidas() {
+    const rol = this.usuario?.rol?.toLowerCase();
+    if (this.tipoReceptor === 'chofer') {
+      if (rol === 'chofer') {
+        this.respuestasRapidas = ['¡Hola!', 'Llego enseguida', 'Estoy en tráfico', 'Ya llegué', '¿Dónde se encuentra?'];
+      } else {
+        this.respuestasRapidas = ['¡Hola!', 'Salgo enseguida', 'Salgo en 5 mn', 'Ya bajo', 'Estoy afuera'];
+      }
+    } else {
+      if (rol === 'admin') {
+        this.respuestasRapidas = ['Hola, ¿en qué puedo ayudarte?', 'Tu pago ha sido validado', 'Estamos revisando tu caso'];
+      } else {
+        this.respuestasRapidas = ['Hola, necesito ayuda', 'Problema con el pago', 'Cancelar viaje'];
+      }
+    }
+  }
+
+  enviarRespuestaRapida(respuesta: string) {
+    this.nuevoMensaje = respuesta;
+    this.enviar();
+  }
+
   cargarHistorial() {
     this.loading = true;
-    this.chatService.getHistorial(this.otroId, 'admin', this.viajeId).subscribe({
+    this.chatService.getHistorial(this.otroId, this.tipoReceptor, this.viajeId).subscribe({
       next: (res) => {
         this.lastMessagesLength = 0; // Reset length so it scrolls down
         this.mensajes = res;
@@ -183,7 +213,7 @@ export class ChatPanelComponent implements OnInit, OnChanges, OnDestroy, AfterVi
       viaje_id: this.viajeId || null,
       remitente_id: this.usuario.id,
       destinatario_id: this.otroId,
-      tipo_receptor: 'admin',
+      tipo_receptor: this.tipoReceptor,
       contenido: this.nuevoMensaje.trim()
     };
 

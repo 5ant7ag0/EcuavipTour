@@ -44,6 +44,10 @@ export class AppComponent implements OnInit, OnDestroy {
       const isMyMessage = Number(data.remitente_id) === Number(usuario.id);
 
       // Trigger global notification ONLY if it's not sent by current user AND chat window is closed
+      if (usuario.rol === 'admin') {
+        return;
+      }
+
       if (!isMyMessage && !this.socketService.isChatActive) {
         this.socketService.unreadMessages++; // PERSIST IN SINGLETON SERVICE!
         

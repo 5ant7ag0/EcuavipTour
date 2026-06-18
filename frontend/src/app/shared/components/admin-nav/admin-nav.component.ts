@@ -2,13 +2,13 @@ import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { AdminService } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-nav',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-  <!-- ===== SIDEBAR DESKTOP ===== -->
   <!-- ===== SIDEBAR DESKTOP ===== -->
   <aside 
     class="hidden md:flex bg-[#f3f4f6] text-slate-800 flex-col transition-all duration-300 ease-in-out z-20 shadow-xl relative shrink-0 my-4 ml-4 h-[calc(100vh-2rem)] rounded-[2.5rem] overflow-hidden border border-gray-200/80 w-64">
@@ -36,17 +36,18 @@ import { AuthService } from '../../../core/services/auth.service';
          class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-600 hover:text-slate-900 hover:bg-gray-200 transition-all group relative">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
         <span class="font-bold text-sm whitespace-nowrap">Pagos</span>
+        <span *ngIf="(adminService.pendingCount$ | async) as count" [class.hidden]="count === 0" class="ml-auto bg-amber-100 text-amber-700 text-[11px] font-extrabold px-2 py-0.5 rounded-full transition-all duration-300">
+          {{ count }}
+        </span>
       </a>
 
       <a routerLink="/admin/mensajeria" routerLinkActive="bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
          class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-600 hover:text-slate-900 hover:bg-gray-200 transition-all group relative">
-        <div class="relative shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span *ngIf="notificacionesNuevas > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#f3f4f6]">
-            {{ notificacionesNuevas }}
-          </span>
-        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span class="font-bold text-sm whitespace-nowrap">Mensajería</span>
+        <span *ngIf="(adminService.unreadCount$ | async) as count" [class.hidden]="count === 0" class="ml-auto bg-red-100 text-red-700 text-[11px] font-extrabold px-2 py-0.5 rounded-full transition-all duration-300">
+          {{ count }}
+        </span>
       </a>
 
       <!-- Usuarios -->
@@ -61,6 +62,9 @@ import { AuthService } from '../../../core/services/auth.service';
          class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-600 hover:text-slate-900 hover:bg-gray-200 transition-all group relative">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
         <span class="font-bold text-sm whitespace-nowrap">Vehículos</span>
+        <span *ngIf="(adminService.pendingVehiclesCount$ | async) as count" [class.hidden]="count === 0" class="ml-auto bg-rose-100 text-rose-700 text-[11px] font-extrabold px-2 py-0.5 rounded-full transition-all duration-300 animate-pulse">
+          {{ count }}
+        </span>
       </a>
 
       <!-- Gastos Financieros -->
@@ -96,22 +100,24 @@ import { AuthService } from '../../../core/services/auth.service';
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
       <span class="text-[9px] font-bold uppercase tracking-tighter">Reservas</span>
     </a>
-    <a routerLink="/admin/pagos" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
+    <a routerLink="/admin/pagos" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all relative text-slate-500">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+      <span *ngIf="(adminService.pendingCount$ | async) as count" [class.hidden]="count === 0" class="absolute top-2 right-2 bg-amber-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ count }}</span>
       <span class="text-[9px] font-bold uppercase tracking-tighter">Pagos</span>
     </a>
     <a routerLink="/admin/mensajeria" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all relative text-slate-500">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span *ngIf="notificacionesNuevas > 0" class="absolute top-2 right-2 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ notificacionesNuevas }}</span>
+      <span *ngIf="(adminService.unreadCount$ | async) as count" [class.hidden]="count === 0" class="absolute top-2 right-2 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ count }}</span>
       <span class="text-[9px] font-bold uppercase tracking-tighter">Chat</span>
     </a>
     <a routerLink="/admin/usuarios" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       <span class="text-[9px] font-bold uppercase tracking-tighter">Users</span>
     </a>
-    <a routerLink="/admin/vehiculos" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
+    <a routerLink="/admin/vehiculos" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all relative text-slate-500">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
-      <span class="text-[9px] font-bold uppercase tracking-tighter">Vehículos</span>
+      <span *ngIf="(adminService.pendingVehiclesCount$ | async) as count" [class.hidden]="count === 0" class="absolute top-2 right-2 bg-rose-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">{{ count }}</span>
+      <span class="text-[9px] font-bold uppercase tracking-tighter">Autos</span>
     </a>
     <a routerLink="/admin/gastos" routerLinkActive="text-blue-600 bg-blue-50" class="flex flex-col items-center gap-1 p-2 rounded-2xl transition-all text-slate-500">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
@@ -133,5 +139,5 @@ export class AdminNavComponent {
   @Input() notificacionesNuevas = 0;
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  constructor() {}
+  constructor(public adminService: AdminService) {}
 }

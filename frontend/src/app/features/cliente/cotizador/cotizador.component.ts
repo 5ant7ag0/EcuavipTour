@@ -35,6 +35,10 @@ export class CotizadorComponent implements OnInit, OnDestroy, AfterViewInit {
   // Tab navigation: Compartido ('shared'), Expres ('express'), Mis Viajes ('my-trips')
   activeTab: 'shared' | 'express' | 'my-trips' = 'shared';
 
+  get isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
+
   center: google.maps.LatLngLiteral = { lat: -1.2416, lng: -78.6195 }; // Ambato
   zoom = 13;
   options: google.maps.MapOptions = {
@@ -59,18 +63,11 @@ export class CotizadorComponent implements OnInit, OnDestroy, AfterViewInit {
   tipoViaje: 'pasajero' | 'encomienda' | 'express' = 'express';
   numPasajeros = 1;
   maxPasajeros = 15;
-  horaSalida = '04:00 AM';
+  horaSalida = '';
   
   mostrarMapaAsientos = false;
   asientosSeleccionados: number[] = [];
   asientosOcupados: number[] = [];
-  
-  horariosDisponibles: string[] = [
-    '04:00 AM', '05:00 AM', '06:00 AM', '07:00 AM', '08:00 AM',
-    '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM',
-    '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
-    '07:00 PM', '08:00 PM'
-  ];
 
   cotizacionActual?: CotizacionResponse;
   private cotizacionSub?: Subscription;
@@ -92,6 +89,7 @@ export class CotizadorComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit() {
+    this.setDefaultHoraSalida();
     this.route.queryParams.subscribe(params => {
       const tab = params['tab'];
       if (tab === 'shared' || tab === 'express' || tab === 'my-trips') {
@@ -104,13 +102,21 @@ export class CotizadorComponent implements OnInit, OnDestroy, AfterViewInit {
     this.checkActiveTrip();
   }
 
+  setDefaultHoraSalida() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    this.horaSalida = `${hours}:${minutes}`;
+  }
+
   checkActiveTrip() {
     if (this.authService.isLoggedIn()) {
       this.clienteService.getMisViajes().subscribe({
         next: (viajes) => {
           if (viajes && viajes.length > 0) {
             const ultimoViaje = viajes[0];
-            if (ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_logistico !== 'cancelado') {
+            const isEncomienda = (ultimoViaje.tipo_servicio || '').toLowerCase() === 'encomienda';
+            if (!isEncomienda && ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_logistico !== 'cancelado') {
               if (ultimoViaje.estado_pago === 'pendiente') {
                 this.router.navigate(['/cliente/reserva'], {
                   queryParams: {

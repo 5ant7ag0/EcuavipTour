@@ -1,11 +1,16 @@
 <div class="min-h-screen bg-slate-50 p-4 md:p-8 lg:p-12 overflow-y-auto relative">
   <!-- Floating "Mis viajes" button -->
-  <a [routerLink]="['/cliente/cotizar']" [queryParams]="{tab: 'my-trips'}" class="fixed top-6 right-6 md:top-24 md:right-8 z-[90] flex items-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md border border-gray-100 rounded-2xl shadow-lg shadow-gray-200/50 hover:bg-white hover:scale-105 active:scale-95 transition-all text-xs font-black text-gray-800 uppercase tracking-wider no-underline">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600">
+  <a [routerLink]="viajeActual?.tipo_servicio === 'encomienda' ? ['/cliente/paquetes'] : ['/cliente/cotizar']" [queryParams]="viajeActual?.tipo_servicio === 'encomienda' ? {} : {tab: 'my-trips'}" class="fixed top-6 right-6 md:top-24 md:right-8 z-[90] flex items-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md border border-gray-100 rounded-2xl shadow-lg shadow-gray-200/50 hover:bg-white hover:scale-105 active:scale-95 transition-all text-xs font-black text-gray-800 uppercase tracking-wider no-underline">
+    <svg *ngIf="viajeActual?.tipo_servicio === 'encomienda'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600">
+      <polyline points="21 8 21 21 3 21 3 8"/>
+      <rect x="1" y="3" width="22" height="5"/>
+      <line x1="10" y1="12" x2="14" y2="12"/>
+    </svg>
+    <svg *ngIf="viajeActual?.tipo_servicio !== 'encomienda'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600">
       <path d="M12 8v4l3 3"/>
       <circle cx="12" cy="12" r="10"/>
     </svg>
-    Mis viajes
+    {{ viajeActual?.tipo_servicio === 'encomienda' ? 'Mis paquetes' : 'Mis viajes' }}
   </a>
 
   <!-- MODAL TICKET DE ABORDAJE -->
@@ -13,8 +18,12 @@
     <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-xl" (click)="toggleTicketModal()"></div>
     <div class="bg-white w-full max-w-sm rounded-3xl p-10 relative z-10 shadow-sm border border-white/20">
       <div class="text-center mb-10">
-        <span class="inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest mb-4">Boarding Pass</span>
-        <h3 class="text-3xl font-black text-gray-900">Tu Ticket VIP</h3>
+        <span class="inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest mb-4">
+          {{ viajeActual.tipo_servicio === 'encomienda' ? 'Pase de Entrega' : 'Boarding Pass' }}
+        </span>
+        <h3 class="text-3xl font-black text-gray-900">
+          {{ viajeActual.tipo_servicio === 'encomienda' ? 'Tu Guía de Envío' : 'Tu Ticket VIP' }}
+        </h3>
       </div>
       <div class="bg-gray-50 aspect-square rounded-3xl mb-10 flex items-center justify-center border-2 border-dashed border-gray-200 relative overflow-hidden group">
          <div class="p-6 bg-white rounded-3xl shadow-sm border border-gray-100 group-hover:scale-105 transition-transform duration-500">
@@ -23,7 +32,9 @@
          </div>
       </div>
       <div class="text-center bg-blue-600 rounded-3xl p-8 text-white shadow-sm">
-        <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-2">PIN de Abordaje</p>
+        <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-2">
+          {{ viajeActual.tipo_servicio === 'encomienda' ? 'PIN de Entrega' : 'PIN de Abordaje' }}
+        </p>
         <p class="text-5xl font-black tracking-[0.2em]">{{ getPIN() }}</p>
       </div>
       <button (click)="toggleTicketModal()" class="w-full mt-10 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-gray-900 transition-all">Cerrar</button>
@@ -60,10 +71,15 @@
               </div>
               
               <div>
-                <p class="text-[8px] font-black uppercase tracking-widest text-blue-600 mb-0.5">Tu Chofer VIP</p>
+                <p class="text-[8px] font-black uppercase tracking-widest text-blue-600 mb-0.5">
+                  {{ viajeActual.tipo_servicio === 'encomienda' ? 'Repartidor VIP' : 'Tu Chofer VIP' }}
+                </p>
                 <h4 class="text-sm font-black text-gray-900 leading-tight">{{ viajeActual.nombre_chofer }}</h4>
                 <p class="text-[9px] font-bold text-gray-500 mt-0.5">
-                  {{ viajeActual.estado_logistico === 'en_ruta' ? 'En viaje' : (viajeActual.estado_logistico === 'programado' ? 'Salida: ' + (viajeActual.fecha | date:'shortTime') : 'En camino') }} • 4.9 ★
+                  {{ viajeActual.tipo_servicio === 'encomienda' 
+                     ? (viajeActual.estado_logistico === 'aceptado' ? 'En camino a recogida' : (viajeActual.estado_logistico === 'esperando_cliente' ? 'Esperando entrega de paquete' : 'En tránsito al destino')) 
+                     : (viajeActual.estado_logistico === 'en_ruta' ? 'En viaje' : (viajeActual.estado_logistico === 'programado' ? 'Salida: ' + (viajeActual.fecha | date:'shortTime') : 'En camino')) 
+                  }} • 4.9 ★
                 </p>
               </div>
             </div>
@@ -87,6 +103,12 @@
           </div>
         </div>
 
+        <!-- Detalle de Paquete (Encomienda) -->
+        <div *ngIf="viajeActual.tipo_servicio === 'encomienda' && viajeActual.referencia" class="p-4 bg-indigo-50 border border-indigo-100 rounded-3xl flex flex-col gap-1 animate-slide-up">
+          <span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none">Detalles del Envío</span>
+          <p class="text-xs font-bold text-indigo-950 leading-snug">{{ viajeActual.referencia }}</p>
+        </div>
+
         <!-- Estado Buscando Chofer / Revisando Pago / Pago Rechazado -->
         <div class="space-y-6">
           
@@ -108,15 +130,20 @@
             <div class="absolute -right-6 -top-6 w-20 h-20 bg-blue-600/5 rounded-full blur-xl"></div>
             <div class="relative flex items-center justify-center">
               <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 z-10 animate-bounce">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+                <svg *ngIf="viajeActual.tipo_servicio === 'encomienda'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08"/><polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08"/><polygon points="12 12 21 6.92 12 1.84 3 6.92 12 12"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <svg *ngIf="viajeActual.tipo_servicio !== 'encomienda'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.6C2.1 10.3 2 10.6 2 11v5c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
               </div>
               <!-- Radar ring effects -->
               <div class="absolute w-24 h-24 bg-blue-500/10 rounded-full animate-ping"></div>
               <div class="absolute w-32 h-32 bg-blue-500/5 rounded-full animate-pulse"></div>
             </div>
             <div class="space-y-2">
-              <h4 class="text-xl font-black text-gray-900 tracking-tight leading-tight">Buscando Conductor</h4>
-              <p class="text-xs font-bold text-gray-500 max-w-xs mx-auto">Tu pago ha sido validado. Estamos notificando a las unidades disponibles en la zona para iniciar tu viaje de inmediato.</p>
+              <h4 class="text-xl font-black text-gray-900 tracking-tight leading-tight">
+                {{ viajeActual.tipo_servicio === 'encomienda' ? 'Buscando Repartidor' : 'Buscando Conductor' }}
+              </h4>
+              <p class="text-xs font-bold text-gray-500 max-w-xs mx-auto">
+                {{ viajeActual.tipo_servicio === 'encomienda' ? 'Tu pago ha sido aprobado. Estamos buscando un repartidor cercano para retirar y entregar tu paquete.' : 'Tu pago ha sido validado. Estamos notificando a las unidades disponibles en la zona para iniciar tu viaje de inmediato.' }}
+              </p>
             </div>
             <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse shadow-sm shadow-blue-500/10">
               <span class="w-1.5 h-1.5 bg-white rounded-full"></span>
@@ -141,7 +168,9 @@
             </div>
 
             <div class="flex gap-3">
-              <button (click)="cancelarViaje()" class="flex-1 py-3.5 bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all">Cancelar Viaje</button>
+              <button (click)="cancelarViaje()" class="flex-1 py-3.5 bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all">
+                {{ viajeActual.tipo_servicio === 'encomienda' ? 'Cancelar Envío' : 'Cancelar Viaje' }}
+              </button>
               <button [routerLink]="['/cliente/reserva']" 
                       [queryParams]="{
                         viajeId: viajeActual.viaje_id || viajeActual.id, 
@@ -165,8 +194,11 @@
             <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
               <div class="h-full bg-blue-600 transition-all duration-1000 shadow-[0_0_15px_rgba(37,99,235,0.3)]" [style.width]="getProgreso() + '%'"></div>
             </div>
-            <div class="flex justify-end items-center">
-              <p class="text-[11px] font-black text-gray-900 uppercase tracking-widest">Llegada: <span class="text-blue-600">12 min</span></p>
+            <div class="flex justify-end items-center w-full">
+              <p *ngIf="!viajeActual.isCompartido" class="text-[11px] font-black text-gray-900 uppercase tracking-widest">Llegada: <span class="text-blue-600">12 min</span></p>
+              <p *ngIf="viajeActual.isCompartido" class="text-[11px] font-bold text-slate-800 tracking-wide text-right w-full">
+                {{ getSharedTripStatusText() }}
+              </p>
             </div>
           </div>
         </div>
@@ -182,7 +214,7 @@
               </span>
               <div class="flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-                <span>VER QR</span>
+                <span>{{ viajeActual.tipo_servicio === 'encomienda' ? 'VER GUÍA' : 'VER QR' }}</span>
               </div>
             </button>
             
@@ -203,7 +235,7 @@
                   (click)="cancelarViaje()"
                   class="w-full h-14 bg-red-50 text-red-500 hover:bg-red-100 border border-red-100 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            Cancelar Viaje
+            {{ viajeActual.tipo_servicio === 'encomienda' ? 'Cancelar Envío' : 'Cancelar Viaje' }}
           </button>
         </div>
 
@@ -300,9 +332,9 @@
   <app-chat-sidebar 
     [isOpen]="isChatOpen" 
     tipoReceptor="chofer" 
-    [viajeId]="viajeActual?.viaje_id || viajeActual?.id" 
+    [viajeId]="viajeActual?.isCompartido ? viajeActual?.viaje_programado_id : (viajeActual?.viaje_id || viajeActual?.id)" 
     [destinatarioId]="viajeActual?.chofer_id" 
-    [tituloCabecera]="'Chofer: ' + (viajeActual?.nombre_chofer || 'Conductor VIP')" 
+    [tituloCabecera]="(viajeActual?.tipo_servicio === 'encomienda' ? 'Repartidor: ' : 'Chofer: ') + (viajeActual?.nombre_chofer || 'Conductor VIP')" 
     [fotoPerfilUrl]="viajeActual?.foto_chofer_url || viajeActual?.chofer?.foto_perfil_url"
     (closed)="isChatOpen = false">
   </app-chat-sidebar>
@@ -314,8 +346,12 @@
       <div class="w-24 h-24 bg-yellow-50 text-yellow-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       </div>
-      <h3 class="text-3xl font-black text-gray-900 mb-2">¡Llegaste!</h3>
-      <p class="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-12">Califica el servicio</p>
+      <h3 class="text-3xl font-black text-gray-900 mb-2">
+        {{ viajeActual?.tipo_servicio === 'encomienda' ? '¡Entregado!' : '¡Llegaste!' }}
+      </h3>
+      <p class="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-12">
+        {{ viajeActual?.tipo_servicio === 'encomienda' ? 'Califica al Repartidor' : 'Califica el servicio' }}
+      </p>
       <div class="flex justify-center gap-3 mb-12">
         <button *ngFor="let star of [1,2,3,4,5]" (click)="rating = star" class="transition-all hover:scale-125 active:scale-90 p-1">
           <svg [class]="rating >= star ? 'fill-yellow-400 stroke-yellow-400 drop-shadow-lg' : 'stroke-gray-200'" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke-width="2.5">
@@ -339,10 +375,16 @@
           <path d="M18 6 6 18M6 6l12 12"/>
         </svg>
       </div>
-      <h3 class="text-2xl font-black text-gray-900 mb-2">¿Cancelar Viaje?</h3>
-      <p class="text-gray-500 text-xs font-semibold mb-8 px-2 leading-relaxed">Esta acción cancelará tu reserva de inmediato y liberará al conductor asignado. No se puede deshacer.</p>
+      <h3 class="text-2xl font-black text-gray-900 mb-2">
+        {{ viajeActual?.tipo_servicio === 'encomienda' ? '¿Cancelar Envío?' : '¿Cancelar Viaje?' }}
+      </h3>
+      <p class="text-gray-500 text-xs font-semibold mb-8 px-2 leading-relaxed">
+        {{ viajeActual?.tipo_servicio === 'encomienda' ? 'Esta acción cancelará tu envío de inmediato y liberará al conductor/repartidor asignado. No se puede deshacer.' : 'Esta acción cancelará tu reserva de inmediato y liberará al conductor asignado. No se puede deshacer.' }}
+      </p>
       <div class="space-y-3">
-        <button (click)="confirmarCancelacion()" class="w-full h-14 bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all hover:bg-red-600">Sí, Cancelar Viaje</button>
+        <button (click)="confirmarCancelacion()" class="w-full h-14 bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all hover:bg-red-600">
+          {{ viajeActual?.tipo_servicio === 'encomienda' ? 'Sí, Cancelar Envío' : 'Sí, Cancelar Viaje' }}
+        </button>
         <button (click)="showCancelModal = false" class="w-full py-3 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-gray-600 transition-all">No, Mantener</button>
       </div>
     </div>

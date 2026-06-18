@@ -8,6 +8,7 @@ import { ClienteService } from '../../../core/services/cliente.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { ViajeService } from '../../../core/services/viaje.service';
 import { CountdownService } from '../../../core/services/countdown.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -61,7 +62,8 @@ export class MisViajesComponent implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private socketService: SocketService,
     private viajeService: ViajeService,
-    private countdownService: CountdownService
+    private countdownService: CountdownService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -123,6 +125,7 @@ export class MisViajesComponent implements OnInit, OnDestroy {
             punto_abordaje: r.punto_abordaje,
             pin_abordaje: r.pin_abordaje,
             comprobante_url: r.comprobante_url,
+            calificacion: r.calificacion,
             isCompartido: true
           };
           if (r.fecha_limite_pago) {
@@ -169,6 +172,9 @@ export class MisViajesComponent implements OnInit, OnDestroy {
               existing.id = r.id;
               existing.timer$ = r.timer$;
               existing.comprobante_url = r.comprobante_url;
+            }
+            if (r.calificacion) {
+              existing.calificacion = r.calificacion;
             }
             // Priorizar estado logístico también
             const logPriority = (log: string) => {
@@ -344,8 +350,7 @@ export class MisViajesComponent implements OnInit, OnDestroy {
     if (!this.ratingViaje || this.ratingStars === 0) return;
     this.ratingLoading = true;
     
-    const userStr = localStorage.getItem('usuario');
-    const user = userStr ? JSON.parse(userStr) : null;
+    const user = this.authService.getUsuario();
     if (!user) {
       this.showToast('Usuario no autenticado', 'error');
       this.ratingLoading = false;
@@ -353,7 +358,9 @@ export class MisViajesComponent implements OnInit, OnDestroy {
     }
 
     const datos = {
-      viaje_id: this.ratingViaje.viaje_id || this.ratingViaje.id,
+      viaje_id: this.ratingViaje.isCompartido ? undefined : (this.ratingViaje.viaje_id || this.ratingViaje.id),
+      reserva_id: this.ratingViaje.isCompartido ? (this.ratingViaje.id) : undefined,
+      isCompartido: this.ratingViaje.isCompartido,
       cliente_id: user.id,
       estrellas: this.ratingStars,
       comentario: this.ratingComment
@@ -385,5 +392,12 @@ export class MisViajesComponent implements OnInit, OnDestroy {
   asTimer(raw: any) {
     if (!raw) return { time: '00:00', isCritical: false };
     return raw;
+  }
+
+  canTrack(v: any): boolean {
+    if (!v) return false;
+    if (v.estado_logistico === 'finalizado' || v.estado_logistico === 'cancelado') return false;
+    const estado = v.estado_pago?.toLowerCase();
+    return estado === 'aprobado' || estado === 'confirmado' || estado === 'abordo';
   }
 }

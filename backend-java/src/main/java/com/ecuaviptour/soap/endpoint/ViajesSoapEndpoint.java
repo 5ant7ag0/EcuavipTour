@@ -35,6 +35,7 @@ import com.ecuaviptour.shared.service.SocketIOService;
 import com.ecuaviptour.modules.viajes.service.ViajeService;
 import com.ecuaviptour.soap.viajes.*;
 import com.ecuaviptour.exception.ResourceNotFoundException;
+import com.ecuaviptour.exception.BadRequestException;
 import com.ecuaviptour.exception.UnauthorizedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ws.server.endpoint.annotation.Endpoint;
@@ -298,7 +299,15 @@ public class ViajesSoapEndpoint {
         Usuario user = usuarioRepository.findById(Long.parseLong(userIdStr))
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
-        Calificacion c = calificacionService.calificar(request.getViajeId(), user.getId(), request.getEstrellas(), request.getComentario());
+        Calificacion c;
+        if (request.getReservaId() != null && request.getReservaId() > 0) {
+            c = calificacionService.calificarReserva(request.getReservaId(), user.getId(), request.getEstrellas(), request.getComentario());
+        } else {
+            if (request.getViajeId() == null) {
+                throw new BadRequestException("Debe proporcionar un viajeId o un reservaId para calificar.");
+            }
+            c = calificacionService.calificar(request.getViajeId(), user.getId(), request.getEstrellas(), request.getComentario());
+        }
 
         CalificarResponse response = new CalificarResponse();
         response.setMessage("Viaje calificado correctamente");
@@ -442,6 +451,7 @@ public class ViajesSoapEndpoint {
         soap.setEstadoPago(v.getEstadoPago());
         soap.setEstadoLogistico(v.getEstadoLogistico());
         soap.setTipoServicio(v.getTipoServicio());
+        soap.setReferencia(v.getReferenciaAdicional());
         soap.setFecha(v.getFechaCreacion() != null ? v.getFechaCreacion().format(formatter) : "Sin fecha");
         if (v.getFechaLimitePago() != null) {
             soap.setFechaLimitePago(v.getFechaLimitePago().toString());

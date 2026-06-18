@@ -7,6 +7,7 @@ import com.ecuaviptour.modules.users.domain.Usuario;
 import com.ecuaviptour.modules.users.service.DriverService;
 import com.ecuaviptour.modules.viajes.service.ViajeService;
 import com.ecuaviptour.modules.users.repository.UsuarioRepository;
+import com.ecuaviptour.shared.service.SocketIOService;
 import com.ecuaviptour.soap.chofer.*;
 import com.ecuaviptour.exception.UnauthorizedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,20 +45,24 @@ public class ChoferSoapEndpoint {
     private final DriverService driverService;
     private final ViajeService viajeService;
     private final UsuarioRepository usuarioRepository;
+    private final SocketIOService socketIOService;
 
     /**
-     * Constructor para la inyección de dependencias de servicios de chofer, viaje y repositorios de usuarios.
+     * Constructor para la inyección de dependencias de servicios de chofer, viaje, repositorios de usuarios y sockets.
      *
      * @param driverService     Servicio de gestión de vehículos y conductores.
      * @param viajeService      Servicio de itinerarios y reservas.
      * @param usuarioRepository Repositorio de cuentas de usuario.
+     * @param socketIOService   Servicio para notificaciones push en tiempo real.
      */
     public ChoferSoapEndpoint(DriverService driverService,
                               ViajeService viajeService,
-                              UsuarioRepository usuarioRepository) {
+                              UsuarioRepository usuarioRepository,
+                              SocketIOService socketIOService) {
         this.driverService = driverService;
         this.viajeService = viajeService;
         this.usuarioRepository = usuarioRepository;
+        this.socketIOService = socketIOService;
     }
 
     /**
@@ -174,6 +179,9 @@ public class ChoferSoapEndpoint {
         }
 
         Vehiculo saved = driverService.updateVehiculo(driver.getId(), payload);
+
+        // Notify admins about the vehicle updated/created and pending approval in real-time
+        socketIOService.broadcastNuevoVehiculo(saved.getId(), driver.getNombre());
 
         UpdateVehiculoResponse response = new UpdateVehiculoResponse();
         response.setMessage("Vehiculo actualizado correctamente");

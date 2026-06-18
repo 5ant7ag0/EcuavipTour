@@ -65,6 +65,7 @@
             <xs:element name="vehiculo" type="tns:vehiculoSoapType" minOccurs="0"/>
             <xs:element name="calificacion" type="tns:calificacionSoapType" minOccurs="0"/>
             <xs:element name="asientos" type="xs:int" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="referencia" type="xs:string" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -172,11 +173,11 @@
         </xs:complexType>
     </xs:element>
 
-    <!-- Calificar -->
     <xs:element name="calificarRequest">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="viaje_id" type="xs:long"/>
+                <xs:element name="viaje_id" type="xs:long" minOccurs="0"/>
+                <xs:element name="reserva_id" type="xs:long" minOccurs="0"/>
                 <xs:element name="estrellas" type="xs:int"/>
                 <xs:element name="comentario" type="xs:string" minOccurs="0"/>
             </xs:sequence>
@@ -264,6 +265,7 @@
             <xs:element name="chofer" type="tns:usuarioSoapType" minOccurs="0"/>
             <xs:element name="vehiculo" type="tns:vehiculoSoapType" minOccurs="0"/>
             <xs:element name="estado_logistico" type="xs:string" minOccurs="0"/>
+            <xs:element name="calificacion" type="tns:calificacionSoapType" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -286,6 +288,48 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="viaje_programado" type="tns:viajeProgramadoSoapType"/>
+                <xs:element name="mensaje" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Update Viaje Programado (Admin) -->
+    <xs:element name="updateViajeProgramadoRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:long"/>
+                <xs:element name="chofer_id" type="xs:long"/>
+                <xs:element name="vehiculo_id" type="xs:long"/>
+                <xs:element name="dir_origen" type="xs:string"/>
+                <xs:element name="dir_destino" type="xs:string"/>
+                <xs:element name="fecha_hora_salida" type="xs:string"/>
+                <xs:element name="precio_asiento" type="xs:decimal"/>
+                <xs:element name="capacidad_total" type="xs:int" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="updateViajeProgramadoResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="viaje_programado" type="tns:viajeProgramadoSoapType"/>
+                <xs:element name="mensaje" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Delete Viaje Programado (Admin) -->
+    <xs:element name="deleteViajeProgramadoRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="deleteViajeProgramadoResponse">
+        <xs:complexType>
+            <xs:sequence>
                 <xs:element name="mensaje" type="xs:string"/>
             </xs:sequence>
         </xs:complexType>
@@ -430,6 +474,43 @@
                 <xs:element name="exito" type="xs:boolean"/>
                 <xs:element name="mensaje" type="xs:string"/>
                 <xs:element name="estado" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Cancel/Refund Reservation (Admin) -->
+    <xs:element name="cancelarReservaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="reserva_id" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="cancelarReservaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="mensaje" type="xs:string"/>
+                <xs:element name="exito" type="xs:boolean"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Reschedule Reservation (Admin) -->
+    <xs:element name="reprogramarReservaRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="reserva_id" type="xs:long"/>
+                <xs:element name="nuevo_viaje_programado_id" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="reprogramarReservaResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="mensaje" type="xs:string"/>
+                <xs:element name="exito" type="xs:boolean"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>

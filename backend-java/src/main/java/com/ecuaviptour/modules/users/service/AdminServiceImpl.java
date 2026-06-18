@@ -11,6 +11,7 @@ import com.ecuaviptour.modules.users.repository.CalificacionRepository;
 import com.ecuaviptour.modules.users.repository.UsuarioRepository;
 import com.ecuaviptour.modules.vehiculos.repository.VehiculoRepository;
 import com.ecuaviptour.modules.viajes.repository.ViajeRepository;
+import com.ecuaviptour.modules.viajes.repository.ViajeProgramadoRepository;
 
 import com.ecuaviptour.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -34,23 +35,21 @@ public class AdminServiceImpl implements AdminService {
     private final VehiculoRepository vehiculoRepository;
     private final ViajeRepository viajeRepository;
     private final CalificacionRepository calificacionRepository;
+    private final ViajeProgramadoRepository viajeProgramadoRepository;
 
     /**
      * Constructor para la inyección de dependencias de los repositorios requeridos.
-     *
-     * @param usuarioRepository      Repositorio de gestión de usuarios.
-     * @param vehiculoRepository     Repositorio de gestión de vehículos.
-     * @param viajeRepository        Repositorio de gestión de viajes.
-     * @param calificacionRepository Repositorio de valoraciones y calificaciones.
      */
     public AdminServiceImpl(UsuarioRepository usuarioRepository,
                             VehiculoRepository vehiculoRepository,
                             ViajeRepository viajeRepository,
-                            CalificacionRepository calificacionRepository) {
+                            CalificacionRepository calificacionRepository,
+                            ViajeProgramadoRepository viajeProgramadoRepository) {
         this.usuarioRepository = usuarioRepository;
         this.vehiculoRepository = vehiculoRepository;
         this.viajeRepository = viajeRepository;
         this.calificacionRepository = calificacionRepository;
+        this.viajeProgramadoRepository = viajeProgramadoRepository;
     }
 
     /**
@@ -115,13 +114,34 @@ public class AdminServiceImpl implements AdminService {
 
                     if ("chofer".equalsIgnoreCase(u.getRol())) {
                         // Driver stats calculations
-                        long viajesCompletados = viajeRepository.findByChoferIdOrderByIdDesc(u.getId()).stream()
+                        long privateViajes = viajeRepository.findByChoferIdOrderByIdDesc(u.getId()).stream()
                                 .filter(v -> "finalizado".equalsIgnoreCase(v.getEstadoLogistico()))
                                 .count();
 
-                        double promRating = calificacionRepository.findAll().stream()
+                        long sharedViajes = viajeProgramadoRepository.findByChoferId(u.getId()).stream()
+                                .filter(vp -> "finalizado".equalsIgnoreCase(vp.getEstado()))
+                                .count();
+
+                        long viajesCompletados = privateViajes + sharedViajes;
+
+                        List<Integer> ratings = new ArrayList<>();
+                        
+                        // Private trip ratings
+                        calificacionRepository.findAll().stream()
                                 .filter(c -> c.getViaje() != null && c.getViaje().getChofer() != null && c.getViaje().getChofer().getId().equals(u.getId()))
-                                .mapToInt(c -> c.getEstrellas() != null ? c.getEstrellas() : 0)
+                                .map(c -> c.getEstrellas())
+                                .filter(Objects::nonNull)
+                                .forEach(ratings::add);
+                                
+                        // Shared trip (reservation) ratings
+                        calificacionRepository.findAll().stream()
+                                .filter(c -> c.getReserva() != null && c.getReserva().getViajeProgramado() != null && c.getReserva().getViajeProgramado().getChofer() != null && c.getReserva().getViajeProgramado().getChofer().getId().equals(u.getId()))
+                                .map(c -> c.getEstrellas())
+                                .filter(Objects::nonNull)
+                                .forEach(ratings::add);
+
+                        double promRating = ratings.stream()
+                                .mapToInt(Integer::intValue)
                                 .average()
                                 .orElse(0.0);
 

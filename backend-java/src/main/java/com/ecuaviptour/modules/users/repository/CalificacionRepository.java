@@ -33,5 +33,22 @@ public interface CalificacionRepository extends JpaRepository<Calificacion, Long
      * @return Un {@link Optional} que contiene la calificación si existe, o vacío en caso contrario.
      */
     Optional<Calificacion> findByViajeIdAndClienteId(Long viajeId, Long clienteId);
+
+    /**
+     * Obtiene una lista de calificaciones registradas para una reserva específica.
+     *
+     * @param reservaId Identificador único de la reserva.
+     * @return Lista de {@link Calificacion} asociadas a la reserva.
+     */
+    List<Calificacion> findByReservaId(Long reservaId);
+
+    /**
+     * Busca una calificación específica realizada por un cliente para una reserva determinada.
+     *
+     * @param reservaId Identificador único de la reserva.
+     * @param clienteId Identificador único del cliente (usuario).
+     * @return Un {@link Optional} que contiene la calificación si existe, o vacío en caso contrario.
+     */
+    Optional<Calificacion> findByReservaIdAndClienteId(Long reservaId, Long clienteId);
 }
 

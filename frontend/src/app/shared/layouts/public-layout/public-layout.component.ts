@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { ClientNavbarComponent } from '../../components/client-navbar/client-navbar.component';
 import { AdminNavComponent } from '../../components/admin-nav/admin-nav.component';
 import { ChoferNavbarComponent } from '../../components/chofer-navbar/chofer-navbar.component';
@@ -51,19 +51,37 @@ import { Subscription } from 'rxjs';
     </app-auth-modal>
   `
 })
-export class PublicLayoutComponent {
+export class PublicLayoutComponent implements OnInit, OnDestroy {
   showAuthModal = false;
   authModalIsLogin = true;
   authModalRol = 'cliente';
   isSidebarOpen = true;
   private authSub: Subscription;
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.authSub = this.authService.authModal$.subscribe((options) => {
       this.authModalIsLogin = options?.isLogin !== false;
       this.authModalRol = options?.rol || 'cliente';
       this.showAuthModal = true;
     });
+  }
+
+  ngOnInit() {
+    this.checkAndRedirect();
+  }
+
+  private checkAndRedirect() {
+    const usuario = this.authService.getUsuario();
+    if (usuario) {
+      if (usuario.rol === 'admin') {
+        this.router.navigate(['/admin/monitor']);
+      } else if (usuario.rol === 'chofer') {
+        this.router.navigate(['/chofer/dashboard']);
+      }
+    }
   }
 
   get isAdmin(): boolean {

@@ -41,13 +41,16 @@
     </div>
     <h3 class="text-xl font-black text-gray-900">Sin movimientos</h3>
     <p class="text-gray-500 mt-2 mb-8 max-w-xs mx-auto">No tienes viajes registrados en esta categoría. ¡Es hora de planear tu próximo destino!</p>
-    <button routerLink="/cliente/cotizar" class="bg-ecuavip-blue text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/20 hover:scale-105 transition-transform">Solicitar Viaje</button>
+    <button [routerLink]="['/cliente/cotizar']" [queryParams]="{ tab: 'shared' }" class="bg-ecuavip-blue text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/20 hover:scale-105 transition-transform">Solicitar Viaje</button>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6" *ngIf="!loading">
     <div *ngFor="let v of getViajesFiltrados()" 
          [class.opacity-0]="cancellingId === v.viaje_id"
          [class.scale-95]="cancellingId === v.viaje_id"
+         [routerLink]="canTrack(v) ? ['/cliente/en-curso'] : null"
+         [queryParams]="canTrack(v) ? (v.isCompartido ? {reservaId: v.viaje_id} : {id: v.viaje_id}) : null"
+         [class.cursor-pointer]="canTrack(v)"
          class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-500 group overflow-hidden relative transform">
       
       <!-- Loading Overlay while cancelling -->
@@ -114,10 +117,10 @@
           </p>
           
           <div class="grid grid-cols-2 gap-3">
-            <button (click)="cancelarViaje(v.viaje_id)" class="bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 py-4 rounded-2xl font-bold text-xs transition-colors">
+            <button (click)="cancelarViaje(v.viaje_id); $event.stopPropagation()" class="bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 py-4 rounded-2xl font-bold text-xs transition-colors">
               Cancelar
             </button>
-            <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/reserva']" [queryParams]="{viajeId: v.viaje_id}" class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/10">
+            <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/reserva']" [queryParams]="{viajeId: v.viaje_id}" (click)="$event.stopPropagation()" class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/10">
               Pagar Ahora
             </button>
             <button *ngIf="v.isCompartido" [routerLink]="['/cliente/reserva']" 
@@ -131,6 +134,7 @@
                       hora: v.fecha,
                       pin: v.pin_abordaje
                     }" 
+                    (click)="$event.stopPropagation()"
                     class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg shadow-ecuavip-blue/10">
               Pagar Ahora
             </button>
@@ -182,7 +186,7 @@
             </div>
           </div>
           
-          <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/en-curso']" [queryParams]="{id: v.viaje_id}" class="w-full bg-ecuavip-dark text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2">
+          <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/en-curso']" [queryParams]="{id: v.viaje_id}" (click)="$event.stopPropagation()" class="w-full bg-ecuavip-dark text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             Ver Rastreo en Vivo
           </button>
@@ -190,6 +194,7 @@
           <button *ngIf="v.isCompartido && (v.estado_pago === 'aprobado' || v.estado_pago === 'confirmado')" 
                   [routerLink]="['/cliente/en-curso']" 
                   [queryParams]="{reservaId: v.viaje_id}" 
+                  (click)="$event.stopPropagation()"
                   class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 active:scale-95">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             Check-in / Pase de Abordaje
@@ -198,6 +203,7 @@
           <button *ngIf="v.isCompartido && v.estado_pago === 'abordo'" 
                   [routerLink]="['/cliente/en-curso']" 
                   [queryParams]="{reservaId: v.viaje_id}" 
+                  (click)="$event.stopPropagation()"
                   class="w-full bg-ecuavip-dark text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 active:scale-95">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             Ver Rastreo en Vivo
@@ -231,7 +237,7 @@
           </div>
           
           <div class="grid grid-cols-2 gap-3">
-            <button (click)="cancelarViaje(v.viaje_id)" class="bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 py-4 rounded-2xl font-bold text-xs transition-colors">
+            <button (click)="cancelarViaje(v.viaje_id); $event.stopPropagation()" class="bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 py-4 rounded-2xl font-bold text-xs transition-colors">
               Cancelar
             </button>
             <button *ngIf="!v.isCompartido" [routerLink]="['/cliente/reserva']" 
@@ -243,6 +249,7 @@
                       tipo: v.tipo_servicio,
                       reintentar: true
                     }" 
+                    (click)="$event.stopPropagation()"
                     class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg">
               Reintentar
             </button>
@@ -258,6 +265,7 @@
                       pin: v.pin_abordaje,
                       reintentar: true
                     }" 
+                    (click)="$event.stopPropagation()"
                     class="bg-ecuavip-blue text-white py-4 rounded-2xl font-black shadow-lg">
               Reintentar
             </button>
@@ -266,18 +274,18 @@
 
         <!-- FINALIZADO -->
         <div *ngIf="v.estado_logistico === 'finalizado'" class="flex items-center gap-3">
-          <button (click)="verFactura(v)" class="flex-1 bg-gray-50 text-gray-600 hover:bg-gray-100 py-3 rounded-2xl font-black text-xs transition-colors">
+          <button (click)="verFactura(v); $event.stopPropagation()" class="flex-1 bg-gray-50 text-gray-600 hover:bg-gray-100 py-3 rounded-2xl font-black text-xs transition-colors">
             Ver Factura
           </button>
           
           <ng-container *ngIf="!v.calificacion">
-            <button (click)="calificar(v)" class="flex-1 bg-ecuavip-blue/10 text-ecuavip-blue hover:bg-ecuavip-blue/20 py-3 rounded-2xl font-black text-xs transition-all">
+            <button (click)="calificar(v); $event.stopPropagation()" class="flex-1 bg-ecuavip-blue/10 text-ecuavip-blue hover:bg-ecuavip-blue/20 py-3 rounded-2xl font-black text-xs transition-all">
               Calificar
             </button>
           </ng-container>
           
           <ng-container *ngIf="v.calificacion">
-            <div class="flex-1 bg-amber-50 text-amber-600 py-2.5 rounded-2xl font-black text-xs flex items-center justify-center gap-1 border border-amber-100">
+            <div (click)="$event.stopPropagation()" class="flex-1 bg-amber-50 text-amber-600 py-2.5 rounded-2xl font-black text-xs flex items-center justify-center gap-1 border border-amber-100">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-amber-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               <span>{{ v.calificacion.estrellas }}/5 Estrellas</span>
             </div>

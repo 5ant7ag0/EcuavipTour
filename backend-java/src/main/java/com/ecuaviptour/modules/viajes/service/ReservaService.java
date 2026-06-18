@@ -61,4 +61,14 @@ public interface ReservaService {
      * @return La reserva actualizada.
      */
     Reserva subirComprobante(Long reservaId, String comprobanteUrl);
+
+    /**
+     * Cancela o reembolsa una reserva desde el panel del administrador.
+     */
+    void cancelarReservaAdmin(Long id);
+
+    /**
+     * Reprograma una reserva a otro viaje programado.
+     */
+    void reprogramarReserva(Long id, Long nuevoViajeProgramadoId);
 }

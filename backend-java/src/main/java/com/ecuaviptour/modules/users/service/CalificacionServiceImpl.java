@@ -7,9 +7,11 @@ import com.ecuaviptour.modules.viajes.domain.Viaje;
 import com.ecuaviptour.modules.users.domain.Calificacion;
 import com.ecuaviptour.modules.users.domain.Usuario;
 import com.ecuaviptour.modules.viajes.domain.Viaje;
+import com.ecuaviptour.modules.viajes.domain.Reserva;
 import com.ecuaviptour.modules.users.repository.CalificacionRepository;
 import com.ecuaviptour.modules.users.repository.UsuarioRepository;
 import com.ecuaviptour.modules.viajes.repository.ViajeRepository;
+import com.ecuaviptour.modules.viajes.repository.ReservaRepository;
 
 import com.ecuaviptour.exception.ConflictException;
 import com.ecuaviptour.exception.ResourceNotFoundException;
@@ -33,20 +35,19 @@ public class CalificacionServiceImpl implements CalificacionService {
     private final CalificacionRepository calificacionRepository;
     private final ViajeRepository viajeRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ReservaRepository reservaRepository;
 
     /**
-     * Constructor para inyectar los repositorios requeridos de calificaciones, viajes y usuarios.
-     *
-     * @param calificacionRepository Repositorio de calificaciones.
-     * @param viajeRepository        Repositorio de viajes.
-     * @param usuarioRepository      Repositorio de usuarios.
+     * Constructor para inyectar los repositorios requeridos de calificaciones, viajes, usuarios y reservas.
      */
     public CalificacionServiceImpl(CalificacionRepository calificacionRepository,
                                    ViajeRepository viajeRepository,
-                                   UsuarioRepository usuarioRepository) {
+                                   UsuarioRepository usuarioRepository,
+                                   ReservaRepository reservaRepository) {
         this.calificacionRepository = calificacionRepository;
         this.viajeRepository = viajeRepository;
         this.usuarioRepository = usuarioRepository;
+        this.reservaRepository = reservaRepository;
     }
 
     /**
@@ -150,6 +151,41 @@ public class CalificacionServiceImpl implements CalificacionService {
     @Override
     public Optional<Calificacion> getCalificacionPorViajeYCliente(Long viajeId, Long clienteId) {
         return calificacionRepository.findByViajeIdAndClienteId(viajeId, clienteId);
+    }
+
+    /**
+     * Registra de forma transaccional una nueva valoración (calificación en estrellas y comentario)
+     * por parte de un cliente para una reserva de viaje compartido específica, comprobando que no exista una valoración previa.
+     */
+    @Override
+    @Transactional
+    public Calificacion calificarReserva(Long reservaId, Long clienteId, Integer estrellas, String comentario) {
+        Reserva reserva = reservaRepository.findById(reservaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con el ID: " + reservaId));
+
+        Usuario cliente = usuarioRepository.findById(clienteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con el ID: " + clienteId));
+
+        // Validar que no exista calificación previa para prevenir valoraciones duplicadas
+        Optional<Calificacion> existing = calificacionRepository.findByReservaIdAndClienteId(reservaId, clienteId);
+        if (existing.isPresent()) {
+            throw new ConflictException("Esta reserva ya ha sido calificada por el cliente.");
+        }
+
+        Calificacion c = Calificacion.builder()
+                .reserva(reserva)
+                .cliente(cliente)
+                .estrellas(estrellas)
+                .comentario(comentario)
+                .fechaCalificacion(LocalDateTime.now())
+                .build();
+
+        return calificacionRepository.save(c);
+    }
+
+    @Override
+    public Optional<Calificacion> getCalificacionPorReservaYCliente(Long reservaId, Long clienteId) {
+        return calificacionRepository.findByReservaIdAndClienteId(reservaId, clienteId);
     }
 }
 

@@ -132,15 +132,24 @@ public class ReservaServiceImpl implements ReservaService {
             throw new BadRequestException("La reserva no puede ser abordada porque su pago no está confirmado o la reserva fue cancelada. Estado actual: " + reserva.getEstadoPago());
         }
 
-        boolean valid = pin.trim().equals(reserva.getPinAbordaje());
-        if (valid) {
-            reserva.setEstadoPago("ABORDO");
-            reservaRepository.save(reserva);
+        Long viajeId = reserva.getViajeProgramado().getId();
+        Long usuarioId = reserva.getUsuario().getId();
+        List<Reserva> allReservas = reservaRepository.findByViajeProgramadoId(viajeId);
 
-            // Buscar y actualizar reservas hermanas del mismo usuario para la misma frecuencia
-            Long viajeId = reserva.getViajeProgramado().getId();
-            Long usuarioId = reserva.getUsuario().getId();
-            List<Reserva> allReservas = reservaRepository.findByViajeProgramadoId(viajeId);
+        // Validar si el PIN coincide con la reserva principal o cualquiera de sus reservas hermanas
+        boolean valid = false;
+        for (Reserva r : allReservas) {
+            Long rUsuarioId = (r.getUsuario() != null) ? r.getUsuario().getId() : null;
+            if (rUsuarioId != null && rUsuarioId.equals(usuarioId)) {
+                if (r.getPinAbordaje() != null && pin.trim().equalsIgnoreCase(r.getPinAbordaje().trim())) {
+                    valid = true;
+                    break;
+                }
+            }
+        }
+
+        if (valid) {
+            // Marcar todas las reservas confirmadas de este usuario como ABORDO
             for (Reserva r : allReservas) {
                 Long rUsuarioId = (r.getUsuario() != null) ? r.getUsuario().getId() : null;
                 if (rUsuarioId != null && rUsuarioId.equals(usuarioId) && "CONFIRMADO".equalsIgnoreCase(r.getEstadoPago())) {
@@ -148,6 +157,8 @@ public class ReservaServiceImpl implements ReservaService {
                     reservaRepository.saveAndFlush(r);
                 }
             }
+            reserva.setEstadoPago("ABORDO");
+            reservaRepository.saveAndFlush(reserva);
         }
         return valid;
     }
@@ -202,5 +213,66 @@ public class ReservaServiceImpl implements ReservaService {
         reserva.setComprobanteUrl(comprobanteUrl);
         reserva.setEstadoPago("COMPROBANTE_SUBIDO");
         return reservaRepository.saveAndFlush(reserva);
+    }
+
+    @Override
+    @Transactional
+    public void cancelarReservaAdmin(Long id) {
+        if (id == null) {
+            throw new BadRequestException("El identificador de la reserva es obligatorio.");
+        }
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con el ID: " + id));
+        
+        reserva.setEstadoPago("CANCELADO");
+        reservaRepository.save(reserva);
+    }
+
+    @Override
+    @Transactional
+    public void reprogramarReserva(Long id, Long nuevoViajeProgramadoId) {
+        if (id == null) {
+            throw new BadRequestException("El identificador de la reserva es obligatorio.");
+        }
+        if (nuevoViajeProgramadoId == null) {
+            throw new BadRequestException("El identificador del nuevo viaje es obligatorio.");
+        }
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con el ID: " + id));
+        ViajeProgramado nuevoViaje = viajeProgramadoRepository.findById(nuevoViajeProgramadoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Frecuencia de viaje no encontrada con el ID: " + nuevoViajeProgramadoId));
+
+        Integer seatNum = reserva.getNumeroAsiento();
+        Optional<Reserva> existingSeat = reservaRepository.findByViajeProgramadoIdAndNumeroAsiento(nuevoViajeProgramadoId, seatNum);
+        
+        if (existingSeat.isPresent() && 
+            ("PENDIENTE".equalsIgnoreCase(existingSeat.get().getEstadoPago()) || 
+             "CONFIRMADO".equalsIgnoreCase(existingSeat.get().getEstadoPago()) ||
+             "ABORDO".equalsIgnoreCase(existingSeat.get().getEstadoPago()))) {
+            
+            List<Reserva> existingReservations = reservaRepository.findByViajeProgramadoId(nuevoViajeProgramadoId);
+            java.util.Set<Integer> occupiedSeats = new java.util.HashSet<>();
+            for (Reserva r : existingReservations) {
+                if (!"CANCELADO".equalsIgnoreCase(r.getEstadoPago())) {
+                    occupiedSeats.add(r.getNumeroAsiento());
+                }
+            }
+            
+            int foundSeat = -1;
+            for (int i = 1; i <= nuevoViaje.getCapacidadTotal(); i++) {
+                if (!occupiedSeats.contains(i)) {
+                    foundSeat = i;
+                    break;
+                }
+            }
+            if (foundSeat == -1) {
+                throw new ConflictException("La nueva frecuencia de viaje no tiene asientos disponibles.");
+            }
+            seatNum = foundSeat;
+        }
+
+        reserva.setViajeProgramado(nuevoViaje);
+        reserva.setNumeroAsiento(seatNum);
+        reservaRepository.save(reserva);
     }
 }

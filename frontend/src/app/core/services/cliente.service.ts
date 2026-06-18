@@ -59,14 +59,19 @@ export class ClienteService {
   }
 
   calificarViaje(datos: any): Observable<any> {
+    const body: any = {};
+    if (datos.isCompartido) {
+      body.reserva_id = datos.reserva_id;
+    } else {
+      body.viaje_id = datos.viaje_id;
+    }
+    body.estrellas = datos.estrellas;
+    body.comentario = datos.comentario;
+
     return this.soapService.post(
       this.viajesNamespace,
       'calificarRequest',
-      {
-        viaje_id: datos.viaje_id,
-        estrellas: datos.estrellas,
-        comentario: datos.comentario
-      },
+      body,
       this.authService.getToken() || undefined
     );
   }

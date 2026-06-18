@@ -267,6 +267,7 @@ public class SocketIOServiceImpl implements SocketIOService {
                         choferAsignadoPayload.put("nombre_chofer", chofer.getNombre());
                         choferAsignadoPayload.put("estado", "aceptado");
                         choferAsignadoPayload.put("foto_chofer_url", chofer.getFotoPerfilUrl());
+                        choferAsignadoPayload.put("tipo_servicio", v.getTipoServicio() != null ? v.getTipoServicio() : "");
 
                         if (vehOpt.isPresent()) {
                             Vehiculo veh = vehOpt.get();
@@ -324,7 +325,8 @@ public class SocketIOServiceImpl implements SocketIOService {
 
                 server.getRoomOperations("cliente_" + v.getCliente().getId()).sendEvent("chofer_en_punto", Map.of(
                         "viaje_id", viajeId,
-                        "mensaje", "El chofer ha llegado al punto de inicio"
+                        "mensaje", "El chofer ha llegado al punto de inicio",
+                        "tipo_servicio", v.getTipoServicio() != null ? v.getTipoServicio() : ""
                 ));
 
                 server.getRoomOperations("admins").sendEvent("viaje_actualizado_admin", Map.of(
@@ -344,7 +346,8 @@ public class SocketIOServiceImpl implements SocketIOService {
                 viajeRepository.save(v);
 
                 server.getRoomOperations("cliente_" + v.getCliente().getId()).sendEvent("viaje_finalizado", Map.of(
-                        "viaje_id", viajeId
+                        "viaje_id", viajeId,
+                        "tipo_servicio", v.getTipoServicio() != null ? v.getTipoServicio() : ""
                 ));
 
                 server.getRoomOperations("admins").sendEvent("viaje_actualizado_admin", Map.of(
@@ -465,6 +468,10 @@ public class SocketIOServiceImpl implements SocketIOService {
         Map<String, Object> payload = new HashMap<>();
         payload.put("viaje_id", viajeId);
         payload.put("mensaje", mensaje != null ? mensaje : "El viaje ha sido cancelado");
+        
+        Optional<Viaje> viajeOpt = viajeRepository.findById(viajeId);
+        String tipoServicio = viajeOpt.isPresent() && viajeOpt.get().getTipoServicio() != null ? viajeOpt.get().getTipoServicio() : "";
+        payload.put("tipo_servicio", tipoServicio);
 
         try {
             if (clienteId != null) {
@@ -551,6 +558,7 @@ public class SocketIOServiceImpl implements SocketIOService {
             choferAsignadoPayload.put("nombre_chofer", chofer.getNombre());
             choferAsignadoPayload.put("estado", "aceptado");
             choferAsignadoPayload.put("foto_chofer_url", chofer.getFotoPerfilUrl());
+            choferAsignadoPayload.put("tipo_servicio", v.getTipoServicio() != null ? v.getTipoServicio() : "");
 
             Vehiculo veh = v.getVehiculo();
             if (veh != null) {
@@ -595,12 +603,16 @@ public class SocketIOServiceImpl implements SocketIOService {
 
     @Override
     public void broadcastPagoActualizado(Long viajeId, Long clienteId, String estadoPago, String estadoLogistico, Long choferId) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("viaje_id", viajeId);
-        payload.put("estado_pago", estadoPago);
-        payload.put("estado_logistico", estadoLogistico);
-
-        try {
+         Map<String, Object> payload = new HashMap<>();
+         payload.put("viaje_id", viajeId);
+         payload.put("estado_pago", estadoPago);
+         payload.put("estado_logistico", estadoLogistico);
+ 
+         Optional<Viaje> viajeOpt = viajeRepository.findById(viajeId);
+         String tipoServicio = viajeOpt.isPresent() && viajeOpt.get().getTipoServicio() != null ? viajeOpt.get().getTipoServicio() : "";
+         payload.put("tipo_servicio", tipoServicio);
+ 
+         try {
             if (clienteId != null) {
                 server.getRoomOperations("cliente_" + clienteId).sendEvent("pago_actualizado", payload);
             }
@@ -646,6 +658,19 @@ public class SocketIOServiceImpl implements SocketIOService {
         }
     }
 
+    @Override
+    public void broadcastNuevoVehiculo(Long vehiculoId, String choferNombre) {
+        try {
+            server.getRoomOperations("admins").sendEvent("nuevo_vehiculo", Map.of(
+                "vehiculo_id", vehiculoId,
+                "chofer_nombre", choferNombre != null ? choferNombre : "Chofer"
+            ));
+            System.out.println("[Socket.IO] Emitido 'nuevo_vehiculo' para vehiculo " + vehiculoId);
+        } catch (Exception e) {
+            System.err.println("[Socket.IO ERROR] Fallo al emitir nuevo vehiculo: " + e.getMessage());
+        }
+    }
+
     /**
      * Difunde en tiempo real una actualización del estado logístico de un viaje a la sala del cliente y de los admins.
      *
@@ -658,6 +683,10 @@ public class SocketIOServiceImpl implements SocketIOService {
         Map<String, Object> payload = new HashMap<>();
         payload.put("viaje_id", viajeId);
         payload.put("estado", estadoLogistico);
+
+        Optional<Viaje> viajeOpt = viajeRepository.findById(viajeId);
+        String tipoServicio = viajeOpt.isPresent() && viajeOpt.get().getTipoServicio() != null ? viajeOpt.get().getTipoServicio() : "";
+        payload.put("tipo_servicio", tipoServicio);
 
         try {
             if (clienteId != null) {
@@ -677,8 +706,12 @@ public class SocketIOServiceImpl implements SocketIOService {
     public void broadcastViajeFinalizado(Long viajeId, Long clienteId) {
         try {
             if (clienteId != null) {
+                Optional<Viaje> viajeOpt = viajeRepository.findById(viajeId);
+                String tipoServicio = viajeOpt.isPresent() && viajeOpt.get().getTipoServicio() != null ? viajeOpt.get().getTipoServicio() : "";
+
                 server.getRoomOperations("cliente_" + clienteId).sendEvent("viaje_finalizado", Map.of(
-                        "viaje_id", viajeId
+                        "viaje_id", viajeId,
+                        "tipo_servicio", tipoServicio
                 ));
                 System.out.println("[Socket.IO] Emitido 'viaje_finalizado' para cliente " + clienteId + " y viaje " + viajeId);
             }

@@ -12,6 +12,7 @@ import com.ecuaviptour.soap.viajes.*;
 import com.ecuaviptour.exception.BadRequestException;
 import com.ecuaviptour.exception.UnauthorizedException;
 import com.ecuaviptour.modules.viajes.repository.ReservaRepository;
+import com.ecuaviptour.modules.users.repository.CalificacionRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ws.server.endpoint.annotation.Endpoint;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
@@ -48,17 +49,20 @@ public class ViajeProgramadoSoapEndpoint {
     private final UsuarioRepository usuarioRepository;
     private final SocketIOService socketIOService;
     private final ReservaRepository reservaRepository;
+    private final CalificacionRepository calificacionRepository;
 
     public ViajeProgramadoSoapEndpoint(ViajeProgramadoService viajeProgramadoService,
                                       ReservaService reservaService,
                                       UsuarioRepository usuarioRepository,
                                       SocketIOService socketIOService,
-                                      ReservaRepository reservaRepository) {
+                                      ReservaRepository reservaRepository,
+                                      CalificacionRepository calificacionRepository) {
         this.viajeProgramadoService = viajeProgramadoService;
         this.reservaService = reservaService;
         this.usuarioRepository = usuarioRepository;
         this.socketIOService = socketIOService;
         this.reservaRepository = reservaRepository;
+        this.calificacionRepository = calificacionRepository;
     }
 
     /**
@@ -68,7 +72,13 @@ public class ViajeProgramadoSoapEndpoint {
     @ResponsePayload
     public CreateViajeProgramadoResponse createViajeProgramado(@RequestPayload CreateViajeProgramadoRequest request) {
         String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario activeUser = usuarioRepository.findById(Long.parseLong(userIdStr))
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
+        Usuario activeUser = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
 
         if (!"admin".equalsIgnoreCase(activeUser.getRol())) {
@@ -103,6 +113,146 @@ public class ViajeProgramadoSoapEndpoint {
         CreateViajeProgramadoResponse response = new CreateViajeProgramadoResponse();
         response.setViajeProgramado(mapViajeProgramadoToSoap(saved));
         response.setMensaje("Frecuencia de viaje creada con éxito");
+        return response;
+    }
+
+    /**
+     * Actualiza una frecuencia de viaje programada (Admin).
+     */
+    @PayloadRoot(namespace = NAMESPACE_URI, localPart = "updateViajeProgramadoRequest")
+    @ResponsePayload
+    public UpdateViajeProgramadoResponse updateViajeProgramado(@RequestPayload UpdateViajeProgramadoRequest request) {
+        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
+        Usuario activeUser = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
+
+        if (!"admin".equalsIgnoreCase(activeUser.getRol())) {
+            throw new UnauthorizedException("Acceso denegado. Solo administradores pueden editar frecuencias.");
+        }
+
+        LocalDateTime fechaHoraSalida = null;
+        if (request.getFechaHoraSalida() != null && !request.getFechaHoraSalida().trim().isEmpty()) {
+            try {
+                String fechaStr = request.getFechaHoraSalida().trim().replace(" ", "T");
+                if (fechaStr.length() == 16) {
+                    fechaHoraSalida = LocalDateTime.parse(fechaStr);
+                } else if (fechaStr.length() > 16) {
+                    fechaHoraSalida = LocalDateTime.parse(fechaStr.substring(0, 16));
+                } else {
+                    fechaHoraSalida = LocalDateTime.parse(fechaStr);
+                }
+            } catch (Exception e) {
+                throw new BadRequestException("Formato de fecha de salida inválido. Se espera yyyy-MM-dd HH:mm");
+            }
+        }
+
+        ViajeProgramado vp = ViajeProgramado.builder()
+                .dirOrigen(request.getDirOrigen())
+                .dirDestino(request.getDirDestino())
+                .fechaHoraSalida(fechaHoraSalida)
+                .precioAsiento(request.getPrecioAsiento())
+                .capacidadTotal(request.getCapacidadTotal() != null ? request.getCapacidadTotal() : null)
+                .build();
+
+        ViajeProgramado updated = viajeProgramadoService.actualizarFrecuencia(
+                request.getId(),
+                vp,
+                request.getChoferId(),
+                request.getVehiculoId()
+        );
+
+        UpdateViajeProgramadoResponse response = new UpdateViajeProgramadoResponse();
+        response.setViajeProgramado(mapViajeProgramadoToSoap(updated));
+        response.setMensaje("Frecuencia de viaje actualizada con éxito");
+        return response;
+    }
+
+    /**
+     * Elimina una frecuencia de viaje programada (solo para administradores).
+     */
+    @PayloadRoot(namespace = NAMESPACE_URI, localPart = "deleteViajeProgramadoRequest")
+    @ResponsePayload
+    public DeleteViajeProgramadoResponse deleteViajeProgramado(@RequestPayload DeleteViajeProgramadoRequest request) {
+        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
+        Usuario activeUser = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
+
+        if (!"admin".equalsIgnoreCase(activeUser.getRol())) {
+            throw new UnauthorizedException("Acceso denegado. Solo administradores pueden eliminar frecuencias.");
+        }
+
+        viajeProgramadoService.eliminarFrecuencia(request.getId());
+
+        DeleteViajeProgramadoResponse response = new DeleteViajeProgramadoResponse();
+        response.setMensaje("Frecuencia de viaje eliminada con éxito");
+        return response;
+    }
+
+    /**
+     * Cancela y reembolsa una reserva individual (Admin).
+     */
+    @PayloadRoot(namespace = NAMESPACE_URI, localPart = "cancelarReservaRequest")
+    @ResponsePayload
+    public CancelarReservaResponse cancelarReserva(@RequestPayload CancelarReservaRequest request) {
+        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
+        Usuario activeUser = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
+
+        if (!"admin".equalsIgnoreCase(activeUser.getRol())) {
+            throw new UnauthorizedException("Acceso denegado. Solo administradores pueden gestionar reservas.");
+        }
+
+        reservaService.cancelarReservaAdmin(request.getReservaId());
+
+        CancelarReservaResponse response = new CancelarReservaResponse();
+        response.setMensaje("Reserva cancelada y reembolsada con éxito");
+        response.setExito(true);
+        return response;
+    }
+
+    /**
+     * Reprograma una reserva individual a otra frecuencia (Admin).
+     */
+    @PayloadRoot(namespace = NAMESPACE_URI, localPart = "reprogramarReservaRequest")
+    @ResponsePayload
+    public ReprogramarReservaResponse reprogramarReserva(@RequestPayload ReprogramarReservaRequest request) {
+        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            throw new UnauthorizedException("Sesión expirada o inválida. Por favor, inicia sesión de nuevo.");
+        }
+        Usuario activeUser = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("Usuario no autenticado."));
+
+        if (!"admin".equalsIgnoreCase(activeUser.getRol())) {
+            throw new UnauthorizedException("Acceso denegado. Solo administradores pueden reprogramar reservas.");
+        }
+
+        reservaService.reprogramarReserva(request.getReservaId(), request.getNuevoViajeProgramadoId());
+
+        ReprogramarReservaResponse response = new ReprogramarReservaResponse();
+        response.setMensaje("Reserva reprogramada con éxito");
+        response.setExito(true);
         return response;
     }
 
@@ -374,6 +524,13 @@ public class ViajeProgramadoSoapEndpoint {
             soap.setVehiculo(mapVehiculoToSoap(r.getViajeProgramado().getVehiculo()));
         }
         soap.setEstadoLogistico(r.getViajeProgramado().getEstado());
+
+        calificacionRepository.findByReservaIdAndClienteId(r.getId(), r.getUsuario().getId()).ifPresent(calif -> {
+            CalificacionSoapType cSoap = new CalificacionSoapType();
+            cSoap.setEstrellas(calif.getEstrellas());
+            cSoap.setComentario(calif.getComentario());
+            soap.setCalificacion(cSoap);
+        });
 
         return soap;
     }

@@ -125,10 +125,16 @@ public class ViajeServiceImpl implements ViajeService {
         String zona = "Local/Urbana";
 
         if ("express".equalsIgnoreCase(tipoServicio)) {
-            // Express/Private service charges per kilometer
-            BigDecimal precioKm = BigDecimal.valueOf(2.50);
-            total = distanciaKm.multiply(precioKm).add(BigDecimal.valueOf(10.00));
-            zona = total.compareTo(BigDecimal.valueOf(80)) > 0 ? "Nacional / Interprovincial" : "Regional";
+            // Express/Private service charges per kilometer (Uber-like pricing)
+            BigDecimal precioKm = BigDecimal.valueOf(0.45);
+            BigDecimal baseFare = BigDecimal.valueOf(2.50);
+            total = distanciaKm.multiply(precioKm).add(baseFare);
+            BigDecimal minFare = BigDecimal.valueOf(3.50);
+            if (total.compareTo(minFare) < 0) {
+                total = minFare;
+            }
+            total = total.setScale(2, java.math.RoundingMode.HALF_UP);
+            zona = total.compareTo(BigDecimal.valueOf(30.00)) > 0 ? "Nacional / Interprovincial" : "Regional";
         } else if ("encomienda".equalsIgnoreCase(tipoServicio)) {
             // Packages are quoted on base price + package handling surcharge
             total = BigDecimal.valueOf(10.00).add(distanciaKm.multiply(BigDecimal.valueOf(0.50)));

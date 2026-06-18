@@ -1,6 +1,7 @@
 package com.ecuaviptour.modules.users.domain;
 
 import com.ecuaviptour.modules.viajes.domain.Viaje;
+import com.ecuaviptour.modules.viajes.domain.Reserva;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -34,6 +35,14 @@ public class Calificacion {
     private Viaje viaje;
 
     /**
+     * Relación ManyToOne con la reserva de viaje compartido evaluada. Carga diferida (LAZY).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reserva_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Reserva reserva;
+
+    /**
      * Relación ManyToOne con el usuario (cliente) que realiza la calificación. Carga diferida (LAZY).
      */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -62,12 +71,17 @@ public class Calificacion {
     }
 
     public Calificacion(Long id, Viaje viaje, Usuario cliente, Integer estrellas, String comentario, LocalDateTime fechaCalificacion) {
+        this(id, viaje, cliente, estrellas, comentario, fechaCalificacion, null);
+    }
+
+    public Calificacion(Long id, Viaje viaje, Usuario cliente, Integer estrellas, String comentario, LocalDateTime fechaCalificacion, Reserva reserva) {
         this.id = id;
         this.viaje = viaje;
         this.cliente = cliente;
         this.estrellas = estrellas;
         this.comentario = comentario;
         this.fechaCalificacion = fechaCalificacion != null ? fechaCalificacion : LocalDateTime.now();
+        this.reserva = reserva;
     }
 
     public Long getId() {
@@ -84,6 +98,14 @@ public class Calificacion {
 
     public void setViaje(Viaje viaje) {
         this.viaje = viaje;
+    }
+
+    public Reserva getReserva() {
+        return reserva;
+    }
+
+    public void setReserva(Reserva reserva) {
+        this.reserva = reserva;
     }
 
     public Usuario getCliente() {
@@ -142,6 +164,7 @@ public class Calificacion {
         private Integer estrellas;
         private String comentario;
         private LocalDateTime fechaCalificacion = LocalDateTime.now();
+        private Reserva reserva;
 
         public CalificacionBuilder id(Long id) { this.id = id; return this; }
         public CalificacionBuilder viaje(Viaje viaje) { this.viaje = viaje; return this; }
@@ -149,9 +172,10 @@ public class Calificacion {
         public CalificacionBuilder estrellas(Integer estrellas) { this.estrellas = estrellas; return this; }
         public CalificacionBuilder comentario(String comentario) { this.comentario = comentario; return this; }
         public CalificacionBuilder fechaCalificacion(LocalDateTime fechaCalificacion) { this.fechaCalificacion = fechaCalificacion; return this; }
+        public CalificacionBuilder reserva(Reserva reserva) { this.reserva = reserva; return this; }
 
         public Calificacion build() {
-            return new Calificacion(id, viaje, cliente, estrellas, comentario, fechaCalificacion);
+            return new Calificacion(id, viaje, cliente, estrellas, comentario, fechaCalificacion, reserva);
         }
     }
 }

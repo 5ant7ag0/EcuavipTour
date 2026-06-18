@@ -1,11 +1,7 @@
-<div class="h-screen md:h-[calc(100vh-96px)] w-full flex flex-col overflow-hidden bg-gray-50/50">
+<div class="h-screen md:h-[calc(100vh-72px)] w-full flex flex-col overflow-hidden bg-gray-50/50">
   
-  <!-- Navigation Tabs Header (Apple Style) -->
-  <div class="bg-white border-b border-gray-100 py-3.5 px-6 shrink-0 z-20 shadow-sm flex items-center justify-between flex-wrap gap-4">
-    <div>
-      <h1 class="text-xl font-black text-gray-900 tracking-tight">Viajes Ecuavip</h1>
-    </div>
-    
+  <!-- Navigation Tabs Header (Apple Style) - Hidden on Desktop, Visible on Mobile -->
+  <div class="bg-white border-b border-gray-100 py-3.5 px-6 shrink-0 z-20 shadow-sm flex items-center justify-center md:hidden">
     <!-- Tab Selector -->
     <div class="flex p-1 bg-gray-100 rounded-2xl max-w-md w-full sm:w-96 shrink-0">
       <button 
@@ -29,6 +25,7 @@
         Expres
       </button>
       <button 
+        *ngIf="isLoggedIn"
         (click)="setActiveTab('my-trips')"
         [class.bg-white]="activeTab === 'my-trips'"
         [class.shadow-sm]="activeTab === 'my-trips'"
@@ -126,9 +123,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-bold text-gray-700">Hora de salida</span>
-                  <select [(ngModel)]="horaSalida" class="bg-white border border-gray-200 rounded-lg text-sm px-3 py-1 focus:outline-none focus:ring-1 focus:ring-ecuavip-blue">
-                    <option *ngFor="let hora of horariosDisponibles" [value]="hora">{{ hora }}</option>
-                  </select>
+                  <input type="time" [(ngModel)]="horaSalida" class="bg-white border border-gray-200 rounded-lg text-sm px-3 py-1.5 w-36 focus:outline-none focus:ring-1 focus:ring-ecuavip-blue text-center font-semibold text-slate-700">
                 </div>
               </div>
 

@@ -1,7 +1,7 @@
 package com.ecuaviptour.soap.endpoint;
 
 import com.ecuaviptour.modules.chat.service.ChatService;
-
+import com.ecuaviptour.modules.viajes.repository.ViajeRepository;
 import com.ecuaviptour.modules.chat.repository.MensajeRepository;
 
 import com.ecuaviptour.modules.chat.domain.MensajeChat;
@@ -43,6 +43,7 @@ public class ChatSoapEndpoint {
     private final UsuarioRepository usuarioRepository;
     private final MensajeRepository mensajeRepository;
     private final SocketIOService socketIOService;
+    private final ViajeRepository viajeRepository;
 
     /**
      * Constructor para la inyección de dependencias de lógica de chat, seguridad y sockets.
@@ -51,15 +52,18 @@ public class ChatSoapEndpoint {
      * @param usuarioRepository Repositorio de usuarios.
      * @param mensajeRepository Repositorio de persistencia de mensajes.
      * @param socketIOService   Servicio de notificaciones Socket.IO en tiempo real.
+     * @param viajeRepository   Repositorio de viajes.
      */
     public ChatSoapEndpoint(ChatService chatService,
                             UsuarioRepository usuarioRepository,
                             MensajeRepository mensajeRepository,
-                            SocketIOService socketIOService) {
+                            SocketIOService socketIOService,
+                            ViajeRepository viajeRepository) {
         this.chatService = chatService;
         this.usuarioRepository = usuarioRepository;
         this.mensajeRepository = mensajeRepository;
         this.socketIOService = socketIOService;
+        this.viajeRepository = viajeRepository;
     }
 
     /**
@@ -83,7 +87,11 @@ public class ChatSoapEndpoint {
         List<MensajeChat> list;
         String tipoReceptor = request.getTipoReceptor() != null ? request.getTipoReceptor() : "admin";
         if ("chofer".equalsIgnoreCase(tipoReceptor) && request.getViajeId() != null) {
-            list = chatService.getHistorialPorViaje(request.getViajeId());
+            if (viajeRepository.existsById(request.getViajeId())) {
+                list = chatService.getHistorialPorViaje(request.getViajeId());
+            } else {
+                list = chatService.getHistorialEntreUsuarios(user.getId(), request.getTargetId());
+            }
         } else {
             Long clienteId = "admin".equalsIgnoreCase(user.getRol()) ? request.getTargetId() : user.getId();
             list = chatService.getHistorialSoporteCliente(clienteId);

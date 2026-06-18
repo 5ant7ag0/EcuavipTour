@@ -132,7 +132,12 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
         this.viajeActual.estado_logistico = data.estado;
         this.viajeActual.foto_chofer_url = data.foto_chofer_url;
         this.viajeActual.vehiculo = data.vehiculo;
-        this.showToast(`¡Un chofer ha aceptado tu viaje! ${data.nombre_chofer} está en camino.`);
+        
+        const isEnco = (this.viajeActual.tipo_servicio || '').toLowerCase() === 'encomienda' || (data.tipo_servicio || '').toLowerCase() === 'encomienda';
+        this.showToast(isEnco 
+          ? `¡Un repartidor ha aceptado tu envío! ${data.nombre_chofer} está en camino.` 
+          : `¡Un chofer ha aceptado tu viaje! ${data.nombre_chofer} está en camino.`);
+        
         if (this.directionsRenderer) this.calculateRoute();
       }
     });
@@ -142,7 +147,12 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
       console.log('Chofer en punto!', data);
       if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id || this.viajeActual.id)) {
         this.viajeActual.estado_logistico = 'esperando_cliente';
-        this.showToast('¡Tu chofer ha llegado al punto de inicio!');
+        
+        const isEnco = (this.viajeActual.tipo_servicio || '').toLowerCase() === 'encomienda' || (data.tipo_servicio || '').toLowerCase() === 'encomienda';
+        this.showToast(isEnco 
+          ? '¡El repartidor ha llegado para recoger el paquete!' 
+          : '¡Tu chofer ha llegado al punto de inicio!');
+        
         if (this.directionsRenderer) this.calculateRoute();
       }
     });
@@ -152,7 +162,12 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
       console.log('Viaje finalizado!', data);
       if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id || this.viajeActual.id)) {
         this.viajeActual.estado_logistico = 'finalizado';
-        this.showToast('Tu viaje ha finalizado. ¡Gracias por usar Ecuavip Tour!');
+        
+        const isEnco = (this.viajeActual.tipo_servicio || '').toLowerCase() === 'encomienda' || (data.tipo_servicio || '').toLowerCase() === 'encomienda';
+        this.showToast(isEnco 
+          ? 'Tu paquete ha sido entregado. ¡Gracias por usar Ecuavip Tour!' 
+          : 'Tu viaje ha finalizado. ¡Gracias por usar Ecuavip Tour!');
+        
         this.showRatingModal = true; // ACTIVAR BURBUJA DE CALIFICACIÓN
         // No cargamos viajes aún para no quitar el modal de golpe
       }
@@ -163,7 +178,14 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
       console.log('Viaje cancelado!', data);
       if (this.viajeActual && Number(data.viaje_id) === Number(this.viajeActual.viaje_id || this.viajeActual.id)) {
         this.viajeActual.estado_logistico = 'cancelado';
-        this.showToast(data.mensaje);
+        
+        const isEnco = (this.viajeActual.tipo_servicio || '').toLowerCase() === 'encomienda' || (data.tipo_servicio || '').toLowerCase() === 'encomienda';
+        let msg = data.mensaje || 'El viaje ha sido cancelado';
+        if (isEnco) {
+          msg = msg.replace(/viaje/gi, 'envío').replace(/chofer/gi, 'repartidor');
+        }
+        this.showToast(msg);
+        
         setTimeout(() => this.cargarViajes(), 3000); // Dar tiempo a ver el toast
       }
     });
@@ -178,7 +200,12 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
         if (this.viajeActual.vehiculo) {
           this.viajeActual.vehiculo = null;
         }
-        this.showToast('El chofer asignado canceló el viaje. Buscando otro conductor de inmediato...');
+        
+        const isEnco = (this.viajeActual.tipo_servicio || '').toLowerCase() === 'encomienda' || (data.tipo_servicio || '').toLowerCase() === 'encomienda';
+        this.showToast(isEnco 
+          ? 'El repartidor asignado canceló el envío. Buscando otro de inmediato...' 
+          : 'El chofer asignado canceló el viaje. Buscando otro conductor de inmediato...');
+        
         // Recargar los viajes para actualizar el mapa, quitar la ruta del conductor, etc.
         this.cargarViajes();
       }
@@ -361,6 +388,11 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
       next: (viajes) => {
         if (viajes && viajes.length > 0) {
           const ultimoViaje = viajes[0];
+          const isEncomienda = (ultimoViaje.tipo_servicio || '').toLowerCase() === 'encomienda';
+          if (isEncomienda && ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_logistico !== 'cancelado') {
+            this.router.navigate(['/cliente/paquetes']);
+            return;
+          }
           if (ultimoViaje.estado_logistico !== 'finalizado' && ultimoViaje.estado_logistico !== 'cancelado') {
             if (ultimoViaje.estado_pago === 'pendiente') {
               this.router.navigate(['/cliente/reserva'], {
@@ -414,6 +446,113 @@ export class TrackingViajeComponent implements OnInit, OnDestroy {
     if (est === 'en_curso' || est === 'en_viaje' || est === 'en_ruta') return 90;
     if (est === 'finalizado') return 100;
     return 0;
+  }
+
+  getSharedTripStatusText(): string {
+    if (!this.viajeActual) return '';
+
+    const origen = this.viajeActual.origen || '';
+    const puntoAbordaje = this.viajeActual.punto_abordaje || '';
+    const estLog = this.viajeActual.estado_logistico || '';
+    const estPago = this.viajeActual.estado_pago || '';
+
+    const isOrigen = origen.toLowerCase().trim() === puntoAbordaje.toLowerCase().trim() ||
+                     origen.toLowerCase().includes(puntoAbordaje.toLowerCase()) ||
+                     puntoAbordaje.toLowerCase().includes(origen.toLowerCase());
+
+    const isEnRuta = estLog === 'en_curso' || estLog === 'en_viaje' || estLog === 'en_ruta';
+    const isAbordo = estPago === 'abordo' || estPago === 'confirmado_abordo';
+
+    // Parse departure time to calculate arrival time
+    let horaLlegadaStr = '12:00 pm';
+    if (this.viajeActual.fecha) {
+      try {
+        const departureDate = new Date(this.viajeActual.fecha);
+        if (!isNaN(departureDate.getTime())) {
+          // Assume travel duration of 75 minutes
+          const arrivalDate = new Date(departureDate.getTime() + 75 * 60 * 1000);
+          let hours = arrivalDate.getHours();
+          const minutes = arrivalDate.getMinutes();
+          const ampm = hours >= 12 ? 'pm' : 'am';
+          hours = hours % 12;
+          hours = hours ? hours : 12;
+          const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+          horaLlegadaStr = `${hours}:${minutesStr} ${ampm}`;
+        }
+      } catch (e) {
+        console.error('Error parsing departure date', e);
+      }
+    }
+
+    if (!isEnRuta) {
+      // Before trip starts
+      if (isOrigen) {
+        if (this.viajeActual.fecha) {
+          try {
+            const departureDate = new Date(this.viajeActual.fecha);
+            if (!isNaN(departureDate.getTime())) {
+              const diffMs = departureDate.getTime() - new Date().getTime();
+              const diffMins = Math.round(diffMs / (60 * 1000));
+              if (diffMins > 0) {
+                if (diffMins <= 60) {
+                  return `Prepárate, salimos en ${diffMins} min`;
+                } else {
+                  let depHours = departureDate.getHours();
+                  const depMins = departureDate.getMinutes();
+                  const depAmpm = depHours >= 12 ? 'pm' : 'am';
+                  depHours = depHours % 12;
+                  depHours = depHours ? depHours : 12;
+                  const depMinsStr = depMins < 10 ? '0' + depMins : depMins;
+                  return `Prepárate, salimos a las ${depHours}:${depMinsStr} ${depAmpm}`;
+                }
+              } else {
+                return 'Prepárate, salimos en breves momentos';
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing departure date', e);
+          }
+        }
+        return 'Prepárate, salimos en 5 min';
+      } else {
+        if (this.viajeActual.fecha) {
+          try {
+            const departureDate = new Date(this.viajeActual.fecha);
+            if (!isNaN(departureDate.getTime())) {
+              // Assume stop is reached 15 mins after departure.
+              const stopArrivalDate = new Date(departureDate.getTime() + 15 * 60 * 1000);
+              const diffMs = stopArrivalDate.getTime() - new Date().getTime();
+              const diffMins = Math.round(diffMs / (60 * 1000));
+              if (diffMins > 0) {
+                if (diffMins <= 60) {
+                  return `Espera en la parada: ${puntoAbordaje}, tiempo aproximado de llegada: ${diffMins} min`;
+                } else {
+                  let stopHours = stopArrivalDate.getHours();
+                  const stopMins = stopArrivalDate.getMinutes();
+                  const stopAmpm = stopHours >= 12 ? 'pm' : 'am';
+                  stopHours = stopHours % 12;
+                  stopHours = stopHours ? stopHours : 12;
+                  const stopMinsStr = stopMins < 10 ? '0' + stopMins : stopMins;
+                  return `Espera en la parada: ${puntoAbordaje}, hora aprox. de recogida: ${stopHours}:${stopMinsStr} ${stopAmpm}`;
+                }
+              } else {
+                return `Espera en la parada: ${puntoAbordaje}, el vehículo llegará en breves momentos`;
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing date for stop', e);
+          }
+        }
+        return `Espera en la parada: ${puntoAbordaje}, tiempo aproximado de llegada: 15 min`;
+      }
+    } else {
+      // During trip (en ruta)
+      if (isAbordo) {
+        return `Llegada al destino a las ${horaLlegadaStr} (según la hora de llegada aproximada)`;
+      } else {
+        return `Espera en la parada: ${puntoAbordaje}, tiempo aproximado de llegada del vehículo: 10 min`;
+      }
+    }
   }
 
   logout() {

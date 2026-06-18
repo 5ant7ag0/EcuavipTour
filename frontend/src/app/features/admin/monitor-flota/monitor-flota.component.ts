@@ -47,8 +47,13 @@ export type ChartOptions = {
     <div class="space-y-6 pb-6 animate-in fade-in duration-700">
       <!-- Header / Toolbar Única Alineada con Bordes -->
       <div class="mb-6 flex items-center justify-between gap-4 w-full">
-        <!-- Título Limpio -->
-        <h1 class="text-xl font-black text-slate-900 tracking-tight uppercase">Dashboard</h1>
+        <!-- Título Limpio con Botón de Descarga -->
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl font-black text-slate-900 tracking-tight uppercase">Dashboard</h1>
+          <button (click)="descargarReporteIngresos()" class="p-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl border border-slate-200/60 shadow-sm transition-all flex items-center justify-center shrink-0" title="Descargar Reporte de Ingresos (CSV)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><polyline points="6 9 6 2 18 2 18 9"/><rect width="12" height="8" x="6" y="14"/></svg>
+          </button>
+        </div>
         
         <!-- Cápsula de Periodos -->
         <div class="flex items-center gap-1 bg-white p-1 rounded-2xl shadow-sm border border-slate-100 flex-shrink-0">
@@ -89,6 +94,19 @@ export type ChartOptions = {
 
       <!-- Fila 1: KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Utilidad Neta -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:scale-[1.01] transition-all duration-500 group">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-500">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <span *ngIf="(stats?.kpis?.utilidad_neta || 0) >= 0" class="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">Rentable</span>
+            <span *ngIf="(stats?.kpis?.utilidad_neta || 0) < 0" class="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">Déficit</span>
+          </div>
+          <div class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Utilidad Neta</div>
+          <div class="text-2xl font-bold text-slate-900 tracking-tight">{{ stats?.kpis?.utilidad_neta | currency:'USD':'symbol-narrow':'1.2-2' }}</div>
+        </div>
+
         <!-- Ingresos -->
         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:scale-[1.01] transition-all duration-500 group">
           <div class="flex items-center justify-between mb-3">
@@ -127,21 +145,6 @@ export type ChartOptions = {
           <div class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Pagos Pendientes</div>
           <div class="text-2xl font-bold text-slate-900 tracking-tight">{{ stats?.kpis?.pagos_pendientes }}</div>
         </div>
-
-        <!-- Choferes Online -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:scale-[1.01] transition-all duration-500 group">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-500">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div class="flex -space-x-1.5">
-              <div class="w-5 h-5 rounded-full bg-slate-200 border border-white"></div>
-              <div class="w-5 h-5 rounded-full bg-slate-300 border border-white"></div>
-            </div>
-          </div>
-          <div class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Choferes Online</div>
-          <div class="text-2xl font-bold text-slate-900 tracking-tight">{{ stats?.kpis?.choferes_online }}</div>
-        </div>
       </div>
 
       <!-- Fila 2: Gráfico de Ingresos (Dos columnas) y Columna Derecha (Dos Gráficos: Top Rutas y Servicios) -->
@@ -173,21 +176,24 @@ export type ChartOptions = {
 
         <!-- Columna Derecha: Estados de Viaje y Servicios -->
         <div class="lg:col-span-1 flex flex-col gap-6 h-[520px]">
-          <!-- Estados de Viaje (Donut) -->
+          <!-- Ingresos vs Gastos (Bar comparison) -->
           <div class="flex-1 h-0 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
             <div>
-              <h3 class="text-sm font-bold text-slate-900 tracking-tight">Estados de Viaje</h3>
-              <p class="text-[10px] text-slate-400">Distribución porcentual operativa</p>
+              <h3 class="text-sm font-bold text-slate-900 tracking-tight">Ingresos vs Gastos</h3>
+              <p class="text-[10px] text-slate-400">Comparación de rendimiento financiero</p>
             </div>
-            <div *ngIf="donutChartOptions" class="flex-1 flex items-center justify-center min-h-0">
+            <div *ngIf="incomeExpensesChartOptions" class="flex-1 flex items-center justify-center min-h-0">
               <apx-chart
-                [series]="donutChartOptions.series"
-                [chart]="donutChartOptions.chart"
-                [labels]="donutChartOptions.labels"
-                [dataLabels]="donutChartOptions.dataLabels"
-                [legend]="donutChartOptions.legend"
-                [colors]="donutChartOptions.colors"
-                [tooltip]="donutChartOptions.tooltip"
+                [series]="incomeExpensesChartOptions.series"
+                [chart]="incomeExpensesChartOptions.chart"
+                [xaxis]="incomeExpensesChartOptions.xaxis"
+                [yaxis]="incomeExpensesChartOptions.yaxis"
+                [dataLabels]="incomeExpensesChartOptions.dataLabels"
+                [grid]="incomeExpensesChartOptions.grid"
+                [stroke]="incomeExpensesChartOptions.stroke"
+                [tooltip]="incomeExpensesChartOptions.tooltip"
+                [colors]="incomeExpensesChartOptions.colors"
+                [legend]="incomeExpensesChartOptions.legend"
                 class="w-full"
               ></apx-chart>
             </div>
@@ -291,7 +297,7 @@ export class MonitorFlotaComponent implements OnInit {
   ];
 
   public revenueChartOptions: Partial<ChartOptions> | any;
-  public donutChartOptions: Partial<ChartOptions> | any;
+  public incomeExpensesChartOptions: Partial<ChartOptions> | any;
   public barChartOptions: Partial<ChartOptions> | any;
   public serviceChartOptions: Partial<ChartOptions> | any;
 
@@ -299,6 +305,22 @@ export class MonitorFlotaComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadStats();
+  }
+
+  descargarReporteIngresos() {
+    this.adminService.descargarReporteIngresos(this.selectedPeriod, this.customStartDate, this.customEndDate).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte_ingresos_${this.selectedPeriod}_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => console.error('Error al descargar reporte de ingresos:', err)
+    });
   }
 
   setPeriod(period: string) {
@@ -406,29 +428,72 @@ export class MonitorFlotaComponent implements OnInit {
       colors: ['#0046D5']
     };
 
-    // 2. Chart de Distribución (Donut - Estados de Viaje)
-    this.donutChartOptions = {
-      series: this.stats.charts.distribution.data,
+    // 2. Chart de Ingresos vs Gastos (Line/Area comparison)
+    const revenueLabels = this.stats.charts.revenue?.labels || [];
+    const revenueData = this.stats.charts.revenue?.data || [];
+    const expensesData = this.stats.charts.expenses?.data || [];
+
+    this.incomeExpensesChartOptions = {
+      series: [
+        {
+          name: "Ingresos",
+          data: revenueData
+        },
+        {
+          name: "Gastos",
+          data: expensesData.length ? expensesData : new Array(revenueData.length).fill(0)
+        }
+      ],
       chart: {
-        type: "donut",
-        height: 150,
+        type: "line",
+        height: 160,
+        toolbar: { show: false },
+        zoom: { enabled: false },
         fontFamily: 'Plus Jakarta Sans, sans-serif'
       },
-      labels: this.stats.charts.distribution.labels.map((l: string) => l.toUpperCase()),
-      colors: ['#0046D5', '#3B82F6', '#1E3A8A', '#94A3B8', '#CBD5E1'],
+      stroke: {
+        curve: "smooth",
+        width: 2.5
+      },
       dataLabels: { enabled: false },
+      xaxis: {
+        type: 'datetime',
+        categories: revenueLabels,
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: {
+          rotate: 0,
+          hideOverlappingLabels: true,
+          datetimeFormatter: {
+            year: 'yyyy',
+            month: 'MMM',
+            day: 'dd MMM'
+          },
+          style: { colors: '#94a3b8', fontWeight: 600, fontSize: '9px' }
+        }
+      },
+      yaxis: {
+        tickAmount: 4,
+        labels: {
+          formatter: (val: number) => `$${val.toFixed(0)}`,
+          style: { colors: '#94a3b8', fontWeight: 600, fontSize: '9px' }
+        }
+      },
+      grid: {
+        borderColor: '#f1f5f9',
+        strokeDashArray: 4
+      },
       legend: {
-        position: 'right',
-        fontWeight: 600,
+        show: true,
+        position: 'top',
+        horizontalAlign: 'right',
         fontSize: '9px',
+        fontWeight: 600,
         labels: { colors: '#64748b' },
         markers: {
-          width: 6,
-          height: 6,
+          width: 8,
+          height: 8,
           radius: 12
-        },
-        itemMargin: {
-          vertical: 1
         }
       },
       tooltip: {
@@ -437,13 +502,15 @@ export class MonitorFlotaComponent implements OnInit {
           fontSize: '11px',
           fontFamily: 'Plus Jakarta Sans, sans-serif'
         },
-        marker: {
-          show: true
+        x: {
+          show: true,
+          format: 'dd MMM yyyy'
         },
         y: {
-          formatter: (val: number) => `${val} viajes`
+          formatter: (val: number) => `$${val.toFixed(2)}`
         }
-      }
+      },
+      colors: ['#0046D5', '#EF4444']
     };
 
     // 3. Chart de Top Rutas (Bar Horiz)

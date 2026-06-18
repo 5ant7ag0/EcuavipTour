@@ -19,13 +19,13 @@ import { filter } from 'rxjs/operators';
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>Inicio</span>
       </a>
-      <a *ngIf="isLoggedIn" routerLink="/cliente/cotizar" [class.active-mobile]="isMisViajesActive()" class="nav-mobile-item">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.617a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0l4.212 2.106Z"/><path d="M9 3.5v13"/><path d="M15 7.5v13"/></svg>
-        <span>Viajes</span>
-      </a>
-      <a *ngIf="!isLoggedIn" routerLink="/servicios" routerLinkActive="active-mobile" class="nav-mobile-item">
+      <a routerLink="/servicios" routerLinkActive="active-mobile" class="nav-mobile-item">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
         <span>Servicios</span>
+      </a>
+      <a routerLink="/cliente/cotizar" [class.active-mobile]="isMisViajesActive()" class="nav-mobile-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.617a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0l4.212 2.106Z"/><path d="M9 3.5v13"/><path d="M15 7.5v13"/></svg>
+        <span>Viajes</span>
       </a>
       <a routerLink="/cliente/paquetes" routerLinkActive="active-mobile" class="nav-mobile-item">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -55,8 +55,47 @@ import { filter } from 'rxjs/operators';
         <nav class="flex items-center gap-1">
           <a routerLink="/" [routerLinkActiveOptions]="{exact:true}" routerLinkActive="nav-active" class="nav-link">Inicio</a>
           <a routerLink="/servicios" routerLinkActive="nav-active" class="nav-link">Servicios</a>
-          <a routerLink="/cliente/cotizar" [class.nav-active]="isMisViajesActive()" class="nav-link">Viajes</a>
-          <a routerLink="/cliente/paquetes" routerLinkActive="nav-active" class="nav-link">Paquetes</a>
+          <!-- Viajes Dropdown -->
+          <div class="relative group">
+            <a routerLink="/cliente/cotizar" [class.nav-active]="isMisViajesActive()" class="nav-link cursor-pointer flex items-center gap-1 no-underline">
+              <span>Viajes</span>
+              <svg class="text-gray-400 group-hover:text-blue-600 transition-colors mt-0.5" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </a>
+            <div class="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[110]">
+              <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 p-1.5 overflow-hidden">
+                <a routerLink="/cliente/cotizar" [queryParams]="{tab: 'shared'}" class="flex items-center px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all no-underline">
+                  Compartido
+                </a>
+                <a routerLink="/cliente/cotizar" [queryParams]="{tab: 'express'}" class="flex items-center px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all no-underline">
+                  Expres
+                </a>
+                <a *ngIf="isLoggedIn" routerLink="/cliente/cotizar" [queryParams]="{tab: 'my-trips'}" class="flex items-center px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all no-underline">
+                  Mis Viajes
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paquetes Dropdown -->
+          <div class="relative group">
+            <a routerLink="/cliente/paquetes" routerLinkActive="nav-active" class="nav-link cursor-pointer flex items-center gap-1 no-underline">
+              <span>Paquetes</span>
+              <svg class="text-gray-400 group-hover:text-blue-600 transition-colors mt-0.5" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </a>
+            <div class="absolute left-1/2 -translate-x-1/2 top-full pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[110]">
+              <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 p-1.5 overflow-hidden">
+                <a routerLink="/cliente/paquetes" [queryParams]="{tab: 'send-receive'}" class="flex items-center px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all no-underline">
+                  Enviar/Recibir
+                </a>
+                <a *ngIf="isLoggedIn" routerLink="/cliente/paquetes" [queryParams]="{tab: 'my-packages'}" class="flex items-center px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all no-underline">
+                  MIs paquetes
+                </a>
+                <a routerLink="/cliente/paquetes" [queryParams]="{tab: 'scan-qr'}" class="flex items-center px-4 py-2.5 text-xs font-black uppercase tracking-wider text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all no-underline">
+                  Escanear QR
+                </a>
+              </div>
+            </div>
+          </div>
           <a routerLink="/contacto" routerLinkActive="nav-active" class="nav-link">Contacto</a>
         </nav>
 
@@ -223,7 +262,9 @@ export class ClientNavbarComponent implements OnInit {
     if (this.usuario?.rol === 'cliente') {
       this.socketService.listen('viaje_despachado_cliente').subscribe((data: any) => {
         console.log('[Global Client Socket] Viaje despachado recibido:', data);
-        this.router.navigate(['/cliente/en-curso']).then(() => {
+        const isEncomienda = (data.tipo_servicio || '').toLowerCase() === 'encomienda';
+        const dest = isEncomienda ? '/cliente/paquetes' : '/cliente/en-curso';
+        this.router.navigate([dest]).then(() => {
           sessionStorage.setItem('despachado_toast', JSON.stringify(data));
         });
       });

@@ -35,6 +35,10 @@ import com.ecuaviptour.modules.vehiculos.domain.Vehiculo;
 import com.ecuaviptour.modules.users.service.AdminService;
 import com.ecuaviptour.modules.pagos.service.PagoService;
 import com.ecuaviptour.shared.service.SocketIOService;
+import com.ecuaviptour.modules.gastos.domain.Gasto;
+import com.ecuaviptour.modules.gastos.repository.GastoRepository;
+import com.ecuaviptour.modules.viajes.domain.ViajeProgramado;
+import com.ecuaviptour.modules.viajes.repository.ViajeProgramadoRepository;
 import com.ecuaviptour.soap.admin.*;
 import com.ecuaviptour.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -81,6 +85,8 @@ public class AdminSoapEndpoint {
     private final ReservaAsientoRepository reservaAsientoRepository;
     private final SocketIOService socketIOService;
     private final ReservaRepository reservaRepository;
+    private final GastoRepository gastoRepository;
+    private final ViajeProgramadoRepository viajeProgramadoRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -96,6 +102,8 @@ public class AdminSoapEndpoint {
      * @param reservaAsientoRepository Repositorio de reservas de asientos.
      * @param socketIOService          Servicio para notificaciones en tiempo real por sockets.
      * @param reservaRepository        Repositorio de reservas individuales.
+     * @param gastoRepository          Repositorio de gastos.
+     * @param viajeProgramadoRepository Repositorio de viajes programados/frecuencias.
      */
     public AdminSoapEndpoint(AdminService adminService,
                              PagoService pagoService,
@@ -106,7 +114,9 @@ public class AdminSoapEndpoint {
                              TicketQRRepository ticketQRRepository,
                              ReservaAsientoRepository reservaAsientoRepository,
                              SocketIOService socketIOService,
-                             ReservaRepository reservaRepository) {
+                             ReservaRepository reservaRepository,
+                             GastoRepository gastoRepository,
+                             ViajeProgramadoRepository viajeProgramadoRepository) {
         this.adminService = adminService;
         this.pagoService = pagoService;
         this.viajeRepository = viajeRepository;
@@ -117,6 +127,8 @@ public class AdminSoapEndpoint {
         this.reservaAsientoRepository = reservaAsientoRepository;
         this.socketIOService = socketIOService;
         this.reservaRepository = reservaRepository;
+        this.gastoRepository = gastoRepository;
+        this.viajeProgramadoRepository = viajeProgramadoRepository;
     }
 
     /**
@@ -218,6 +230,12 @@ public class AdminSoapEndpoint {
             soap.setActivo(Boolean.parseBoolean(uMap.get("activo").toString()));
             soap.setFechaRegistro(uMap.get("fecha_registro") != null ? uMap.get("fecha_registro").toString() : "");
             soap.setFotoPerfilUrl((String) uMap.get("foto_perfil_url"));
+            if (uMap.get("viajes_completados") != null) {
+                soap.setViajesCompletados(Long.parseLong(uMap.get("viajes_completados").toString()));
+            }
+            if (uMap.get("promedio_calificacion") != null) {
+                soap.setPromedioCalificacion(Double.parseDouble(uMap.get("promedio_calificacion").toString()));
+            }
             response.getUsuarios().add(soap);
         }
         return response;
@@ -320,6 +338,7 @@ public class AdminSoapEndpoint {
                 soap.setClienteCedula(cliente != null ? cliente.getCedula() : "N/A");
                 soap.setOrigen(v.getDirOrigen());
                 soap.setDestino(v.getDirDestino());
+                soap.setTipoServicio(v.getTipoServicio());
 
                 list.add(soap);
             }
@@ -698,6 +717,7 @@ public class AdminSoapEndpoint {
         final LocalDateTime finalStart = startLimit;
         final LocalDateTime finalEnd = endLimit;
 
+        // 1. Fetch and Filter Express / Package trips (Viaje)
         List<Viaje> filteredTrips = allTrips;
         if (finalStart != null || finalEnd != null) {
             filteredTrips = allTrips.stream()
@@ -707,18 +727,65 @@ public class AdminSoapEndpoint {
                     .collect(Collectors.toList());
         }
 
-        double totalRevenue = filteredTrips.stream()
+        // 2. Fetch and Filter Shared trip bookings (Reserva)
+        List<Reserva> allReservations = reservaRepository.findAll();
+        List<Reserva> filteredReservations = allReservations;
+        if (finalStart != null || finalEnd != null) {
+            filteredReservations = allReservations.stream()
+                    .filter(r -> r.getFechaReserva() != null)
+                    .filter(r -> finalStart == null || r.getFechaReserva().isAfter(finalStart) || r.getFechaReserva().isEqual(finalStart))
+                    .filter(r -> finalEnd == null || r.getFechaReserva().isBefore(finalEnd) || r.getFechaReserva().isEqual(finalEnd))
+                    .collect(Collectors.toList());
+        }
+
+        // 3. Fetch and Filter Frequencies (ViajeProgramado)
+        List<ViajeProgramado> allFrequencies = viajeProgramadoRepository.findAll();
+        List<ViajeProgramado> filteredFrequencies = allFrequencies;
+        if (finalStart != null || finalEnd != null) {
+            filteredFrequencies = allFrequencies.stream()
+                    .filter(f -> f.getFechaHoraSalida() != null)
+                    .filter(f -> finalStart == null || f.getFechaHoraSalida().isAfter(finalStart) || f.getFechaHoraSalida().isEqual(finalStart))
+                    .filter(f -> finalEnd == null || f.getFechaHoraSalida().isBefore(finalEnd) || f.getFechaHoraSalida().isEqual(finalEnd))
+                    .collect(Collectors.toList());
+        }
+
+        // --- KPI Calculations ---
+        
+        // Sum total revenue (Viaje approved/paid + Reserva confirmed/abordo)
+        double expressRevenue = filteredTrips.stream()
                 .filter(v -> "aprobado".equalsIgnoreCase(v.getEstadoPago()) || "pagado".equalsIgnoreCase(v.getEstadoPago()))
                 .mapToDouble(v -> v.getMontoTotal() != null ? v.getMontoTotal().doubleValue() : 0.0)
                 .sum();
 
-        long activeTrips = filteredTrips.stream()
+        double sharedRevenue = filteredReservations.stream()
+                .filter(r -> Arrays.asList("confirmado", "abordo").contains(r.getEstadoPago().toLowerCase()))
+                .mapToDouble(r -> r.getViajeProgramado() != null && r.getViajeProgramado().getPrecioAsiento() != null ?
+                        r.getViajeProgramado().getPrecioAsiento().doubleValue() : 0.0)
+                .sum();
+
+        double totalRevenue = expressRevenue + sharedRevenue;
+
+        // Sum active trips (Viaje in progress + ViajeProgramado frequencies EN_RUTA)
+        long activeExpress = filteredTrips.stream()
                 .filter(v -> Arrays.asList("en_curso", "recogiendo", "aceptado").contains(v.getEstadoLogistico().toLowerCase()))
                 .count();
 
-        long pendingPayments = filteredTrips.stream()
+        long activeFrequencies = filteredFrequencies.stream()
+                .filter(f -> "en_ruta".equalsIgnoreCase(f.getEstado()))
+                .count();
+
+        long activeTrips = activeExpress + activeFrequencies;
+
+        // Sum pending payments (Viaje pending + Reserva pending)
+        long pendingExpressPayments = filteredTrips.stream()
                 .filter(v -> "pendiente".equalsIgnoreCase(v.getEstadoPago()) || "comprobante_subido".equalsIgnoreCase(v.getEstadoPago()))
                 .count();
+
+        long pendingSharedPayments = filteredReservations.stream()
+                .filter(r -> Arrays.asList("pendiente", "comprobante_subido").contains(r.getEstadoPago().toLowerCase()))
+                .count();
+
+        long pendingPayments = pendingExpressPayments + pendingSharedPayments;
 
         long onlineDrivers = usuarioRepository.findAll().stream()
                 .filter(u -> "chofer".equalsIgnoreCase(u.getRol()) && u.getActivo() == true)
@@ -730,6 +797,7 @@ public class AdminSoapEndpoint {
         kpis.put("pagos_pendientes", pendingPayments);
         kpis.put("choferes_online", onlineDrivers);
 
+        // --- Temporal Calculations for Revenue Chart ---
         long daysBetween = 30;
         LocalDateTime startForChart = LocalDateTime.now().minus(29, ChronoUnit.DAYS);
 
@@ -759,6 +827,7 @@ public class AdminSoapEndpoint {
             revenueByDate.put(startForChart.plus(i, ChronoUnit.DAYS).format(dateFormatter), 0.0);
         }
 
+        // Add Express/Package revenue
         filteredTrips.stream()
                 .filter(v -> "aprobado".equalsIgnoreCase(v.getEstadoPago()) || "pagado".equalsIgnoreCase(v.getEstadoPago()))
                 .forEach(v -> {
@@ -769,10 +838,23 @@ public class AdminSoapEndpoint {
                     }
                 });
 
+        // Add Shared seats revenue
+        filteredReservations.stream()
+                .filter(r -> Arrays.asList("confirmado", "abordo").contains(r.getEstadoPago().toLowerCase()))
+                .forEach(r -> {
+                    String dateStr = r.getFechaReserva().format(dateFormatter);
+                    if (revenueByDate.containsKey(dateStr)) {
+                        double price = r.getViajeProgramado() != null && r.getViajeProgramado().getPrecioAsiento() != null ?
+                                r.getViajeProgramado().getPrecioAsiento().doubleValue() : 0.0;
+                        revenueByDate.put(dateStr, revenueByDate.get(dateStr) + price);
+                    }
+                });
+
         Map<String, Object> revenueChart = new HashMap<>();
         revenueChart.put("labels", new ArrayList<>(revenueByDate.keySet()));
         revenueChart.put("data", new ArrayList<>(revenueByDate.values()));
 
+        // --- Logistic State Distribution ---
         Map<String, Long> distributionMap = filteredTrips.stream()
                 .filter(v -> v.getEstadoLogistico() != null)
                 .collect(Collectors.groupingBy(Viaje::getEstadoLogistico, Collectors.counting()));
@@ -781,6 +863,7 @@ public class AdminSoapEndpoint {
         distributionChart.put("labels", new ArrayList<>(distributionMap.keySet()));
         distributionChart.put("data", new ArrayList<>(distributionMap.values()));
 
+        // --- Routes Demand ---
         Map<String, Long> routesMap = filteredTrips.stream()
                 .filter(v -> v.getDirOrigen() != null && v.getDirDestino() != null)
                 .collect(Collectors.groupingBy(v -> v.getDirOrigen() + " -> " + v.getDirDestino(), Collectors.counting()));
@@ -796,35 +879,103 @@ public class AdminSoapEndpoint {
                 .limit(5)
                 .collect(Collectors.toList());
 
-        Map<String, Long> servicesMap = filteredTrips.stream()
+        // --- Services Distribution (Express vs Packages vs Shared) ---
+        Map<String, Long> servicesMap = new HashMap<>();
+        filteredTrips.stream()
                 .filter(v -> v.getTipoServicio() != null)
-                .collect(Collectors.groupingBy(Viaje::getTipoServicio, Collectors.counting()));
+                .forEach(v -> {
+                    String service = v.getTipoServicio().toLowerCase();
+                    servicesMap.put(service, servicesMap.getOrDefault(service, 0L) + 1);
+                });
+
+        long confirmedReservationsCount = filteredReservations.stream()
+                .filter(r -> Arrays.asList("confirmado", "abordo").contains(r.getEstadoPago().toLowerCase()))
+                .count();
+        if (confirmedReservationsCount > 0) {
+            servicesMap.put("compartido", confirmedReservationsCount);
+        }
 
         Map<String, Object> servicesChart = new HashMap<>();
         servicesChart.put("labels", new ArrayList<>(servicesMap.keySet()));
         servicesChart.put("data", new ArrayList<>(servicesMap.values()));
 
-        List<Viaje> recentTrips = filteredTrips.stream()
-                .sorted((a, b) -> b.getFechaCreacion().compareTo(a.getFechaCreacion()))
-                .limit(10)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> movements = recentTrips.stream().map(v -> {
-            Usuario cl = v.getCliente();
+        // --- Combined Movements (Recent express runs & recent shared seat bookings) ---
+        List<Map<String, Object>> combinedMovements = new ArrayList<>();
+        
+        filteredTrips.forEach(v -> {
             Map<String, Object> m = new HashMap<>();
             m.put("id", v.getId());
-            m.put("cliente", cl != null ? cl.getNombre() : "Sistema");
+            m.put("cliente", v.getCliente() != null ? v.getCliente().getNombre() : "Sistema");
             m.put("monto", v.getMontoTotal() != null ? v.getMontoTotal().doubleValue() : 0.0);
-            m.put("estado", v.getEstadoLogistico());
-            m.put("fecha", v.getFechaCreacion() != null ? v.getFechaCreacion().toString() : "");
-            return m;
-        }).collect(Collectors.toList());
+            m.put("estado", v.getEstadoLogistico() != null ? v.getEstadoLogistico() : "pendiente");
+            m.put("fecha", v.getFechaCreacion() != null ? v.getFechaCreacion() : LocalDateTime.now());
+            combinedMovements.add(m);
+        });
+
+        filteredReservations.forEach(r -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", r.getId() + 100000000L);
+            m.put("cliente", r.getUsuario() != null ? r.getUsuario().getNombre() : "Sistema");
+            double price = r.getViajeProgramado() != null && r.getViajeProgramado().getPrecioAsiento() != null ?
+                    r.getViajeProgramado().getPrecioAsiento().doubleValue() : 0.0;
+            m.put("monto", price);
+            m.put("estado", r.getEstadoPago() != null ? r.getEstadoPago() : "pendiente");
+            m.put("fecha", r.getFechaReserva() != null ? r.getFechaReserva() : LocalDateTime.now());
+            combinedMovements.add(m);
+        });
+
+        // Sort combined list by date descending
+        combinedMovements.sort((a, b) -> ((LocalDateTime) b.get("fecha")).compareTo((LocalDateTime) a.get("fecha")));
+
+        // Limit to top 10 and map LocalDateTime to String for JSON compatibility
+        List<Map<String, Object>> movements = combinedMovements.stream()
+                .limit(10)
+                .map(m -> {
+                    Map<String, Object> copy = new HashMap<>(m);
+                    copy.put("fecha", m.get("fecha").toString());
+                    return copy;
+                })
+                .collect(Collectors.toList());
+
+        // --- Expenses (Egreso) Calculations ---
+        List<Gasto> allGastos = gastoRepository.findAll();
+        List<Gasto> filteredGastos = allGastos;
+        if (finalStart != null || finalEnd != null) {
+            filteredGastos = allGastos.stream()
+                    .filter(g -> g.getFecha() != null)
+                    .filter(g -> finalStart == null || g.getFecha().isAfter(finalStart) || g.getFecha().isEqual(finalStart))
+                    .filter(g -> finalEnd == null || g.getFecha().isBefore(finalEnd) || g.getFecha().isEqual(finalEnd))
+                    .collect(Collectors.toList());
+        }
+
+        Map<String, Double> expensesByDate = new TreeMap<>();
+        for (int i = 0; i < daysBetween; i++) {
+            expensesByDate.put(startForChart.plus(i, ChronoUnit.DAYS).format(dateFormatter), 0.0);
+        }
+
+        filteredGastos.forEach(g -> {
+            String dateStr = g.getFecha().format(dateFormatter);
+            if (expensesByDate.containsKey(dateStr)) {
+                expensesByDate.put(dateStr, expensesByDate.get(dateStr) +
+                        (g.getMonto() != null ? g.getMonto().doubleValue() : 0.0));
+            }
+        });
+
+        Map<String, Object> expensesChart = new HashMap<>();
+        expensesChart.put("labels", new ArrayList<>(expensesByDate.keySet()));
+        expensesChart.put("data", new ArrayList<>(expensesByDate.values()));
+
+        double totalExpenses = filteredGastos.stream()
+                .mapToDouble(g -> g.getMonto() != null ? g.getMonto().doubleValue() : 0.0)
+                .sum();
+        kpis.put("utilidad_neta", totalRevenue - totalExpenses);
 
         Map<String, Object> statsData = new HashMap<>();
         statsData.put("kpis", kpis);
 
         Map<String, Object> charts = new HashMap<>();
         charts.put("revenue", revenueChart);
+        charts.put("expenses", expensesChart);
         charts.put("distribution", distributionChart);
         charts.put("routes", routesList);
         charts.put("services", servicesChart);
